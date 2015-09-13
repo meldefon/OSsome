@@ -75,15 +75,15 @@ void doAppClerkStuff() {
 	customersWithCompletedApps[socialSecurityNum] = true;
 
 	//signal the AppClerk that we have given him the social security number
-	appClerk->clerkCV[myLine]->Signal(appClerk->clerkLock[myLine]);
+	appClerk->clerkCV[myLine]->Signal(&(appClerk->clerkLock[myLine]));
 
 	//wait for the clerk to confirm then deduct cash after
-	appClerk->clerkCV[myLine]->Wait(appClerk->clerkLock[myLine]);
+	appClerk->clerkCV[myLine]->Wait(&(appClerk->clerkLock[myLine]));
 	
 	cash-=100; //deduct cash
 	appClerkSeen = true; //we have seen the appClerk
 
-	appClerk->clerkCV[myLine]->Signal(appClerk->clerkLock[myLine]); //signal the clerk
+	appClerk->clerkCV[myLine]->Signal(&(appClerk->clerkLock[myLine])); //signal the clerk
 	appClerk->clerkLock[myLine]->Release(); //let go of the lock
 
 	if(picClerkSeen) {

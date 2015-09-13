@@ -28,11 +28,11 @@ void applicationClerk(int id) {
 		//now we can let go of line lock since we properly acquired the clerk lock
 		appClerk.lineLock->Release();
 
-		appClerk.clerkCV[myLine].Wait(appClerk.clerkLock[myLine]); //wait for customer to signal us
+		appClerk.clerkCV[myLine].Wait(&(appClerk.clerkLock[myLine])); //wait for customer to signal us
 		cout<<"I received social security num!\n"; //ask now for cash
 		
-		appClerk.clerkCV[myLine].Signal(appClerk.clerkLock[myLine]); //tell the customer they need cash
-		appClerk.clerkCV[myLine].Wait(appClerk.clerkLock[myLine]); //wait for customer to signal us
+		appClerk.clerkCV[myLine].Signal(&(appClerk.clerkLock[myLine])); //tell the customer they need cash
+		appClerk.clerkCV[myLine].Wait(&(appClerk.clerkLock[myLine])); //wait for customer to signal us
 		cout<<"I recevied customer's cash!\n";
 		
 		appClerk.clerkLock[myLine].Release(); //release the clerk lock since we are done

@@ -4,7 +4,7 @@
 using namespace std;
 #include "synch.h"
 #include "monitor.h"
-#include "customers.cpp"
+#include "customer.cpp"
 #include "clerks.cpp"
 //#include "globalVars.h"
 
