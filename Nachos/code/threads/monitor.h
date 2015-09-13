@@ -20,11 +20,13 @@ struct Monitor {
         clerkCV = new Condition[size]();
         lineCount = new int[size]();
         bribeLineCount = new int[size]();
+        bribeLineCV = new Condition[size]();
         clerkState = new int[size]();
         numOfClerks = size;
     }
     Lock *lineLock;
     Condition *lineCV;
+    Condition *bribeLineCV;
     Lock *clerkLock;
     Condition *clerkCV;
     int *lineCount;
