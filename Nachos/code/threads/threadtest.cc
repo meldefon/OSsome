@@ -1,51 +1,77 @@
-// threadtest.cc 
-//	Simple test case for the threads assignment.
-//
-//	Create two threads, and have them context switch
-//	back and forth between themselves by calling Thread::Yield, 
-//	to illustratethe inner workings of the thread system.
-//
-// Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
-// of liability and disclaimer of warranty provisions.
-
 #include "copyright.h"
 #include "system.h"
+#include <iostream>
+using namespace std;
+#include "synch.h"
 
-//----------------------------------------------------------------------
-// SimpleThread
-// 	Loop 5 times, yielding the CPU to another ready thread 
-//	each iteration.
-//
-//	"which" is simply a number identifying the thread, for debugging
-//	purposes.
-//----------------------------------------------------------------------
+//global struct that contains all locks, monitor variables, and condition
+//variables needed to properly implement synchronization 
+struct Monitor {
+	Lock *lineLock;
+  	Condition *lineCV;
+  	Lock *clerkLock;
+  	Condition *clerkCV;
+  	int *lineCount;
+  	int *bribeLineCount;
+} appClerk, picClerk, passPClerk, cashier;
 
-void
-SimpleThread(int which)
-{
-    int num;
-    
-    for (num = 0; num < 5; num++) {
-	printf("*** thread %d looped %d times\n", which, num);
-        currentThread->Yield();
-    }
+//global shared data between the clerks that are used for filing purposes
+bool* customersWithCompletedApps;
+bool* customersWithCompletedPics;
+bool* passportClerkChecked;
+
+void ThreadTest() {
+  	int size; //will be used to take in user input for the sizes of specific variables
+	cout<<"How many Application Clerks would you like to have? ";
+	cin >> size;
+
+	appClerk.lineLock = new Lock("AppClerk Line Lock");
+	appClerk.lineCV = new Condition[size]();
+	appClerk.clerkLock = new Lock[size]();
+	appClerk.clerkCV = new Condition[size]();
+	appClerk.lineCount = new int[size];
+	appClerk.bribeLineCount = new int[size];
+
+	cout<<"How many Picture Clerks would you like to have? ";
+	cin >> size;
+
+	picClerk.lineLock = new Lock("Picture Clerk Line Lock");
+	picClerk.lineCV = new Condition[size]();
+	picClerk.clerkLock = new Lock[size]();
+	picClerk.clerkCV = new Condition[size]();
+	picClerk.lineCount = new int[size];
+	picClerk.bribeLineCount = new int[size];
+
+	cout<<"How many Passport Clerks would you like to have? ";
+	cin >> size;
+
+	passPClerk.lineLock = new Lock("Passport Clerk Line Lock");
+	passPClerk.lineCV = new Condition[size]();
+	passPClerk.clerkLock = new Lock[size]();
+	passPClerk.clerkCV = new Condition[size]();
+	passPClerk.lineCount = new int[size];
+	passPClerk.bribeLineCount = new int[size];
+
+	cout<<"How many Cashiers would you like to have? ";
+	cin >> size;
+
+	cashier.lineLock = new Lock("Cashier Line Lock");
+	cashier.lineCV = new Condition[size]();
+	cashier.clerkLock = new Lock[size]();
+	cashier.clerkCV = new Condition[size]();
+	cashier.lineCount = new int[size];
+	cashier.bribeLineCount = new int[size];
+
+	cout<<"How many Customers would you like to have? ";
+	cin >> size;
+
+	//will hold booleans that indicate whether a customer has
+	//completed application or pictures using the social security
+	//number as an index
+	customersWithCompletedApps = new bool[size];
+	customersWithCompletedPics = new bool[size];
+	passportClerkChecked = new bool[size];
+	
+	//initialize all the threads here
+	return;
 }
-
-//----------------------------------------------------------------------
-// ThreadTest
-// 	Set up a ping-pong between two threads, by forking a thread 
-//	to call SimpleThread, and then calling SimpleThread ourselves.
-//----------------------------------------------------------------------
-
-void
-ThreadTest()
-{
-    DEBUG('t', "Entering SimpleTest");
-
-    Thread *t = new Thread("forked thread");
-
-    t->Fork(SimpleThread, 1);
-    SimpleThread(0);
-}
-
