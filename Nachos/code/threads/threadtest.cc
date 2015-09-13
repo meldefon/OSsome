@@ -13,12 +13,15 @@ struct Monitor {
   	Condition *clerkCV;
   	int *lineCount;
   	int *bribeLineCount;
+  	int *clerkState;
 } appClerk, picClerk, passPClerk, cashier;
 
 //global shared data between the clerks that are used for filing purposes
-bool* customersWithCompletedApps;
-bool* customersWithCompletedPics;
-bool* passportClerkChecked;
+bool *customersWithCompletedApps;
+bool *customersWithCompletedPics;
+bool *passportClerkChecked;
+bool *gottenPassport;
+int *cashReceived; 
 
 void ThreadTest() {
   	int size; //will be used to take in user input for the sizes of specific variables
@@ -29,8 +32,9 @@ void ThreadTest() {
 	appClerk.lineCV = new Condition[size]();
 	appClerk.clerkLock = new Lock[size]();
 	appClerk.clerkCV = new Condition[size]();
-	appClerk.lineCount = new int[size];
-	appClerk.bribeLineCount = new int[size];
+	appClerk.lineCount = new int[size]();
+	appClerk.bribeLineCount = new int[size]();
+	appClerk.clerkState = new int[size]();
 
 	cout<<"How many Picture Clerks would you like to have? ";
 	cin >> size;
@@ -39,8 +43,9 @@ void ThreadTest() {
 	picClerk.lineCV = new Condition[size]();
 	picClerk.clerkLock = new Lock[size]();
 	picClerk.clerkCV = new Condition[size]();
-	picClerk.lineCount = new int[size];
-	picClerk.bribeLineCount = new int[size];
+	picClerk.lineCount = new int[size]();
+	picClerk.bribeLineCount = new int[size]();
+	picClerk.clerkState = new int[size]();
 
 	cout<<"How many Passport Clerks would you like to have? ";
 	cin >> size;
@@ -49,8 +54,9 @@ void ThreadTest() {
 	passPClerk.lineCV = new Condition[size]();
 	passPClerk.clerkLock = new Lock[size]();
 	passPClerk.clerkCV = new Condition[size]();
-	passPClerk.lineCount = new int[size];
-	passPClerk.bribeLineCount = new int[size];
+	passPClerk.lineCount = new int[size]();
+	passPClerk.bribeLineCount = new int[size]();
+	passPClerk.clerkState = new int[size]();
 
 	cout<<"How many Cashiers would you like to have? ";
 	cin >> size;
@@ -59,8 +65,9 @@ void ThreadTest() {
 	cashier.lineCV = new Condition[size]();
 	cashier.clerkLock = new Lock[size]();
 	cashier.clerkCV = new Condition[size]();
-	cashier.lineCount = new int[size];
-	cashier.bribeLineCount = new int[size];
+	cashier.lineCount = new int[size]();
+	cashier.bribeLineCount = new int[size]();
+	cashier.clerkState = new int[size]();
 
 	cout<<"How many Customers would you like to have? ";
 	cin >> size;
