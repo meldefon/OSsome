@@ -4,7 +4,7 @@
 using namespace std;
 
 //globals for the customer functions
-int cash 1000;
+int cash = 1000;
 bool appClerkSeen = false;
 bool picClerkSeen = false; 
 
