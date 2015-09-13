@@ -3,6 +3,7 @@
 #include <iostream>
 using namespace std;
 #include "synch.h"
+#include "monitor.h"
 #include "globalVars.h"
 
 
