@@ -1,14 +1,18 @@
  Title:  Writeup for Project 1, Fall 2015
  Date:  09/20/15
  Group:	27
- Name					Email	
+ Name						Email	
  Allen Almasi				asalmasi@usc.edu
- Gabriel Mel de Fontenay		meldefon@usc.edu
+ Gabriel Mel de Fontenay	meldefon@usc.edu
  Victoria Dea				vdea@usc.edu
 
 I. Requirements:
 - Describe what's your understanding of the requirements from the assignment statement. With the requirement analysis, you would be clear about what you are supposed to do.
-	
+	+ Part 1
+		This part required us to implement the locks and condition variable (CV). We added the private data needed for the locks and CV in the header file. We implemented the functions for the locks and CV in synch.cc. Then we tested the code using the test in test_code.cc provided on Blackboard. 
+
+	+ Part 2
+
 
 II. Assumptions:
 	- Reasonable assumptions you take for your scheme.
@@ -17,21 +21,63 @@ III. Design:
 - This section is to cover your logic and ideas as to how  you are going to solve the problem presented.  This should include a description of classes, algorithms, etc. This is not code. You must document ALL parts of a project.
 
 IV. Implementation:
-	+ Files Modified
-	+ Files added
+	+ Part 1
+		+ Files Modified
+			-synch.h
+			-synch.cc
 
-	+ Data Structures added, and the file they were added to.
-	+ Data Structures modified, and the file they were added to.
-		-For example,
-			class Lock		-- in file threads.cc/threads.h
-			{
-				//. Modified fields.
-			}
+		+ Data Structures modified, and the file they were added to.
 
-	+ Functions added and in which file.
-	+ Functions modified and in which file.
+				class Lock		-- in file synch.cc synch.h
+				{
+					//added private variables
+    				Thread* owner;
+    				List *lockWaitQueue;
+    				bool isFree;
+				}
+
+				class Condition		-- in file synch.cc synch.h
+				{
+					//added private variables
+					Lock* waitingLock;
+    				List *waitQueue;
+				}
+
+		+ Functions added and in which file.
+			// Added in file synch.cc synch.h
+			Lock();
+			Condition();
+
+		+ Functions modified and in which file.
+
+			// Lock Functions modified in file threads.cc
+			    Lock(char* debugName);
+			    ~Lock(); 
+			    void Acquire(); 
+			    void Release(); 
+			    bool isHeldByCurrentThread(); 
+
+			// Condition Functions modified in file threads.cc
+				Condition(char* debugName);
+			    ~Condition();
+			    void Wait(Lock *conditionLock);
+			    void Signal(Lock *conditionLock);
+			    void Broadcast(Lock *conditionLock);
 	
-	
+	+ Part 2
+		+ Files Modified
+		+ Files added
+
+		+ Data Structures added, and the file they were added to.
+		+ Data Structures modified, and the file they were added to.
+			-For example,
+				class Lock		-- in file threads.cc/threads.h
+				{
+					//. Modified fields.
+				}
+
+		+ Functions added and in which file.
+		+ Functions modified and in which file.
 
 V. Testing:  (For each test case, you must show)
 	+ How to test
