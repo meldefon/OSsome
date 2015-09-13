@@ -4,10 +4,21 @@
 using namespace std;
 #include "synch.h"
 #include "monitor.h"
-#include "globalVars.h"
+//#include "globalVars.h"
 
 
 void ThreadTest() {
+
+	Monitor appClerk, picClerk, passPClerk, cashier;
+
+//global shared data between the clerks that are used for filing purposes
+	bool *customersWithCompletedApps;
+	bool *customersWithCompletedPics;
+	bool *passportClerkChecked;
+	bool *gottenPassport;
+	int *cashReceived;
+
+
   	int size; //will be used to take in user input for the sizes of specific variables
 	cout<<"How many Application Clerks would you like to have? ";
 	cin >> size;

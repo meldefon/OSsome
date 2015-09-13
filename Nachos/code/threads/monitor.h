@@ -10,7 +10,10 @@
 //variables needed to properly implement synchronization
 struct Monitor {
 
-    Monitor(char* lockName, int size){
+    Monitor(){
+        numOfClerks=0;
+    }
+    Monitor(char* lockName, int size) {
         lineLock = new Lock(lockName);
         lineCV = new Condition[size]();
         clerkLock = new Lock[size]();
@@ -28,10 +31,7 @@ struct Monitor {
     int *bribeLineCount;
     int *clerkState;
     int numOfClerks;
-}
-
-
-Monitor
+};
 
 
 #endif //OSSOME_MONITOR_H
