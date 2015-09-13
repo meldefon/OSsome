@@ -18,6 +18,7 @@ struct Monitor {
         lineCount = new int[size]();
         bribeLineCount = new int[size]();
         clerkState = new int[size]();
+        numOfClerks = size;
     }
     Lock *lineLock;
     Condition *lineCV;
@@ -26,6 +27,7 @@ struct Monitor {
     int *lineCount;
     int *bribeLineCount;
     int *clerkState;
+    int numOfClerks;
 }
 
 
