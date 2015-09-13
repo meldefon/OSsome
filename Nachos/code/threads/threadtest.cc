@@ -3,25 +3,8 @@
 #include <iostream>
 using namespace std;
 #include "synch.h"
+#include "globalVars.h"
 
-//global struct that contains all locks, monitor variables, and condition
-//variables needed to properly implement synchronization 
-struct Monitor {
-	Lock *lineLock;
-  	Condition *lineCV;
-  	Lock *clerkLock;
-  	Condition *clerkCV;
-  	int *lineCount;
-  	int *bribeLineCount;
-  	int *clerkState;
-} appClerk, picClerk, passPClerk, cashier;
-
-//global shared data between the clerks that are used for filing purposes
-bool *customersWithCompletedApps;
-bool *customersWithCompletedPics;
-bool *passportClerkChecked;
-bool *gottenPassport;
-int *cashReceived; 
 
 void ThreadTest() {
   	int size; //will be used to take in user input for the sizes of specific variables
