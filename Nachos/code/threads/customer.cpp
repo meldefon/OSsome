@@ -8,29 +8,6 @@ int cash = 1000;
 bool appClerkSeen = false;
 bool picClerkSeen = false; 
 
-void customer(int social) {
-	
-	int socialSecurityNum = social;
-	int picOrAppClerk = rand() % 2; //0 for appClerk, 1 for picClerk, 2 for both completed, randomnly generated
-	
-	//set to true if we've seen these clerks so we can use it for PassportClerk
-	bool notCompleted = true; //while we are not done with everything 
-
-	while(notCompleted) {
-
-		//enter if we choose to go to the appClerk
-		if(picOrAppClerk == 0) {
-			cout<<"Customer " << socialSecurityNum << " is going to the Application Clerk!\n";
-			doAppClerkStuff();
-		}
-		
-		//enter if we choose to go to the picClerk
-		if(picOrAppClerk == 1) {
-			cout<<"Customer " << socialSecurityNum << " is going to the Picture Clerk!\n";
-		}
-	}
-}
-
 void getInLine(Monitor *clerk) {
 
 		//possible clerk states are:
@@ -71,26 +48,49 @@ void doAppClerkStuff() {
 
 	//now we must obtain the lock from the AppClerk which went to wait state once he was avaiable and 
 	//waiting for a customer to signal him
-	appClerk->clerkLock[myLine].Acquire();
+	appClerk.clerkLock[myLine].Acquire();
 
 	//input the socialSecurityNum into the completed applications
 	customersWithCompletedApps[socialSecurityNum] = true;
 
 	//signal the AppClerk that we have given him the social security number
-	appClerk->clerkCV[myLine].Signal(&(appClerk->clerkLock[myLine]));
+	appClerk.clerkCV[myLine].Signal(&(appClerk->clerkLock[myLine]));
 
 	//wait for the clerk to confirm then deduct cash after
-	appClerk->clerkCV[myLine].Wait(&(appClerk->clerkLock[myLine]));
+	appClerk.clerkCV[myLine].Wait(&(appClerk->clerkLock[myLine]));
 	
 	cash-=100; //deduct cash
 	appClerkSeen = true; //we have seen the appClerk
 
-	appClerk->clerkCV[myLine].Signal(&(appClerk->clerkLock[myLine])); //signal the clerk
-	appClerk->clerkLock[myLine].Release(); //let go of the lock
+	appClerk.clerkCV[myLine].Signal(&(appClerk->clerkLock[myLine])); //signal the clerk
+	appClerk.clerkLock[myLine].Release(); //let go of the lock
 
 	if(picClerkSeen) {
 		//go to passport or cashier clerk
 	} else {
 		picOrAppClerk = 1; //if we haven't see the picClerk, go see him
+	}
+}
+
+void customer(int social) {
+	
+	int socialSecurityNum = social;
+	int picOrAppClerk = rand() % 2; //0 for appClerk, 1 for picClerk, 2 for both completed, randomnly generated
+	
+	//set to true if we've seen these clerks so we can use it for PassportClerk
+	bool notCompleted = true; //while we are not done with everything 
+
+	while(notCompleted) {
+
+		//enter if we choose to go to the appClerk
+		if(picOrAppClerk == 0) {
+			cout<<"Customer " << socialSecurityNum << " is going to the Application Clerk!\n";
+			doAppClerkStuff();
+		}
+		
+		//enter if we choose to go to the picClerk
+		if(picOrAppClerk == 1) {
+			cout<<"Customer " << socialSecurityNum << " is going to the Picture Clerk!\n";
+		}
 	}
 }
