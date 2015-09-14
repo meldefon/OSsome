@@ -6,19 +6,22 @@ using namespace std;
 #include "monitor.h"
 #include "customer.cpp"
 #include "clerks.cpp"
-//#include "globalVars.h"
+#include "globalVars.h"
 
 
 void ThreadTest() {
 
-	Monitor appClerk, picClerk, passPClerk, cashier;
+	/*Monitor appClerk, picClerk, passPClerk, cashier;
 
 //global shared data between the clerks that are used for filing purposes
 	bool *customersWithCompletedApps;
 	bool *customersWithCompletedPics;
 	bool *passportClerkChecked;
 	bool *gottenPassport;
-	int *cashReceived;
+	int *cashReceived;*/
+
+	Thread* t = new Thread("Stupid thread");
+	t->Fork((VoidFunctionPtr)customer,0);
 
 
   	int size; //will be used to take in user input for the sizes of specific variables

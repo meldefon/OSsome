@@ -1,6 +1,6 @@
 #include <time.h>
 #include <iostream>
-#include "globalVars.h"
+//#include "globalVars.h"
 using namespace std;
 
 //globals for the customer functions
@@ -10,6 +10,15 @@ bool picClerkSeen = false;
 int myLine;	
 int socialSecurityNum;
 int picOrAppClerk;
+
+Monitor appClerk, picClerk, passPClerk, cashier;
+
+//global shared data between the clerks that are used for filing purposes
+bool *customersWithCompletedApps;
+bool *customersWithCompletedPics;
+bool *passportClerkChecked;
+bool *gottenPassport;
+int *cashReceived;
 
 void getInLine(Monitor *clerk) {
 
@@ -32,7 +41,7 @@ void getInLine(Monitor *clerk) {
 				lineSize = clerk->lineCount[i];
 			}
 		}
-		
+		myLine = 1;
 		if(clerk->clerkState[myLine] == 0) { //if the clerk is busy with another customer, we must wait, else just 									 //bypass this and go straight to transaction
 			clerk->lineCount[myLine]++; //get in line
 			clerk->lineCV[myLine].Wait(clerk->lineLock); //wait until we are signaled by AppClerk
