@@ -1,6 +1,6 @@
 #include <time.h>
 #include <iostream>
-//#include "globalVars.h"
+#include "globalVars.h"
 using namespace std;
 
 //globals for the customer functions
@@ -19,6 +19,7 @@ bool *customersWithCompletedPics;
 bool *passportClerkChecked;
 bool *gottenPassport;
 int *cashReceived;
+
 
 void getInLine(Monitor *clerk) {
 
