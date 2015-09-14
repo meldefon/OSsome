@@ -7,6 +7,9 @@ using namespace std;
 int cash = 1000;
 bool appClerkSeen = false;
 bool picClerkSeen = false; 
+int myLine;	
+int socialSecurityNum;
+int picOrAppClerk;
 
 void getInLine(Monitor *clerk) {
 
@@ -18,7 +21,7 @@ void getInLine(Monitor *clerk) {
 		clerk->lineLock->Acquire();  //grab the lock since we are dealing with shared data for the lines and clerks
 		
 		//pick the shortest clerk line
-		int myLine = -1;
+		myLine = -1;
 		int lineSize = 777;
 
 		for(int i = 0; i < clerk->numOfClerks; i++) {
@@ -74,8 +77,8 @@ void doAppClerkStuff() {
 
 void customer(int social) {
 	
-	int socialSecurityNum = social;
-	int picOrAppClerk = rand() % 2; //0 for appClerk, 1 for picClerk, 2 for both completed, randomnly generated
+	socialSecurityNum = social;
+	picOrAppClerk = rand() % 2; //0 for appClerk, 1 for picClerk, 2 for both completed, randomnly generated
 	
 	//set to true if we've seen these clerks so we can use it for PassportClerk
 	bool notCompleted = true; //while we are not done with everything 
