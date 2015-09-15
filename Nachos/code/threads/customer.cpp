@@ -1,5 +1,6 @@
 #include <time.h>
 #include <iostream>
+#include "synch.h"
 #include "globalVars.h"
 using namespace std;
 
@@ -10,6 +11,7 @@ bool picClerkSeen = false;
 int myLine;	
 int socialSecurityNum;
 int picOrAppClerk;
+int punishTime = 100;
 
 Monitor appClerk, picClerk, passPClerk, cashier;
 
@@ -19,6 +21,18 @@ bool *customersWithCompletedPics;
 bool *passportClerkChecked;
 bool *gottenPassport;
 int *cashReceived;
+
+
+
+void punish(int punishTime){
+	for (int i = 0; i < punishTime; i++) {
+		CurrentThread->Yield();
+	}
+}
+
+void tellPassportClerkSSN(int SSN){
+	cout<<"Telling the passportClerk my SSN is "<<SSN<"\n";
+}
 
 
 void getInLine(Monitor *clerk) {
@@ -95,6 +109,41 @@ void doAppClerkStuff() {
 		picOrAppClerk = 1; //if we haven't see the picClerk, go see him
 	}
 }
+
+
+
+void doPassportClerkStuff(){
+
+	//First get in line with a generic method
+	//myLine = getInLine(passportClerkLineMonitor); //DISCUSS
+	getInLine(&passPClerk);
+
+	//Enter interaction monitor with passport clerk
+	Lock workLock = passPClerk.clerkLock[myLine];
+	CV workCV = passPClerk.clerkCV[myLine];
+	workLock.Acquire();
+
+	//Tell Clerk CV, then wait
+	tellPassportClerkSSN(mySSN);
+	workCV.Signal(&workLock);
+	workCV.Wait(&workLock);
+
+	//Now leave
+	workCV.Signal(&workLock);
+	workLock.Release();
+
+	//Decide weather to self-punish
+	myPassportChecked = passportClerkChecked[mySSN];
+	if(!myPassportChecked) {
+		punish(punishTime);
+		return;
+	}
+	return;
+
+}
+
+
+
 
 void customer(int social) {
 	
