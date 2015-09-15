@@ -2,8 +2,8 @@
 // Created by meldefon on 9/13/15.
 //
 
-#ifndef OSSOME_MONITOR_H
-#define OSSOME_MONITOR_H
+#ifndef MONITOR_H
+#define MONITOR_H
 
 
 //global struct that contains all locks, monitor variables, and condition
@@ -18,12 +18,19 @@ struct Monitor {
         lineCV = new Condition[size]();
         clerkLock = new Lock[size]();
         clerkCV = new Condition[size]();
-        lineCount = new int[size]();
-        bribeLineCount = new int[size]();
+        lineCount = new int[size];
+        bribeLineCount = new int[size];
         bribeLineCV = new Condition[size]();
-        clerkState = new int[size]();
+        clerkState = new int[size];
         numOfClerks = size;
+
+    for(int i = 0; i < size; i++) {
+        lineCount[i] = 0;
+        bribeLineCount[i] = 0;
+        clerkState[i] = 0;
     }
+    }
+
     Lock *lineLock;
     Condition *lineCV;
     Condition *bribeLineCV;
@@ -36,4 +43,4 @@ struct Monitor {
 };
 
 
-#endif //OSSOME_MONITOR_H
+#endif //MONITOR_H

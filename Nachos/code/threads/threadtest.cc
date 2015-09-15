@@ -10,9 +10,6 @@ using namespace std;
 
 void ThreadTest() {
 
-	//Thread* t = new Thread("Stupid thread");
-	//t->Fork((VoidFunctionPtr)customer,0);
-
   	int size; //will be used to take in user input for the sizes of specific variables
 	cout<<"How many Application Clerks would you like to have? ";
 	cin >> size;
@@ -44,6 +41,18 @@ void ThreadTest() {
 	customersWithCompletedPics = new bool[size];
 	passportClerkChecked = new bool[size];
 	
-	//initialize all the threads here
+	//initialize all the threads here 
+	Thread *c;
+
+	for(int i = 0; i < appClerk.numOfClerks; i++) {
+		c = new Thread("AppClerk Thread");
+		c->Fork((VoidFunctionPtr)applicationClerk,i);
+	}
+	
+	for(int i = 0; i < size; i++) {
+		c = new Thread("Customer Thread");
+		c->Fork((VoidFunctionPtr)customer,i);
+	}
+
 	return;
 }

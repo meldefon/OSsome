@@ -159,7 +159,7 @@ void Lock::Release() {
         scheduler->ReadyToRun(owner); //put thread on back of ready queue
         
     }else{
-        isFree = FALSE; //make lock unavailable
+        isFree = TRUE; //make lock available
         owner = NULL; //unset lock owner
     }
     (void) interrupt->SetLevel(oldLevel);  // restore interrupts
@@ -230,12 +230,12 @@ void Condition::Wait(Lock* conditionLock) {
 //  Wakes one sleeping thread if one exists
 void Condition::Signal(Lock* conditionLock) { 
     IntStatus oldLevel = interrupt->SetLevel(IntOff); //disable interrupts
-    if(waitQueue->IsEmpty()){   //no waiting thread exists
+    if(waitingLock != conditionLock){ //locks don't match
+        printf("Error: Locks don't match \n");
         (void) interrupt->SetLevel(oldLevel);  // restore interrupts
         return;
     }
-    if(waitingLock != conditionLock){ //locks don't match
-        printf("Error: Locks don't match \n");
+    if(waitQueue->IsEmpty()){   //no waiting thread exists
         (void) interrupt->SetLevel(oldLevel);  // restore interrupts
         return;
     }
