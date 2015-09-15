@@ -91,8 +91,8 @@ void passportClerk(int id){
 	waitForLine(&passPClerk,id);
 
 	//Set up some convenient variables
-	Lock* workLock = &passPClerk.clerkLock[myLine];
-	Condition* workCV = &passPClerk.clerkCV[myLine];
+	Lock* workLock = &passPClerk.clerkLock[myLineID];
+	Condition* workCV = &passPClerk.clerkCV[myLineID];
 
 
 	//Now the clerk has been woken up and has been told the customer ID

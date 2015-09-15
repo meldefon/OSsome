@@ -4,13 +4,8 @@
 #include "globalVars.h"
 using namespace std;
 
-//globals for the customer functions
-int cash = 1000;
-bool appClerkSeen = false;
-bool picClerkSeen = false; 
-int myLine;	
-int socialSecurityNum;
-int picOrAppClerk;
+
+
 int punishTime = 100;
 
 Monitor appClerk, picClerk, passPClerk, cashier;
@@ -35,13 +30,13 @@ void punish(int time){
 	}
 }
 
-void tellPassportClerkSSN(int SSN){
+void tellPassportClerkSSN(int SSN,int myLine){
 	cout<<"Telling the passportClerk my SSN is "<<SSN<"\n";
 	passportClerkCurrentCustomer[myLine] = SSN;
 }
 
 
-void getInLine(Monitor *clerk) {
+int getInLine(Monitor *clerk, int socialSecurityNum) {
 
 		//possible clerk states are:
 		//0 = busy
@@ -52,7 +47,7 @@ void getInLine(Monitor *clerk) {
 		//pick the shortest clerk line
 		cout<<"Customer #" << socialSecurityNum << " has acquired the "<<clerk->lineLock->getName()<<"\n";
 
-		myLine = -1;
+		int myLine = -1;
 		int lineSize = 777;
 
 		for(int i = 0; i < clerk->numOfClerks; i++) {
@@ -82,11 +77,14 @@ void getInLine(Monitor *clerk) {
 		clerk->lineLock->Release(); //release the lock since we now can begin to conduct the transaction 
 									//which is only relavent to the two threads of customer and clerk
 		cout<<"Customer #" << socialSecurityNum << " has released the Application Clerk Line Lock!\n";
+
+
+	return myLine;
 }
 
-void doAppClerkStuff() {
+void doAppClerkStuff(int socialSecurityNum, bool* appClerkSeen, bool* picClerkSeen, int* picOrAppClerk, int* cash) {
 
-	getInLine(&appClerk);
+	int myLine = getInLine(&appClerk,socialSecurityNum);
 
 	//now we must obtain the lock from the AppClerk which went to wait state once he was avaiable and 
 	//waiting for a customer to signal him
@@ -102,29 +100,29 @@ void doAppClerkStuff() {
 	//wait for the clerk to confirm then deduct cash after
 	appClerk.clerkCV[myLine].Wait(&(appClerk.clerkLock[myLine]));
 	
-	cash-=100; //deduct cash
-	appClerkSeen = true; //we have seen the appClerk
+	*cash-=100; //deduct cash
+	*appClerkSeen = true; //we have seen the appClerk
 
 	appClerk.clerkCV[myLine].Signal(&(appClerk.clerkLock[myLine])); //signal the clerk
 	appClerk.clerkLock[myLine].Release(); //let go of the lock
 	cout<<"Customer #" << socialSecurityNum << " has released the Application Clerk #" << myLine << " Condition Variable Lock!\n";
 
-	if(picClerkSeen) {
+	if(*picClerkSeen) {
 		//go to passport or cashier clerk
 	} else {
-		picOrAppClerk = 1; //if we haven't see the picClerk, go see him
+		*picOrAppClerk = 1; //if we haven't see the picClerk, go see him
 	}
 }
 
 
 
-void doPassportClerkStuff(){
+void doPassportClerkStuff(int socialSecurityNum){
 
 	int mySSN = socialSecurityNum;
 
 	//First get in line with a generic method
 	//myLine = getInLine(passportClerkLineMonitor); //DISCUSS
-	getInLine(&passPClerk);
+	int myLine = getInLine(&passPClerk,socialSecurityNum);
 
 	//Enter interaction monitor with passport clerk
 	Lock* workLock = &passPClerk.clerkLock[myLine];
@@ -132,7 +130,7 @@ void doPassportClerkStuff(){
 	workLock->Acquire();
 
 	//Tell Clerk CV, then wait
-	tellPassportClerkSSN(mySSN);
+	tellPassportClerkSSN(mySSN,myLine);
 	workCV->Signal(workLock);
 	workCV->Wait(workLock);
 
@@ -155,6 +153,16 @@ void doPassportClerkStuff(){
 
 
 void customer(int social) {
+
+	//Customer variables
+	int cash = 1000;
+	bool appClerkSeen = false;
+	bool picClerkSeen = false;
+	int myLine;
+	int socialSecurityNum;
+	int picOrAppClerk;
+
+
 	
 	socialSecurityNum = social;
 	picOrAppClerk = 0; //rand() % 2; //0 for appClerk, 1 for picClerk, 2 for both completed, randomnly generated
@@ -167,7 +175,7 @@ void customer(int social) {
 		//enter if we choose to go to the appClerk
 		if(picOrAppClerk == 0) {
 			cout<<"Customer #" << socialSecurityNum << " is going to the Application Clerk Area!\n";
-			doAppClerkStuff();
+			doAppClerkStuff(socialSecurityNum,&appClerkSeen,&picClerkSeen,&picOrAppClerk,&cash);
 			notCompleted = false;
 		}
 		
