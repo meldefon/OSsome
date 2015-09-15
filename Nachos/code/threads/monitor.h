@@ -13,7 +13,7 @@ struct Monitor {
     Monitor(){
         numOfClerks=0;
     }
-    Monitor(char* lockName, int size) {
+    void initialize(char* lockName, int size) {
         lineLock = new Lock(lockName);
         lineCV = new Condition[size]();
         clerkLock = new Lock[size]();
