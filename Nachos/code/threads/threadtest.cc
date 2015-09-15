@@ -40,6 +40,17 @@ void ThreadTest() {
 	customersWithCompletedApps = new bool[size];
 	customersWithCompletedPics = new bool[size];
 	passportClerkChecked = new bool[size];
+
+
+	//will hold currentCust SSN for checking
+	appClerkCurrentCustomer = new int[size];
+	pictureClerkCurrentCustomer = new int[size];
+	passportClerkCurrentCustomer = new int[size];
+	cashierCurrentCustomer = new int[size];
+
+
+
+
 	
 	//initialize all the threads here 
 	Thread *c;

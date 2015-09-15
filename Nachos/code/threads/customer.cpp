@@ -22,6 +22,11 @@ bool *passportClerkChecked;
 bool *gottenPassport;
 int *cashReceived;
 
+int* appClerkCurrentCustomer;
+int* pictureClerkCurrentCustomer;
+int* passportClerkCurrentCustomer;
+int* cashierCurrentCustomer;
+
 
 
 void punish(int time){
@@ -32,6 +37,7 @@ void punish(int time){
 
 void tellPassportClerkSSN(int SSN){
 	cout<<"Telling the passportClerk my SSN is "<<SSN<"\n";
+	passportClerkCurrentCustomer[myLine] = SSN;
 }
 
 
@@ -44,7 +50,7 @@ void getInLine(Monitor *clerk) {
 		clerk->lineLock->Acquire();  //grab the lock since we are dealing with shared data for the lines and clerks
 		
 		//pick the shortest clerk line
-		cout<<"Customer #" << socialSecurityNum << " has acquired the Application Clerk Line Lock!\n";
+		cout<<"Customer #" << socialSecurityNum << " has acquired the "<<clerk->lineLock->getName()<<"\n";
 
 		myLine = -1;
 		int lineSize = 777;
@@ -121,18 +127,18 @@ void doPassportClerkStuff(){
 	getInLine(&passPClerk);
 
 	//Enter interaction monitor with passport clerk
-	Lock workLock = passPClerk.clerkLock[myLine];
-	Condition workCV = passPClerk.clerkCV[myLine];
-	workLock.Acquire();
+	Lock* workLock = &passPClerk.clerkLock[myLine];
+	Condition* workCV = &passPClerk.clerkCV[myLine];
+	workLock->Acquire();
 
 	//Tell Clerk CV, then wait
 	tellPassportClerkSSN(mySSN);
-	workCV.Signal(&workLock);
-	workCV.Wait(&workLock);
+	workCV->Signal(workLock);
+	workCV->Wait(workLock);
 
 	//Now leave
-	workCV.Signal(&workLock);
-	workLock.Release();
+	workCV->Signal(workLock);
+	workLock->Release();
 
 	//Decide weather to self-punish
 	bool myPassportChecked = passportClerkChecked[mySSN];
@@ -143,6 +149,7 @@ void doPassportClerkStuff(){
 	return;
 
 }
+
 
 
 

@@ -18,5 +18,10 @@ extern bool *passportClerkChecked;
 extern bool *gottenPassport;
 extern int *cashReceived;
 
+extern int* appClerkCurrentCustomer;
+extern int* pictureClerkCurrentCustomer;
+extern int* passportClerkCurrentCustomer;
+extern int* cashierCurrentCustomer;
+
 
 #endif //GLOBALVARS_H
