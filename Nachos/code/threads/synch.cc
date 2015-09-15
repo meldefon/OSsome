@@ -139,7 +139,7 @@ void Lock::Acquire() {
         isFree = FALSE; //make state busy
         owner = currentThread;  //make current thread the owner
     }else{ //lock is not available
-        lockWaitQueue->Append(currentThread); //put current thread on lock's wait queue
+        lockWaitQueue->Append((void *)currentThread); //put current thread on lock's wait queue
         currentThread->Sleep();
     }
     (void) interrupt->SetLevel(oldLevel);  // restore interrupts
@@ -159,7 +159,7 @@ void Lock::Release() {
         scheduler->ReadyToRun(owner); //put thread on back of ready queue
         
     }else{
-        isFree = FALSE; //make lock unavailable
+        isFree = TRUE; //make lock available
         owner = NULL; //unset lock owner
     }
     (void) interrupt->SetLevel(oldLevel);  // restore interrupts
@@ -177,7 +177,7 @@ bool Lock::isHeldByCurrentThread(){
 
 //  Condition::Condition
 //  Constructor for a condition variable
-//  name is an arbitrary name useful for debuggind
+//  name is an arbitrary name useful for debugging
 //  waitingLock is the lock that other waiters gave up
 //  waitQueue is a list of threads that are sleeping
 Condition::Condition(char* debugName) { 
@@ -218,7 +218,7 @@ void Condition::Wait(Lock* conditionLock) {
         (void) interrupt->SetLevel(oldLevel);  // restore interrupts
         return; 
     }
-    waitQueue->Append(currentThread);// Add current thread to CV wait queue
+    waitQueue->Append((void *)currentThread);// Add current thread to CV wait queue
     conditionLock->Release();   //release the lock before going to sleep
     currentThread->Sleep();     //puts current thread to sleep
     conditionLock->Acquire();   
@@ -230,12 +230,12 @@ void Condition::Wait(Lock* conditionLock) {
 //  Wakes one sleeping thread if one exists
 void Condition::Signal(Lock* conditionLock) { 
     IntStatus oldLevel = interrupt->SetLevel(IntOff); //disable interrupts
-    if(waitQueue->IsEmpty()){   //no waiting thread exists
+    if(waitingLock != conditionLock){ //locks don't match
+        printf("Error: Locks don't match \n");
         (void) interrupt->SetLevel(oldLevel);  // restore interrupts
         return;
     }
-    if(waitingLock != conditionLock){ //locks don't match
-        printf("Error: Locks don't match \n");
+    if(waitQueue->IsEmpty()){   //no waiting thread exists
         (void) interrupt->SetLevel(oldLevel);  // restore interrupts
         return;
     }

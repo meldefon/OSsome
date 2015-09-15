@@ -4,8 +4,8 @@
 
 #include "monitor.h"
 
-#ifndef OSSOME_GLOBALVARS_H
-#define OSSOME_GLOBALVARS_H
+#ifndef GLOBALVARS_H
+#define GLOBALVARS_H
 
 
 
@@ -19,7 +19,4 @@ extern bool *gottenPassport;
 extern int *cashReceived;
 
 
-
-
-
-#endif //OSSOME_GLOBALVARS_H
+#endif //GLOBALVARS_H
