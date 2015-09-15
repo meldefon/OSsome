@@ -18,13 +18,19 @@ II. Assumptions:
 	- Reasonable assumptions you take for your scheme.
 
 III. Design:
+
 - This section is to cover your logic and ideas as to how  you are going to solve the problem presented.  This should include a description of classes, algorithms, etc. This is not code. You must document ALL parts of a project.
+
+	+ Part 1
+		For the Locks and Condition Variable functions, we chose to use the more primative thread routine instead of semaphores because we followed the algorithm given to us in lecture by the professor. 
+
+	+ Part 2 
 
 IV. Implementation:
 	+ Part 1
 		+ Files Modified
-			-synch.h
-			-synch.cc
+			- synch.h
+			- synch.cc
 
 		+ Data Structures modified, and the file they were added to.
 
