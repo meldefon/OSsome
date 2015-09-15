@@ -20,4 +20,6 @@ extern int *cashReceived;
 
 
 
+
+
 #endif //OSSOME_GLOBALVARS_H
