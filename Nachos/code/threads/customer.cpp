@@ -24,9 +24,9 @@ int *cashReceived;
 
 
 
-void punish(int punishTime){
-	for (int i = 0; i < punishTime; i++) {
-		CurrentThread->Yield();
+void punish(int time){
+	for (int i = 0; i < time; i++) {
+		//CurrentThread->Yield();
 	}
 }
 
@@ -114,13 +114,15 @@ void doAppClerkStuff() {
 
 void doPassportClerkStuff(){
 
+	int mySSN = socialSecurityNum;
+
 	//First get in line with a generic method
 	//myLine = getInLine(passportClerkLineMonitor); //DISCUSS
 	getInLine(&passPClerk);
 
 	//Enter interaction monitor with passport clerk
 	Lock workLock = passPClerk.clerkLock[myLine];
-	CV workCV = passPClerk.clerkCV[myLine];
+	Condition workCV = passPClerk.clerkCV[myLine];
 	workLock.Acquire();
 
 	//Tell Clerk CV, then wait
@@ -133,7 +135,7 @@ void doPassportClerkStuff(){
 	workLock.Release();
 
 	//Decide weather to self-punish
-	myPassportChecked = passportClerkChecked[mySSN];
+	bool myPassportChecked = passportClerkChecked[mySSN];
 	if(!myPassportChecked) {
 		punish(punishTime);
 		return;
