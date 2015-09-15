@@ -37,9 +37,11 @@ void ThreadTest() {
 	//will hold booleans that indicate whether a customer has
 	//completed application or pictures using the social security
 	//number as an index
-	customersWithCompletedApps = new bool[size];
-	customersWithCompletedPics = new bool[size];
-	passportClerkChecked = new bool[size];
+	customersWithCompletedApps = new bool[size]();
+	customersWithCompletedPics = new bool[size]();
+	passportClerkChecked = new bool[size]();
+	cashierChecked = new bool[size]();
+	cashReceived = new bool[size]();
 
 
 	//will hold currentCust SSN for checking
@@ -58,6 +60,12 @@ void ThreadTest() {
 	for(int i = 0; i < appClerk.numOfClerks; i++) {
 		c = new Thread("AppClerk Thread");
 		c->Fork((VoidFunctionPtr)applicationClerk,i);
+	}
+
+
+	for(int i = 0; i < passPClerk.numOfClerks; i++) {
+		c = new Thread("passPClerk Thread");
+		c->Fork((VoidFunctionPtr)passportClerk,i);
 	}
 	
 	for(int i = 0; i < size; i++) {

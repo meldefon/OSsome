@@ -14,6 +14,7 @@ Monitor appClerk, picClerk, passPClerk, cashier;
 bool *customersWithCompletedApps;
 bool *customersWithCompletedPics;
 bool *passportClerkChecked;
+bool *cashierChecked;
 bool *gottenPassport;
 int *cashReceived;
 
@@ -31,8 +32,17 @@ void punish(int time){
 }
 
 void tellPassportClerkSSN(int SSN,int myLine){
-	cout<<"Telling the passportClerk my SSN is "<<SSN<"\n";
+	//cout<<"Telling the passportClerk my SSN is "<<SSN<"\n";
 	passportClerkCurrentCustomer[myLine] = SSN;
+}
+
+void tellCashierSSN(int SSN, int myLine){
+	cashierCurrentCustomer[myLine] = SSN;
+}
+
+void payCashier(int SSN, int *cash){
+	cashRecieved[SSN]+=100;
+	cash-=100;
 }
 
 
@@ -121,7 +131,7 @@ void doPassportClerkStuff(int socialSecurityNum){
 	int mySSN = socialSecurityNum;
 
 	//First get in line with a generic method
-	//myLine = getInLine(passportClerkLineMonitor); //DISCUSS
+	cout<<"Customer #"<<socialSecurityNum<<" getting in passport Line\n";
 	int myLine = getInLine(&passPClerk,socialSecurityNum);
 
 	//Enter interaction monitor with passport clerk
@@ -130,11 +140,13 @@ void doPassportClerkStuff(int socialSecurityNum){
 	workLock->Acquire();
 
 	//Tell Clerk CV, then wait
+	cout<<"Customer #"<<socialSecurityNum<<" telling passportClerk #"<<myLine<<" mySSN\n";
 	tellPassportClerkSSN(mySSN,myLine);
 	workCV->Signal(workLock);
 	workCV->Wait(workLock);
 
 	//Now leave
+	cout<<"Customer #"<<socialSecurityNum<<" leaving passportClerk #"<<myLine<<"\n";
 	workCV->Signal(workLock);
 	workLock->Release();
 
@@ -142,8 +154,51 @@ void doPassportClerkStuff(int socialSecurityNum){
 	bool myPassportChecked = passportClerkChecked[mySSN];
 	if(!myPassportChecked) {
 		punish(punishTime);
+	}
+	return;
+
+}
+
+
+
+void doCashierStuff(int mySSN, int* cash){
+	//First get in line with a generic method
+	cout<<"Customer #"<<socialSecurityNum<<" getting in cashier line\n";
+	int myLine = getInLine(&cashier,socialSecurityNum);
+
+	//Enter interaction monitor with passport clerk
+	Lock* workLock = &cashier.clerkLock[myLine];
+	Condition* workCV = &cashier.clerkCV[myLine];
+	workLock->Acquire();
+
+	//Tell Clerk CV, then wait
+	cout<<"Customer #"<<socialSecurityNum<<" telling cashier #"<<myLine<<" mySSN\n";
+	tellCashierSSN(mySSN,myLine);
+	workCV->Signal(workLock);
+	workCV->Wait(workLock);
+
+	//Decide weather to self-punish
+	bool readyToPay = cashierChecked[mySSN];
+	if(!readyToPay) {
+		//Release, punish, and leave
+		cout<<"Customer #"<<socialSecurityNum<<" is self-punishing and leaving cashier #"<<myLine<<"\n";
+		workCV->Signal(workLock);
+		workLock->Release();
+		punish(punishTime);
 		return;
 	}
+
+	//Now you can pay
+	cout<<"Customer #"<<socialSecurityNum<<" is paying cashier #"<<myLine<<"\n";
+	payCashier(mySSN,myLine,&cash);
+	workCV->Signal(workLock);
+	workCV->Wait(workLock);
+
+	//Now you've been woken up because you have the passport, so leave
+	cout<<"Customer #"<<socialSecurityNum<<" got passport and is leaving cashier #"<<myLine<<"\n";
+	workCV->Signal(workLock);
+	workLock->Release();
+
 	return;
 
 }
@@ -176,6 +231,7 @@ void customer(int social) {
 		if(picOrAppClerk == 0) {
 			cout<<"Customer #" << socialSecurityNum << " is going to the Application Clerk Area!\n";
 			doAppClerkStuff(socialSecurityNum,&appClerkSeen,&picClerkSeen,&picOrAppClerk,&cash);
+
 			notCompleted = false;
 		}
 		
@@ -184,5 +240,8 @@ void customer(int social) {
 			cout<<"Customer #" << socialSecurityNum << " is going to the Picture Clerk Area!\n";
 			notCompleted = false;
 		}
+
+		//doPassportClerkStuff(socialSecurityNum);
+
 	}
 }

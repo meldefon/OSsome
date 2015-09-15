@@ -15,6 +15,7 @@ extern Monitor appClerk, picClerk, passPClerk, cashier;
 extern bool *customersWithCompletedApps;
 extern bool *customersWithCompletedPics;
 extern bool *passportClerkChecked;
+extern bool *cashierChecked;
 extern bool *gottenPassport;
 extern int *cashReceived;
 
