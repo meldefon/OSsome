@@ -13,7 +13,7 @@ struct Monitor {
     Monitor(){
         numOfClerks=0;
     }
-    void initialize(char* lockName, int size) {
+    void initialize(char* lockName,char* clerkType_, int size) {
         lineLock = new Lock(lockName);
         lineCV = new Condition[size]();
         clerkLock = new Lock[size]();
@@ -23,6 +23,7 @@ struct Monitor {
         bribeLineCV = new Condition[size]();
         clerkState = new int[size];
         numOfClerks = size;
+        clerkType = clerkType_;
 
     for(int i = 0; i < size; i++) {
         lineCount[i] = 0;
@@ -40,6 +41,7 @@ struct Monitor {
     int *bribeLineCount;
     int *clerkState;
     int numOfClerks;
+    char* clerkType;
 };
 
 

@@ -14,22 +14,22 @@ void ThreadTest() {
 	cout<<"How many Application Clerks would you like to have? ";
 	cin >> size;
 
-	appClerk.initialize("Application Clerk Line Lock", size);
+	appClerk.initialize("Application Clerk Line Lock","App", size);
 
 	cout<<"How many Picture Clerks would you like to have? ";
 	cin >> size;
 
-	picClerk.initialize("Picture Clerk Line Lock", size);
+	picClerk.initialize("Picture Clerk Line Lock","Pic", size);
 
 	cout<<"How many Passport Clerks would you like to have? ";
 	cin >> size;
 
-	passPClerk.initialize("Passport Clerk Line Lock", size);
+	passPClerk.initialize("Passport Clerk Line Lock","Passport", size);
 
 	cout<<"How many Cashiers would you like to have? ";
 	cin >> size;
 
-	cashier.initialize("Cashier Line Lock", size);
+	cashier.initialize("Cashier Line Lock","Cashier", size);
 
 	cout<<"How many Customers would you like to have? ";
 	cin >> size;
@@ -41,14 +41,14 @@ void ThreadTest() {
 	customersWithCompletedPics = new bool[size]();
 	passportClerkChecked = new bool[size]();
 	cashierChecked = new bool[size]();
-	cashReceived = new bool[size]();
+	cashReceived = new int[size]();
 
 
 	//will hold currentCust SSN for checking
-	appClerkCurrentCustomer = new int[size];
-	pictureClerkCurrentCustomer = new int[size];
-	passportClerkCurrentCustomer = new int[size];
-	cashierCurrentCustomer = new int[size];
+	appClerkCurrentCustomer = new int[appClerk.numOfClerks];
+	pictureClerkCurrentCustomer = new int[picClerk.numOfClerks];
+	passportClerkCurrentCustomer = new int[passPClerk.numOfClerks];
+	cashierCurrentCustomer = new int[cashier.numOfClerks];
 
 
 
@@ -75,4 +75,5 @@ void ThreadTest() {
 
 	return;
 }
+
 

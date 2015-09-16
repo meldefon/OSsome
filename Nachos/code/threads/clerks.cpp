@@ -12,27 +12,27 @@ void waitForLine(Monitor* clerk,int myLineID){
 		//cout<<clerk->bribeLineCount[myLineID]<<"\n";
 		clerk->bribeLineCV[myLineID].Signal(clerk->lineLock);
 		clerk->clerkState[myLineID] = 0; //set state to busy
-		//cout<<"Application Clerk #" << myLineID << " signaled someone in the bribe line!\n";
+		cout<<clerk->clerkType<<" Clerk #" << myLineID << " signaled someone in the bribe line!\n";
 	} else if(clerk->lineCount[myLineID] > 0) { //signal someone in normal line
 		clerk->lineCV[myLineID].Signal(clerk->lineLock);
 		clerk->clerkState[myLineID] = 0; //set state to busy
-		//cout<<"Application Clerk #" << myLineID  << " signaled someone in the line!\n";
+		cout<<clerk->clerkType<<" Clerk #" << myLineID  << " signaled someone in the line!\n";
 	} else { //no one is in either line, we must go to sleep
-		//cout<<"Application Clerk #" << myLineID  << " is available and waiting!\n";
+		cout<<clerk->clerkType<<" Clerk #" << myLineID  << " is available and waiting!\n";
 		clerk->clerkState[myLineID] = 2; //set state to available
 	}
 
 	//grab the clerkLock so we can properly signal the waiting customer
 	//to avoid a race condition and guarentee the correct order of events
 	clerk->clerkLock[myLineID].Acquire();
-	//cout<<"Application Clerk #" << myLineID  << " obtained the Application Clerk Condition Variable Lock!\n";
+	cout<<clerk->clerkType<<" Clerk #" << myLineID  << " obtained the Application Clerk Condition Variable Lock!\n";
 
 	//now we can let go of line lock since we properly acquired the clerk lock
 	clerk->lineLock->Release();
-	//cout<<"Application Clerk #" << myLineID  << " released the Application Clerk Line Lock!\n";
+	cout<<clerk->clerkType<<" Clerk #" << myLineID  << " released the Application Clerk Line Lock!\n";
 
 	clerk->clerkCV[myLineID].Wait(&(clerk->clerkLock[myLineID])); //wait for customer to signal us
-	//cout<<"Application Clerk #" << myLineID  << " received customer's social security number!\n"; //ask now for cash
+	cout<<clerk->clerkType<<" Clerk #" << myLineID  << " received customer's social security number!\n"; //ask now for cash
 
 
 }
