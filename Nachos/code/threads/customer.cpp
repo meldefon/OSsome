@@ -117,10 +117,32 @@ void doAppClerkStuff(int socialSecurityNum, int* cash) {
 	appClerk.clerkCV[myLine].Signal(&(appClerk.clerkLock[myLine])); //signal the clerk
 	appClerk.clerkLock[myLine].Release(); //let go of the lock
 	cout<<"Customer #" << socialSecurityNum << " has released the Application Clerk #" << myLine << " Condition Variable Lock!\n";
-
 }
 
+void doPicClerkStuff(int socialSecurityNum, int* cash) {
 
+	int myLine = getInLine(&picClerk,socialSecurityNum);
+
+	//now we must obtain the lock from the PicClerk which went to wait state once he was avaiable and 
+	//waiting for a customer to signal him
+	picClerk.clerkLock[myLine].Acquire();
+	cout<<"Customer #" << socialSecurityNum << " has acquired the Picture Clerk #" << myLine << " Condition Variable Lock!\n";
+	
+	//input the socialSecurityNum into the completed applications
+	customersWithCompletedPics[socialSecurityNum] = true;
+
+	//signal the PicClerk that we have given him the social security number
+	picClerk.clerkCV[myLine].Signal(&(picClerk.clerkLock[myLine]));
+
+	//wait for the clerk to confirm then deduct cash after
+	picClerk.clerkCV[myLine].Wait(&(picClerk.clerkLock[myLine]));
+	
+	*cash-=100; //deduct cash
+
+	picClerk.clerkCV[myLine].Signal(&(picClerk.clerkLock[myLine])); //signal the clerk
+	picClerk.clerkLock[myLine].Release(); //let go of the lock
+	cout<<"Customer #" << socialSecurityNum << " has released the Picture Clerk #" << myLine << " Condition Variable Lock!\n";
+}
 
 void doPassportClerkStuff(int socialSecurityNum){
 
@@ -154,8 +176,6 @@ void doPassportClerkStuff(int socialSecurityNum){
 	return;
 
 }
-
-
 
 void doCashierStuff(int mySSN, int* cash){
 
@@ -238,7 +258,7 @@ void customer(int social) {
 			//enter if we choose to go to the picClerk
 			if (picOrAppClerk == 1) {
 				cout << "Customer #" << socialSecurityNum << " is going to the Picture Clerk Area!\n";
-				customersWithCompletedPics[socialSecurityNum] = true;
+				doPicClerkStuff(socialSecurityNum,&cash);
 				picOrAppClerk = 0;
 				continue;
 			}
