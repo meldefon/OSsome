@@ -232,16 +232,29 @@ void customer(int social) {
 				cout << "Customer #" << socialSecurityNum << " is going to the Application Clerk Area!\n";
 				doAppClerkStuff(socialSecurityNum,&cash);
 				picOrAppClerk = 1;
+				continue;
 			}
 
 			//enter if we choose to go to the picClerk
 			if (picOrAppClerk == 1) {
 				cout << "Customer #" << socialSecurityNum << " is going to the Picture Clerk Area!\n";
+				customersWithCompletedPics[socialSecurityNum] = true;
 				picOrAppClerk = 0;
+				continue;
 			}
 		}
 
-		//doPassportClerkStuff(socialSecurityNum);
-
+		else if(!passportClerkChecked[socialSecurityNum]){
+			doPassportClerkStuff(socialSecurityNum);
+			continue;
+		}
+		else if(!cashierChecked[socialSecurityNum]){
+			doCashierStuff(socialSecurityNum,&cash);
+			continue;
+		}
+		else{
+			notCompleted = false;
+		}
 	}
+
 }

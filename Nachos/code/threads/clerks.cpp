@@ -25,11 +25,11 @@ void waitForLine(Monitor* clerk,int myLineID){
 	//grab the clerkLock so we can properly signal the waiting customer
 	//to avoid a race condition and guarentee the correct order of events
 	clerk->clerkLock[myLineID].Acquire();
-	cout<<clerk->clerkType<<" Clerk #" << myLineID  << " obtained the Application Clerk Condition Variable Lock!\n";
+	cout<<clerk->clerkType<<" Clerk #" << myLineID  << " obtained the "<<clerk->clerkType<<" Clerk Condition Variable Lock!\n";
 
 	//now we can let go of line lock since we properly acquired the clerk lock
 	clerk->lineLock->Release();
-	cout<<clerk->clerkType<<" Clerk #" << myLineID  << " released the Application Clerk Line Lock!\n";
+	cout<<clerk->clerkType<<" Clerk #" << myLineID  << " released the "<<clerk->clerkType<<" Clerk Line Lock!\n";
 
 	clerk->clerkCV[myLineID].Wait(&(clerk->clerkLock[myLineID])); //wait for customer to signal us
 	cout<<clerk->clerkType<<" Clerk #" << myLineID  << " received customer's social security number!\n"; //ask now for cash
@@ -87,68 +87,74 @@ void passportClerk(int id){
 	//set ID
 	int myLineID = id;
 
-	//Wait fot the next cust to signal
-	cout<<"Passport Clerk #"<<id<<" about to wait for customer\n";
-	waitForLine(&passPClerk,id);
+	while(true) {
+		//Wait fot the next cust to signal
+		cout << "Passport Clerk #" << id << " about to wait for customer\n";
+		waitForLine(&passPClerk, id);
 
 
-	//Set up some convenient variables
-	Lock* workLock = &passPClerk.clerkLock[myLineID];
-	Condition* workCV = &passPClerk.clerkCV[myLineID];
+		//Set up some convenient variables
+		Lock *workLock = &passPClerk.clerkLock[myLineID];
+		Condition *workCV = &passPClerk.clerkCV[myLineID];
 
 
-	//Now the clerk has been woken up and has been told the customer ID
-	//Check
-	int customerSSN = passportClerkCurrentCustomer[myLineID];
-	cout<<"Passport Clerk #"<<id<<" checking on customer #"<<customerSSN<<" and signalling\n";
-	passportClerkChecked[customerSSN] = customersWithCompletedApps[customerSSN] && customersWithCompletedPics[customerSSN];
-	//And Signal
-	workCV->Signal(workLock);
-	workCV->Wait(workLock);
+		//Now the clerk has been woken up and has been told the customer ID
+		//Check
+		int customerSSN = passportClerkCurrentCustomer[myLineID];
+		cout << "Passport Clerk #" << id << " checking on customer #" << customerSSN << " and signalling\n";
+		passportClerkChecked[customerSSN] =
+				customersWithCompletedApps[customerSSN] && customersWithCompletedPics[customerSSN];
+		//And Signal
+		workCV->Signal(workLock);
+		workCV->Wait(workLock);
 
-	//Now customer is gone
-	cout<<"Passport Clerk #"<<id<<" finished with customer #"<<customerSSN<<"\n";
-	workLock->Release();
+		//Now customer is gone
+		cout << "Passport Clerk #" << id << " finished with customer #" << customerSSN << "\n";
+		workLock->Release();
+	}
 
 }
 
 
-void cashierDo(int id){
+void cashierDo(int id) {
 
 	//set ID
 	int myLineID = id;
 
-	//Wait fot the next cust to signal
-	cout<<"Cashier #"<<id<<" about to wait for customer\n";
-	waitForLine(&cashier,id);
 
-	//Set up some convenient variables
-	Lock* workLock = &cashier.clerkLock[myLineID];
-	Condition* workCV = &cashier.clerkCV[myLineID];
+	while (true) {
+		//Wait fot the next cust to signal
+		cout << "Cashier #" << id << " about to wait for customer\n";
+		waitForLine(&cashier, id);
 
-	//Now the clerk has been woken up and has been told the customer ID
-	//Check
-	int customerSSN = cashierCurrentCustomer[myLineID];
-	cout<<"Cashier #"<<id<<" checking on customer #"<<customerSSN<<" and signalling\n";
-	cashierChecked[customerSSN] = passportClerkChecked[customerSSN];
-	//And Signal
-	workCV->Signal(workLock);
-	workCV->Wait(workLock);
+		//Set up some convenient variables
+		Lock *workLock = &cashier.clerkLock[myLineID];
+		Condition *workCV = &cashier.clerkCV[myLineID];
 
-	if(!cashierChecked[customerSSN]){
-		//Now customer is gone
-		cout<<"Passport Clerk #"<<id<<" finished with customer #"<<customerSSN<<"\n";
+		//Now the clerk has been woken up and has been told the customer ID
+		//Check
+		int customerSSN = cashierCurrentCustomer[myLineID];
+		cout << "Cashier #" << id << " checking on customer #" << customerSSN << " and signalling\n";
+		cashierChecked[customerSSN] = passportClerkChecked[customerSSN];
+		//And Signal
+		workCV->Signal(workLock);
+		workCV->Wait(workLock);
+
+		if (!cashierChecked[customerSSN]) {
+			//Now customer is gone
+			cout << "Passport Clerk #" << id << " finished with customer #" << customerSSN << "\n";
+			workLock->Release();
+		}
+
+		//Now customer has paid, so give passport and mark
+		cout << "Cashier #" << id << " marking customer #" << customerSSN << " as having gotten passport\n";
+		gottenPassport[customerSSN] = true;
+		workCV->Signal(workLock);
+		workCV->Wait(workLock);
+
+		//Now customer has left
+		cout << "Cashier #" << id << " finished with customer #" << customerSSN << "\n";
 		workLock->Release();
 	}
-
-	//Now customer has paid, so give passport and mark
-	cout<<"Cashier #"<<id<<" marking customer #"<<customerSSN<<" as having gotten passport\n";
-	gottenPassport[customerSSN] = true;
-	workCV->Signal(workLock);
-	workCV->Wait(workLock);
-
-	//Now customer has left
-	cout<<"Cashier #"<<id<<" finished with customer #"<<customerSSN<<"\n";
-	workLock->Release();
 
 }
