@@ -1,5 +1,6 @@
 #include <time.h>
 #include <iostream>
+#include <stdlib.h>
 #include "synch.h"
 #include "globalVars.h"
 using namespace std;
@@ -46,7 +47,23 @@ void payCashier(int SSN, int *cash){
 }
 
 
-int getInLine(Monitor *clerk, int socialSecurityNum) {
+int getInLine(Monitor *clerk, int socialSecurityNum, int* cash) {
+
+		int* lineCount;
+		Condition* lineCV;
+
+		//int wantToBribe = 1;// rand() % 2; // random choice about whether to bribe
+		bool wantToBribe = socialSecurityNum==4;
+		if(wantToBribe && *cash>100){
+			*cash-=500;
+			lineCount = clerk->bribeLineCount;
+			lineCV = clerk->bribeLineCV;
+		}
+		else{
+			lineCount = clerk->lineCount;
+			lineCV = clerk->lineCV;
+		}
+
 
 		//possible clerk states are:
 		//0 = busy
@@ -55,7 +72,7 @@ int getInLine(Monitor *clerk, int socialSecurityNum) {
 		clerk->lineLock->Acquire();  //grab the lock since we are dealing with shared data for the lines and clerks
 		
 		//pick the shortest clerk line
-		cout<<"Customer #" << socialSecurityNum << " has acquired the "<<clerk->lineLock->getName()<<"\n";
+		cout<<"Customer #" << socialSecurityNum << " has acquired the "<<clerk->lineLock->getName()<<". Bribe:"<<wantToBribe<<"\n";
 
 		int myLine = -1;
 		int lineSize = 777;
@@ -64,13 +81,13 @@ int getInLine(Monitor *clerk, int socialSecurityNum) {
 			
 			if(clerk->clerkState[i] == 2) { //or the clerk is available
 				myLine = i;
-				lineSize = clerk->lineCount[i];
+				lineSize = lineCount[i];
 				break; //leave since we found the right clerk
 			} 
-			else if(clerk->lineCount[i] < lineSize && clerk->clerkState[i] != 1) { //if the line we are in is the
+			else if(lineCount[i] < lineSize && clerk->clerkState[i] != 1) { //if the line we are in is the
 				// shortest and the clerk is not on break, consider that line
 				myLine = i;
-				lineSize = clerk->lineCount[i];
+				lineSize = lineCount[i];
 			}
 		}
 		
@@ -78,9 +95,9 @@ int getInLine(Monitor *clerk, int socialSecurityNum) {
 		if(clerk->clerkState[myLine] == 0) { //if the clerk is busy with another customer, we must wait, else just
 			// bypass this and go straight to transaction
 			cout<<"Customer #" << socialSecurityNum << " is waiting for "<<clerk->clerkType<<" Clerk #" << myLine << "!\n";
-			clerk->lineCount[myLine]++; //get in line
-			clerk->lineCV[myLine].Wait(clerk->lineLock); //wait until we are signaled by AppClerk
-			clerk->lineCount[myLine]--; //get out of line and move to the counter
+			lineCount[myLine]++; //get in line
+			lineCV[myLine].Wait(clerk->lineLock); //wait until we are signaled by AppClerk
+			lineCount[myLine]--; //get out of line and move to the counter
 		}
 			
 		clerk->clerkState[myLine] = 0;   //set the clerk status to busy
@@ -96,7 +113,7 @@ int getInLine(Monitor *clerk, int socialSecurityNum) {
 
 void doAppClerkStuff(int socialSecurityNum, int* cash) {
 
-	int myLine = getInLine(&appClerk,socialSecurityNum);
+	int myLine = getInLine(&appClerk,socialSecurityNum, cash);
 
 	//now we must obtain the lock from the AppClerk which went to wait state once he was avaiable and 
 	//waiting for a customer to signal him
@@ -122,13 +139,13 @@ void doAppClerkStuff(int socialSecurityNum, int* cash) {
 
 
 
-void doPassportClerkStuff(int socialSecurityNum){
+void doPassportClerkStuff(int socialSecurityNum,int*cash){
 
 	int mySSN = socialSecurityNum;
 
 	//First get in line with a generic method
 	cout<<"Customer #"<<socialSecurityNum<<" getting in passport Line\n";
-	int myLine = getInLine(&passPClerk,socialSecurityNum);
+	int myLine = getInLine(&passPClerk,socialSecurityNum,cash);
 
 	//Enter interaction monitor with passport clerk
 	Lock* workLock = &passPClerk.clerkLock[myLine];
@@ -163,7 +180,7 @@ void doCashierStuff(int mySSN, int* cash){
 
 	//First get in line with a generic method
 	cout<<"Customer #"<<socialSecurityNum<<" getting in cashier line\n";
-	int myLine = getInLine(&cashier,socialSecurityNum);
+	int myLine = getInLine(&cashier,socialSecurityNum,cash);
 
 	//Enter interaction monitor with passport clerk
 	Lock* workLock = &cashier.clerkLock[myLine];
@@ -209,7 +226,7 @@ void doCashierStuff(int mySSN, int* cash){
 void customer(int social) {
 
 	//Customer variables
-	int cash = 1000;
+	int cash = 1100;
 	bool appClerkSeen = false;
 	bool picClerkSeen = false;
 	int myLine;
@@ -245,7 +262,7 @@ void customer(int social) {
 		}
 
 		else if(!passportClerkChecked[socialSecurityNum]){
-			doPassportClerkStuff(socialSecurityNum);
+			doPassportClerkStuff(socialSecurityNum,&cash);
 			continue;
 		}
 		else if(!cashierChecked[socialSecurityNum]){
