@@ -52,9 +52,9 @@ int getInLine(Monitor *clerk, int socialSecurityNum, int* cash) {
 		int* lineCount;
 		Condition* lineCV;
 
-		//int wantToBribe = 1;// rand() % 2; // random choice about whether to bribe
-		bool wantToBribe = socialSecurityNum==4;
-		if(wantToBribe && *cash>100){
+		int wantToBribe = rand() % 5; // random choice about whether to bribe
+		//bool wantToBribe = socialSecurityNum==4;
+		if(wantToBribe==0 && *cash>100){
 			*cash-=500;
 			lineCount = clerk->bribeLineCount;
 			lineCV = clerk->bribeLineCV;
@@ -138,7 +138,7 @@ void doAppClerkStuff(int socialSecurityNum, int* cash) {
 
 void doPicClerkStuff(int socialSecurityNum, int* cash) {
 
-	int myLine = getInLine(&picClerk,socialSecurityNum);
+	int myLine = getInLine(&picClerk,socialSecurityNum,cash);
 
 	//now we must obtain the lock from the PicClerk which went to wait state once he was avaiable and 
 	//waiting for a customer to signal him
