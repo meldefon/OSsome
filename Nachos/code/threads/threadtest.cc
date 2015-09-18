@@ -73,6 +73,10 @@ void ThreadTest() {
 		c->Fork((VoidFunctionPtr)applicationClerk,i);
 	}
 
+	for(int i = 0; i < picClerk.numOfClerks; i++) {
+		c = new Thread("PicClerk Thread");
+		c->Fork((VoidFunctionPtr)pictureClerk,i);
+	}	
 
 	for(int i = 0; i < passPClerk.numOfClerks; i++) {
 		c = new Thread("passPClerk Thread");
