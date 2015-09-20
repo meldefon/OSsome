@@ -119,7 +119,7 @@ void passportClerk(int id) {
 
 	while(true) {
 		//Wait fot the next cust to signal
-		//cout << "PassportClerk #" << id << " about to wait for customer\n";
+		cout << "PassportClerk #" << id << " about to wait for customer\n";
 		ifBribed = waitForLine(&passPClerk, id, firstTime);
 
 		//Set up some convenient variables

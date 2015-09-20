@@ -84,10 +84,9 @@ void ThreadTest() {
 		c = new Thread("passPClerk Thread");
 		c->Fork((VoidFunctionPtr)passportClerk,i);
 	}
-	
-	for(int i = 0; i < cashier.numOfClerks; i++) {
+
+	for(int i = 0; i <= cashier.numOfClerks; i++) {
 		c = new Thread("Cashier Thread");
-		cout<<"MAKING: "<<i<<"\n";
 		c->Fork((VoidFunctionPtr)cashierDo,i);
 	}
 
