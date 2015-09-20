@@ -5,12 +5,14 @@
 using namespace std;
 
 
-void waitForLine(Monitor* clerk,int myLineID, bool firstTime){
+bool waitForLine(Monitor* clerk,int myLineID, bool firstTime){
 	clerk->lineLock->Acquire(); //acquire line lock
+	bool ifBribed = false;
 
 	//if there is someone in the bribe line, signal them first
 	if(clerk->bribeLineCount[myLineID] > 0) {
 		clerk->bribeLineCV[myLineID].Signal(clerk->lineLock);
+		ifBribed = true;
 		clerk->clerkState[myLineID] = 0; //set state to busy
 		cout<<clerk->clerkType<<" #" << myLineID << " has signalled a Customer to come to their counter.\n";
 	} else if(clerk->lineCount[myLineID] > 0) { //signal someone in normal line
@@ -41,6 +43,7 @@ void waitForLine(Monitor* clerk,int myLineID, bool firstTime){
 	//cout<<clerk->clerkType<<" Clerk #" << myLineID  << " released the "<<clerk->clerkType<<" Clerk Line Lock!\n";
 
 	clerk->clerkCV[myLineID].Wait(&(clerk->clerkLock[myLineID])); //wait for customer to signal us
+	return ifBribed;
 	//cout<<clerk->clerkType<<" Clerk #" << myLineID  << " received customer's social security number!\n"; //ask now for cash
 }
 
@@ -48,10 +51,11 @@ void pictureClerk(int id) {
 	
 	int myLineID = id; //the index we pass in will be used as id's for the clerks
 	bool firstTime = true;
+	bool ifBribed;
 
 	while(true) {	
 		//cout<<"Picture Clerk #" << id << " about to wait for customer\n";
-		waitForLine(&picClerk, id, firstTime); 
+		ifBribed = waitForLine(&picClerk, id, firstTime); 
 
 		cout<<"PictureClerk #" << id << " has received SSN " << picClerk.currentCustomer[id] << " from Customer #" << picClerk.currentCustomer[id] << ".\n";
 		cout<<"PictureClerk #" << id << " has taken a picture of Customer #" << picClerk.currentCustomer[id] << ".\n";
@@ -65,6 +69,11 @@ void pictureClerk(int id) {
 			cout<<"PictureClerk #" << id << " has been told that Customer #" << picClerk.currentCustomer[id] << " does not like their picture.\n";
 		}
 
+		if(ifBribed) {
+			cout<<"PictureClerk #" << id << " has received $500 from Customer #" << picClerk.currentCustomer[id] << ".\n";
+			picClerk.cashReceived+=500;
+		}
+
 		firstTime = false;
 		picClerk.clerkLock[myLineID].Release(); //release the clerk lock since we are done
 		//cout<<"Picture Clerk #" << id << " released the Picture Clerk Condition Variable Lock!\n";
@@ -75,6 +84,7 @@ void applicationClerk(int id) {
 	
 	int myLineID = id; //the index we pass in will be used as id's for the clerks
 	bool firstTime = true;
+	bool ifBribed;
 
 	while(true) {	
 		//cout<<"Application Clerk #" << id << " about to wait for customer\n";
@@ -89,7 +99,12 @@ void applicationClerk(int id) {
 		customersWithCompletedApps[appClerk.currentCustomer[id]] = true;
 
 		cout<<"ApplicationClerk #" << id << " has recorded a completed application for Customer #" << appClerk.currentCustomer[id] << ".\n";
-		//cout<<"ApplicationClerk #" << id << " has received $500 from Customer #" << appClerk.currentCustomer[id] << ".\n";
+		
+		if(ifBribed) {
+			cout<<"ApplicationClerk #" << id << " has received $500 from Customer #" << appClerk.currentCustomer[id] << ".\n";
+			appClerk.cashReceived+=500;
+		}
+
 		firstTime = false;
 		appClerk.clerkLock[myLineID].Release(); //release the clerk lock since we are done
 		//cout<<"Application Clerk #" << id << " released the Application Clerk Condition Variable Lock!\n";
@@ -210,7 +225,7 @@ void checkForClerkOnBreak(Monitor *clerk) {
 						if(strcmp(clerk->clerkType, "ApplicationClerk") == 0)
 							cout<<"Manager has woken up an ApplicationClerk.\n";
 						else
-							cout<<"Manager has woken up an " << clerk->clerkType << ".\n";
+							cout<<"Manager has woken up a " << clerk->clerkType << ".\n";
 					}
 				}
 
@@ -232,6 +247,12 @@ void managerDo(int id) {
 		checkForClerkOnBreak(&passPClerk);
 		checkForClerkOnBreak(&cashier);
 
+		cout<<"Manager has counted a total of $" << appClerk.cashReceived << " for ApplicationClerks.\n";
+		cout<<"Manager has counted a total of $" << picClerk.cashReceived << " for PictureClerks.\n";
+		cout<<"Manager has counted a total of $" << passPClerk.cashReceived << " for PassportClerks.\n";
+		cout<<"Manager has counted a total of $" << casher.cashReceived << " for Cashiers.\n";
+		cout<<"Manager has counted a total of $" << appClerk.cashReceived + picClerk.cashReceived + passPClerk.cashReceived + casher.cashReceived << " for the passport office.\n";
+		
 		//go on "break" per say by only checking periodically
 		for(int i = 0; i = 20; i++) {
 			currentThread->Yield();

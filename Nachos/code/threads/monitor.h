@@ -28,6 +28,7 @@ struct Monitor {
         breakCV = new Condition();
         currentCustomer = new int[size];
         numCustomersInLimbo = 0;
+        cashReceived = 0;
 
         for(int i = 0; i < size; i++) {
             lineCount[i] = 0;

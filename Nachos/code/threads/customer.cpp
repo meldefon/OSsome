@@ -95,7 +95,7 @@ int getInLine(Monitor *clerk, int socialSecurityNum, int* cash) {
 			
 			//if all the clerks on are on break
 			if(myLine == -1) {
-				cout<<"Customer #" << socialSecurityNum << " has entered "<<clerk->clerkType<<"Clerk Limbo Line.\n";
+				cout<<"Customer #" << socialSecurityNum << " has entered "<<clerk->clerkType<<" Limbo Line.\n";
 				clerk->numCustomersInLimbo++;
 				clerk->limboLineCV->Wait(clerk->lineLock); //wait to be signaled by manager to wake up from limbo line
 			}
@@ -104,9 +104,9 @@ int getInLine(Monitor *clerk, int socialSecurityNum, int* cash) {
 		if(clerk->clerkState[myLine] == 0) { //if the clerk is busy with another customer, we must wait, else just
 			// bypass this and go straight to transaction
 			if(!didBribe)
-				cout<<"Customer #" << socialSecurityNum << " has gotten in regular line for "<<clerk->clerkType<<"Clerk #" << myLine << ".\n";
+				cout<<"Customer #" << socialSecurityNum << " has gotten in regular line for "<<clerk->clerkType<<" #" << myLine << ".\n";
 			else
-				cout<<"Customer #" << socialSecurityNum << " has gotten in bribe line for "<<clerk->clerkType<<"Clerk #" << myLine << ".\n";
+				cout<<"Customer #" << socialSecurityNum << " has gotten in bribe line for "<<clerk->clerkType<<" #" << myLine << ".\n";
 			
 			lineCount[myLine]++; //get in line
 			lineCV[myLine].Wait(clerk->lineLock); //wait until we are signaled by AppClerk
