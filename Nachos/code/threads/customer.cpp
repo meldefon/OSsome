@@ -186,7 +186,7 @@ void doPassportClerkStuff(int socialSecurityNum,int*cash){
 	int mySSN = socialSecurityNum;
 
 	//First get in line with a generic method
-	cout<<"Customer #"<<socialSecurityNum<<" getting in passport Line\n";
+	//cout<<"Customer #"<<socialSecurityNum<<" getting in passport Line\n";
 	int myLine = getInLine(&passPClerk,socialSecurityNum,cash);
 
 	//Enter interaction monitor with passport clerk
@@ -195,19 +195,21 @@ void doPassportClerkStuff(int socialSecurityNum,int*cash){
 	workLock->Acquire();
 
 	//Tell Clerk CV, then wait
-	cout<<"Customer #"<<socialSecurityNum<<" telling passportClerk #"<<myLine<<" mySSN\n";
+	cout<<"Customer #"<<socialSecurityNum<<" has given SSN "<<socialSecurityNum<<" to PassportClerk #"<<myLine<<"\n";
 	tellPassportClerkSSN(mySSN,myLine);
 	workCV->Signal(workLock);
 	workCV->Wait(workLock);
 
 	//Now leave
-	cout<<"Customer #"<<socialSecurityNum<<" leaving passportClerk #"<<myLine<<"\n";
+	//cout<<"Customer #"<<socialSecurityNum<<" leaving passportClerk #"<<myLine<<"\n";
 	workCV->Signal(workLock);
 	workLock->Release();
 
 	//Decide weather to self-punish
 	bool myPassportChecked = passportClerkChecked[mySSN];
 	if(!myPassportChecked) {
+		cout<<"Customer #"<<socialSecurityNum<<" has gone to PassportClerk #"<<myLine<<" too soon. "<<
+				"They are going to the back of the line.\n";
 		punish(punishTime);
 	}
 	return;
@@ -219,7 +221,7 @@ void doCashierStuff(int mySSN, int* cash){
 	int socialSecurityNum = mySSN;
 
 	//First get in line with a generic method
-	cout<<"Customer #"<<socialSecurityNum<<" getting in cashier line\n";
+	//cout<<"Customer #"<<socialSecurityNum<<" getting in cashier line\n";
 	int myLine = getInLine(&cashier,socialSecurityNum,cash);
 
 	//Enter interaction monitor with passport clerk
@@ -228,7 +230,7 @@ void doCashierStuff(int mySSN, int* cash){
 	workLock->Acquire();
 
 	//Tell Clerk CV, then wait
-	cout<<"Customer #"<<socialSecurityNum<<" telling cashier #"<<myLine<<" mySSN\n";
+	cout<<"Customer #"<<socialSecurityNum<<" has given SSN "<<socialSecurityNum<<" to Cashier #"<<myLine<<"\n";
 	tellCashierSSN(mySSN,myLine);
 	workCV->Signal(workLock);
 	workCV->Wait(workLock);
@@ -237,7 +239,8 @@ void doCashierStuff(int mySSN, int* cash){
 	bool readyToPay = cashierChecked[mySSN];
 	if(!readyToPay) {
 		//Release, punish, and leave
-		cout<<"Customer #"<<socialSecurityNum<<" is self-punishing and leaving cashier #"<<myLine<<"\n";
+		cout<<"Customer #"<<socialSecurityNum<<" has gone to Cashier #"<<myLine<<" too soon. "<<
+				"They are going to the back of the line.\n";
 		workCV->Signal(workLock);
 		workLock->Release();
 		punish(punishTime);
@@ -245,7 +248,7 @@ void doCashierStuff(int mySSN, int* cash){
 	}
 
 	//Now you can pay
-	cout<<"Customer #"<<socialSecurityNum<<" is paying cashier #"<<myLine<<"\n";
+	cout<<"Customer #"<<socialSecurityNum<<" has given Cashier #"<<myLine<<"$100\n";
 	payCashier(mySSN,cash);
 	workCV->Signal(workLock);
 	workCV->Wait(workLock);
@@ -306,4 +309,6 @@ void customer(int social) {
 			notCompleted = false;
 		}
 	}
+
+	cout<<"Customer #"<<socialSecurityNum<<" is leaving the Passport Office.\n";
 }
