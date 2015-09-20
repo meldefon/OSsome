@@ -1,93 +1,114 @@
 #include "globalVars.h"
 #include "synch.h"
 #include <iostream>
+#include <string.h>
 using namespace std;
 
 
-void waitForLine(Monitor* clerk,int myLineID){
+void waitForLine(Monitor* clerk,int myLineID, bool firstTime){
 	clerk->lineLock->Acquire(); //acquire line lock
 
 	//if there is someone in the bribe line, signal them first
 	if(clerk->bribeLineCount[myLineID] > 0) {
-		//cout<<clerk->bribeLineCount[myLineID]<<"\n";
 		clerk->bribeLineCV[myLineID].Signal(clerk->lineLock);
 		clerk->clerkState[myLineID] = 0; //set state to busy
-		cout<<clerk->clerkType<<" Clerk #" << myLineID << " signaled someone in the bribe line!\n";
+		cout<<clerk->clerkType<<" #" << myLineID << " has signalled a Customer to come to their counter.\n";
 	} else if(clerk->lineCount[myLineID] > 0) { //signal someone in normal line
 		clerk->lineCV[myLineID].Signal(clerk->lineLock);
 		clerk->clerkState[myLineID] = 0; //set state to busy
-		cout<<clerk->clerkType<<" Clerk #" << myLineID  << " signaled someone in the line!\n";
+		cout<<clerk->clerkType<<" #" << myLineID  << " has signalled a Customer to come to their counter.\n";
 	} else { //no one is in either line, we must go to sleep
-		cout<<clerk->clerkType<<" Clerk #" << myLineID  << " is available and waiting!\n";
+		
+		if(!firstTime) {
+			cout<<clerk->clerkType<<" #" << myLineID  << " is going on break.\n";
+			clerk->clerkState[myLineID] = 1; //set state to break
+			clerk->breakCV->Wait(clerk->lineLock); //wait for the manager to signal
+			cout<<clerk->clerkType<<" #" << myLineID  << " is coming off break.\n";
+		}
+
 		clerk->clerkState[myLineID] = 2; //set state to available
+		//clerk->clerkState[myLineID] = 0;
+		//return;
 	}
 
 	//grab the clerkLock so we can properly signal the waiting customer
 	//to avoid a race condition and guarentee the correct order of events
 	clerk->clerkLock[myLineID].Acquire();
-	cout<<clerk->clerkType<<" Clerk #" << myLineID  << " obtained the "<<clerk->clerkType<<" Clerk Condition Variable Lock!\n";
+	//cout<<clerk->clerkType<<" Clerk #" << myLineID  << " obtained the "<<clerk->clerkType<<" Clerk Condition Variable Lock!\n";
 
 	//now we can let go of line lock since we properly acquired the clerk lock
 	clerk->lineLock->Release();
-	cout<<clerk->clerkType<<" Clerk #" << myLineID  << " released the "<<clerk->clerkType<<" Clerk Line Lock!\n";
+	//cout<<clerk->clerkType<<" Clerk #" << myLineID  << " released the "<<clerk->clerkType<<" Clerk Line Lock!\n";
 
 	clerk->clerkCV[myLineID].Wait(&(clerk->clerkLock[myLineID])); //wait for customer to signal us
-	cout<<clerk->clerkType<<" Clerk #" << myLineID  << " received customer's social security number!\n"; //ask now for cash
-
-
+	//cout<<clerk->clerkType<<" Clerk #" << myLineID  << " received customer's social security number!\n"; //ask now for cash
 }
 
 void pictureClerk(int id) {
 	
 	int myLineID = id; //the index we pass in will be used as id's for the clerks
-					 //which also corresponds to the their line numbers
+	bool firstTime = true;
+
 	while(true) {	
+		//cout<<"Picture Clerk #" << id << " about to wait for customer\n";
+		waitForLine(&picClerk, id, firstTime); 
 
-		cout<<"Picture Clerk #" << id << " about to wait for customer\n";
-		waitForLine(&picClerk, id); 
+		cout<<"PictureClerk #" << id << " has received SSN " << picClerk.currentCustomer[id] << " from Customer #" << picClerk.currentCustomer[id] << ".\n";
+		cout<<"PictureClerk #" << id << " has taken a picture of Customer #" << picClerk.currentCustomer[id] << ".\n";
 
-		picClerk.clerkCV[myLineID].Signal(&(picClerk.clerkLock[myLineID])); //tell the customer they need cash
-		picClerk.clerkCV[myLineID].Wait(&(picClerk.clerkLock[myLineID])); //wait for customer to signal us
-		cout<<"Picture Clerk #" << id << " received customer's cash and is done!\n"; 
+		picClerk.clerkCV[myLineID].Signal(&(picClerk.clerkLock[myLineID])); //tell the customer the picture is completed
+		picClerk.clerkCV[myLineID].Wait(&(picClerk.clerkLock[myLineID])); //wait for customer to decide if they like the photo
 		
+		if(customersWithCompletedPics[picClerk.currentCustomer[id]] == true) {
+			cout<<"PictureClerk #" << id << " has been told that Customer #" << picClerk.currentCustomer[id] << " does like their picture.\n";
+		} else {
+			cout<<"PictureClerk #" << id << " has been told that Customer #" << picClerk.currentCustomer[id] << " does not like their picture.\n";
+		}
+
+		firstTime = false;
 		picClerk.clerkLock[myLineID].Release(); //release the clerk lock since we are done
-		cout<<"Picture Clerk #" << id << " released the Picture Clerk Condition Variable Lock!\n";
+		//cout<<"Picture Clerk #" << id << " released the Picture Clerk Condition Variable Lock!\n";
 	}
 }
 
 void applicationClerk(int id) {
 	
 	int myLineID = id; //the index we pass in will be used as id's for the clerks
-					 //which also corresponds to the their line numbers
+	bool firstTime = true;
+
 	while(true) {	
+		//cout<<"Application Clerk #" << id << " about to wait for customer\n";
+		waitForLine(&appClerk, id, firstTime); 
 
-		cout<<"Application Clerk #" << id << " about to wait for customer\n";
-		waitForLine(&appClerk, id); 
+		cout<<"ApplicationClerk #" << id << " has received SSN " << appClerk.currentCustomer[id] << " from Customer #" << appClerk.currentCustomer[id] << ".\n";
 
-		appClerk.clerkCV[myLineID].Signal(&(appClerk.clerkLock[myLineID])); //tell the customer they need cash
-		appClerk.clerkCV[myLineID].Wait(&(appClerk.clerkLock[myLineID])); //wait for customer to signal us
-		cout<<"Application Clerk #" << id << " received customer's cash and is done!\n"; 
+		appClerk.clerkCV[myLineID].Signal(&(appClerk.clerkLock[myLineID])); //tell the customer their application is done
+		appClerk.clerkCV[myLineID].Wait(&(appClerk.clerkLock[myLineID])); //wait for customer to leave us
 		
+		//input the socialSecurityNum into the completed applications
+		customersWithCompletedApps[appClerk.currentCustomer[id]] = true;
+
+		cout<<"ApplicationClerk #" << id << " has recorded a completed application for Customer #" << appClerk.currentCustomer[id] << ".\n";
+		//cout<<"ApplicationClerk #" << id << " has received $500 from Customer #" << appClerk.currentCustomer[id] << ".\n";
+		firstTime = false;
 		appClerk.clerkLock[myLineID].Release(); //release the clerk lock since we are done
-		cout<<"Application Clerk #" << id << " released the Application Clerk Condition Variable Lock!\n";
+		//cout<<"Application Clerk #" << id << " released the Application Clerk Condition Variable Lock!\n";
 	}
 }
 
-void passportClerk(int id){
+void passportClerk(int id) {
 
-	//set ID
-	int myLineID = id;
+	int myLineID = id; 	//set ID
+	bool firstTime = true;
 
 	while(true) {
 		//Wait fot the next cust to signal
 		cout << "Passport Clerk #" << id << " about to wait for customer\n";
-		waitForLine(&passPClerk, id);
-
+		waitForLine(&passPClerk, id, firstTime);
 
 		//Set up some convenient variables
 		Lock *workLock = &passPClerk.clerkLock[myLineID];
 		Condition *workCV = &passPClerk.clerkCV[myLineID];
-
 
 		//Now the clerk has been woken up and has been told the customer ID
 		//Check
@@ -101,22 +122,20 @@ void passportClerk(int id){
 
 		//Now customer is gone
 		cout << "Passport Clerk #" << id << " finished with customer #" << customerSSN << "\n";
+		firstTime = false;
 		workLock->Release();
 	}
-
 }
-
 
 void cashierDo(int id) {
 
-	//set ID
-	int myLineID = id;
-
+	int myLineID = id; 	//set ID
+	bool firstTime = true;
 
 	while (true) {
-		//Wait fot the next cust to signal
+		//Wait fot the next customer to signal
 		cout << "Cashier #" << id << " about to wait for customer\n";
-		waitForLine(&cashier, id);
+		waitForLine(&cashier, id, firstTime);
 
 		//Set up some convenient variables
 		Lock *workLock = &cashier.clerkLock[myLineID];
@@ -145,7 +164,68 @@ void cashierDo(int id) {
 
 		//Now customer has left
 		cout << "Cashier #" << id << " finished with customer #" << customerSSN << "\n";
+		firstTime = false;
 		workLock->Release();
 	}
 
+}
+
+void checkForClerkOnBreak(Monitor *clerk) {
+
+	clerk->lineLock->Acquire(); //acquire the line lock 
+	bool clerksOnBreak = false;
+
+	//check if there are any clerks on break
+	for(int i = 0; i <clerk->numOfClerks; i++) {
+		if(clerk->clerkState[i] == 1) {
+			clerksOnBreak = true;
+			break;
+		}
+	}
+
+	if(clerksOnBreak) {
+		//check if there is a particular line with more than 3 customers waiting
+		for(int i = 0; i < clerk->numOfClerks; i++) {
+			if(clerk->lineCount[i] > 3 || clerk->bribeLineCount[i] > 3) {
+				
+				if(clerk->numCustomersInLimbo != 0) {
+					clerk->limboLineCV->Broadcast(clerk->lineLock); //wake up all sleeping customers
+					clerk->numCustomersInLimbo = 0;
+				}
+
+				for(int j = 0; j < clerk->numOfClerks; j++) {
+					
+					if(clerk->clerkState[j] == 1) { //if a clerk is on break, wake them up
+						clerk->breakCV->Signal(clerk->lineLock);
+
+						if(strcmp(clerk->clerkType, "ApplicationClerk") == 0)
+							cout<<"Manager has woken up an ApplicationClerk.\n";
+						else
+							cout<<"Manager has woken up an " << clerk->clerkType << ".\n";
+					}
+				}
+
+				break;
+			}
+		}
+	}
+
+	clerk->lineLock->Release(); //release the line lock
+}
+
+void managerDo(int id) {
+
+	int myID = id; 	//set ID
+
+	while (true) {
+		checkForClerkOnBreak(&appClerk);
+		checkForClerkOnBreak(&picClerk);
+		checkForClerkOnBreak(&passPClerk);
+		checkForClerkOnBreak(&cashier);
+
+		//go on "break" per say by only checking periodically
+		for(int i = 0; i = 20; i++) {
+			currentThread->Yield();
+		}
+	}	
 }

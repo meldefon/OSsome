@@ -14,17 +14,17 @@ void ThreadTest() {
 	cout<<"How many Application Clerks would you like to have? ";
 	cin >> size;
 
-	appClerk.initialize("Application Clerk Line Lock","App", size);
+	appClerk.initialize("Application Clerk Line Lock","ApplicationClerk", size);
 
 	cout<<"How many Picture Clerks would you like to have? ";
 	cin >> size;
 
-	picClerk.initialize("Picture Clerk Line Lock","Pic", size);
+	picClerk.initialize("Picture Clerk Line Lock","PictureClerk", size);
 
 	cout<<"How many Passport Clerks would you like to have? ";
 	cin >> size;
 
-	passPClerk.initialize("Passport Clerk Line Lock","Passport", size);
+	passPClerk.initialize("Passport Clerk Line Lock","PassportClerk", size);
 
 	cout<<"How many Cashiers would you like to have? ";
 	cin >> size;
@@ -61,12 +61,13 @@ void ThreadTest() {
 	passportClerkCurrentCustomer = new int[passPClerk.numOfClerks];
 	cashierCurrentCustomer = new int[cashier.numOfClerks];
 
-
-
-
-	
 	//initialize all the threads here 
 	Thread *c;
+
+	for(int i = 0; i < size; i++) {
+		c = new Thread("Customer Thread");
+		c->Fork((VoidFunctionPtr)customer,i);
+	}
 
 	for(int i = 0; i < appClerk.numOfClerks; i++) {
 		c = new Thread("AppClerk Thread");
@@ -87,11 +88,8 @@ void ThreadTest() {
 		c = new Thread("Cashier Thread");
 		c->Fork((VoidFunctionPtr)cashierDo,i);
 	}
-	
-	for(int i = 0; i < size; i++) {
-		c = new Thread("Customer Thread");
-		c->Fork((VoidFunctionPtr)customer,i);
-	}
+
+	c->Fork((VoidFunctionPtr)managerDo, 0);
 
 	return;
 }
