@@ -189,18 +189,23 @@ void cashierDo(int id) {
 
 		if (!cashierChecked[customerSSN]) {
 			//Now customer is gone
-			cout << "Passport Clerk #" << id << " finished with customer #" << customerSSN << "\n";
+			cout<<"Cashier #"<<id<<" has recieved $100 from Customer #"<<customerSSN<<
+					" before certification. They are to go to the back of the line\n";
 			workLock->Release();
+			return;
 		}
 
 		//Now customer has paid, so give passport and mark
-		cout << "Cashier #" << id << " marking customer #" << customerSSN << " as having gotten passport\n";
+		cout<<"Cashier #"<<id<<" has verified that Customer #"<<customerSSN<<" has been certified by a PassportClerk\n";
+		cout<<"Cashier #"<<id<<" has recieved $100 from Customer #"<<customerSSN<<" after certification\n";
+		cout << "Cashier #" << id << " provided Customer #" << customerSSN << " with their completed passport\n";
 		gottenPassport[customerSSN] = true;
 		workCV->Signal(workLock);
 		workCV->Wait(workLock);
 
 		//Now customer has left
-		cout << "Cashier #" << id << " finished with customer #" << customerSSN << "\n";
+		cout << "Cashier #" << id << " has recorded that Customer #" << customerSSN <<
+				" has been given their completed passport\n";
 		firstTime = false;
 		workLock->Release();
 	}
