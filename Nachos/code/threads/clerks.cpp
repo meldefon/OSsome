@@ -65,6 +65,13 @@ void pictureClerk(int id) {
 		
 		if(customersWithCompletedPics[picClerk.currentCustomer[id]] == true) {
 			cout<<"PictureClerk #" << id << " has been told that Customer #" << picClerk.currentCustomer[id] << " does like their picture.\n";
+			
+			int yieldCalls = (rand() % 80) + 21; //generate # from 20-100
+
+			for(int i = 0; i < yieldCalls; i++) { //delay in filing the picture
+				currentThread->Yield();
+			}
+
 		} else {
 			cout<<"PictureClerk #" << id << " has been told that Customer #" << picClerk.currentCustomer[id] << " does not like their picture.\n";
 		}
@@ -95,6 +102,12 @@ void applicationClerk(int id) {
 		appClerk.clerkCV[myLineID].Signal(&(appClerk.clerkLock[myLineID])); //tell the customer their application is done
 		appClerk.clerkCV[myLineID].Wait(&(appClerk.clerkLock[myLineID])); //wait for customer to leave us
 		
+		int yieldCalls = (rand() % 80) + 21; //generate # from 20-100
+
+		for(int i = 0; i < yieldCalls; i++) { //delay in filing the application
+			currentThread->Yield();
+		}		
+
 		//input the socialSecurityNum into the completed applications
 		customersWithCompletedApps[appClerk.currentCustomer[id]] = true;
 
@@ -115,12 +128,10 @@ void passportClerk(int id) {
 
 	int myLineID = id; 	//set ID
 	bool firstTime = true;
-	bool ifBribed = false;
 
 	while(true) {
 		//Wait fot the next cust to signal
-		cout << "PassportClerk #" << id << " about to wait for customer\n";
-		ifBribed = waitForLine(&passPClerk, id, firstTime);
+		waitForLine(&passPClerk, id, firstTime);
 
 		//Set up some convenient variables
 		Lock *workLock = &passPClerk.clerkLock[myLineID];
@@ -129,29 +140,15 @@ void passportClerk(int id) {
 		//Now the clerk has been woken up and has been told the customer ID
 		//Check
 		int customerSSN = passportClerkCurrentCustomer[myLineID];
-		cout << "PassportClerk #" << id << " has recieved SSN " << customerSSN
-			<<" from Customer #"<<customerSSN<<"\n";
+		cout << "Passport Clerk #" << id << " checking on customer #" << customerSSN << " and signalling\n";
 		passportClerkChecked[customerSSN] =
 				customersWithCompletedApps[customerSSN] && customersWithCompletedPics[customerSSN];
-		if(passportClerkChecked[customerSSN]){
-			cout<<"PassportClerk #" << id << " has determined that Customer #"<<customerSSN<<
-					" has both their application and picture completed\n";
-		}
-		else{
-			cout<<"PassportClerk #" << id << " has determined that Customer #"<<customerSSN<<
-			" does not have both their application and picture completed\n";
-		}
 		//And Signal
 		workCV->Signal(workLock);
 		workCV->Wait(workLock);
 
-		if(ifBribed){
-			cout<<"PassportClerk #" << id << " has received $500 from Customer #" << customerSSN << ".\n";
-			passPClerk.cashReceived+=500;
-		}
-
 		//Now customer is gone
-		//cout << "Passport Clerk #" << id << " has recorded Customer #" << customerSSN << " passport documentation\n";
+		cout << "Passport Clerk #" << id << " finished with customer #" << customerSSN << "\n";
 		firstTime = false;
 		workLock->Release();
 	}
@@ -161,12 +158,11 @@ void cashierDo(int id) {
 
 	int myLineID = id; 	//set ID
 	bool firstTime = true;
-	bool ifBribed;
 
 	while (true) {
 		//Wait fot the next customer to signal
 		cout << "Cashier #" << id << " about to wait for customer\n";
-		ifBribed = waitForLine(&cashier, id, firstTime);
+		waitForLine(&cashier, id, firstTime);
 
 		//Set up some convenient variables
 		Lock *workLock = &cashier.clerkLock[myLineID];
@@ -175,8 +171,7 @@ void cashierDo(int id) {
 		//Now the clerk has been woken up and has been told the customer ID
 		//Check
 		int customerSSN = cashierCurrentCustomer[myLineID];
-		cout << "Cashier #" << id << " has recieved SSN " << customerSSN <<
-				" from Customer #"<<customerSSN<<"\n";
+		cout << "Cashier #" << id << " checking on customer #" << customerSSN << " and signalling\n";
 		cashierChecked[customerSSN] = passportClerkChecked[customerSSN];
 		//And Signal
 		workCV->Signal(workLock);
@@ -184,25 +179,18 @@ void cashierDo(int id) {
 
 		if (!cashierChecked[customerSSN]) {
 			//Now customer is gone
-			cout<<"Cashier #"<<id<<" has recieved $100 from Customer #"<<customerSSN<<
-					" before certification. They are to go to the back of the line\n";
+			cout << "Passport Clerk #" << id << " finished with customer #" << customerSSN << "\n";
 			workLock->Release();
-			return;
 		}
 
 		//Now customer has paid, so give passport and mark
-		cout<<"Cashier #"<<id<<" has verified that Customer #"<<customerSSN<<
-				" has been certified by a PassportClerk\n";
-		cout<<"Cashier #"<<id<<" has recieved $100 from Customer #"<<customerSSN<<
-				" after certification\n";
-		cout<<"Cashier #"<<id<<" has provided Customer #"<<customerSSN<<" their complete passport\n";
+		cout << "Cashier #" << id << " marking customer #" << customerSSN << " as having gotten passport\n";
 		gottenPassport[customerSSN] = true;
 		workCV->Signal(workLock);
 		workCV->Wait(workLock);
 
 		//Now customer has left
-		cout<<"Cashier #"<<id<<" has recorded that Customer #"<<customerSSN<<
-				" has been given their completed passport\n";
+		cout << "Cashier #" << id << " finished with customer #" << customerSSN << "\n";
 		firstTime = false;
 		workLock->Release();
 	}
@@ -241,7 +229,6 @@ void checkForClerkOnBreak(Monitor *clerk) {
 							cout<<"Manager has woken up an ApplicationClerk.\n";
 						else
 							cout<<"Manager has woken up a " << clerk->clerkType << ".\n";
-
 					}
 				}
 

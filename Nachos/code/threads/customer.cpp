@@ -49,7 +49,6 @@ int getInLine(Monitor *clerk, int socialSecurityNum, int* cash) {
 		Condition* lineCV;
 		bool didBribe = false;
 
-
 		int wantToBribe = rand() % 10; // random choice about whether to bribe
 		//bool wantToBribe = socialSecurityNum==4;
 		if(wantToBribe==0 && *cash>100){
