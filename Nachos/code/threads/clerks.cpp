@@ -115,11 +115,12 @@ void passportClerk(int id) {
 
 	int myLineID = id; 	//set ID
 	bool firstTime = true;
+	bool ifBribed = false;
 
 	while(true) {
 		//Wait fot the next cust to signal
 		//cout << "PassportClerk #" << id << " about to wait for customer\n";
-		waitForLine(&passPClerk, id, firstTime);
+		ifBribed = waitForLine(&passPClerk, id, firstTime);
 
 		//Set up some convenient variables
 		Lock *workLock = &passPClerk.clerkLock[myLineID];
@@ -144,8 +145,13 @@ void passportClerk(int id) {
 		workCV->Signal(workLock);
 		workCV->Wait(workLock);
 
+		if(ifBribed){
+			cout<<"PassportClerk #" << id << " has received $500 from Customer #" << customerSSN << ".\n";
+			passPClerk.cashReceived+=500;
+		}
+
 		//Now customer is gone
-		cout << "Passport Clerk #" << id << " has recorded Customer #" << customerSSN << " passport documentation\n";
+		//cout << "Passport Clerk #" << id << " has recorded Customer #" << customerSSN << " passport documentation\n";
 		firstTime = false;
 		workLock->Release();
 	}
@@ -226,6 +232,7 @@ void checkForClerkOnBreak(Monitor *clerk) {
 							cout<<"Manager has woken up an ApplicationClerk.\n";
 						else
 							cout<<"Manager has woken up a " << clerk->clerkType << ".\n";
+
 					}
 				}
 
@@ -250,8 +257,8 @@ void managerDo(int id) {
 		cout<<"Manager has counted a total of $" << appClerk.cashReceived << " for ApplicationClerks.\n";
 		cout<<"Manager has counted a total of $" << picClerk.cashReceived << " for PictureClerks.\n";
 		cout<<"Manager has counted a total of $" << passPClerk.cashReceived << " for PassportClerks.\n";
-		cout<<"Manager has counted a total of $" << casher.cashReceived << " for Cashiers.\n";
-		cout<<"Manager has counted a total of $" << appClerk.cashReceived + picClerk.cashReceived + passPClerk.cashReceived + casher.cashReceived << " for the passport office.\n";
+		cout<<"Manager has counted a total of $" << cashier.cashReceived << " for Cashiers.\n";
+		cout<<"Manager has counted a total of $" << appClerk.cashReceived + picClerk.cashReceived + passPClerk.cashReceived + cashier.cashReceived << " for the passport office.\n";
 		
 		//go on "break" per say by only checking periodically
 		for(int i = 0; i = 20; i++) {
