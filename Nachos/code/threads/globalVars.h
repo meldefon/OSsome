@@ -10,6 +10,7 @@
 
 
 extern Monitor appClerk, picClerk, passPClerk, cashier;
+extern int numCustomersLeft;
 
 //global shared data between the clerks that are used for filing purposes
 extern bool *customersWithCompletedApps;

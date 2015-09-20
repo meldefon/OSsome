@@ -214,7 +214,7 @@ void Condition::Wait(Lock* conditionLock) {
         waitingLock = conditionLock;
     }
     if(waitingLock != conditionLock){ //locks don't match
-        printf("Error: Locks don't match \n");
+        printf("Wait Error: Locks don't match \n");
         (void) interrupt->SetLevel(oldLevel);  // restore interrupts
         return; 
     }
@@ -231,7 +231,7 @@ void Condition::Wait(Lock* conditionLock) {
 void Condition::Signal(Lock* conditionLock) { 
     IntStatus oldLevel = interrupt->SetLevel(IntOff); //disable interrupts
     if(waitingLock != conditionLock){ //locks don't match
-        printf("Error: Locks don't match \n");
+        printf("Signal Error: Locks don't match \n");
         (void) interrupt->SetLevel(oldLevel);  // restore interrupts
         return;
     }

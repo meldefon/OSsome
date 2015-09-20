@@ -22,6 +22,8 @@ int* pictureClerkCurrentCustomer;
 int* passportClerkCurrentCustomer;
 int* cashierCurrentCustomer;
 
+int numCustomersLeft;
+
 void punish(int time){
 	for (int i = 0; i < time; i++) {
 		currentThread->Yield();
@@ -84,8 +86,9 @@ int getInLine(Monitor *clerk, int socialSecurityNum, int* cash) {
 					myLine = i;
 					lineSize = lineCount[i];
 					break; //leave since we found the right clerk
-				} 
-				else if(lineCount[i] < lineSize && clerk->clerkState[i] != 1) { //if the line we are in is the
+				}
+				//Right now, customer picks shortest line regardless of break status
+				else if(lineCount[i] < lineSize/* && clerk->clerkState[i] != 1*/) { //if the line we are in is the
 					// shortest and the clerk is not on break, consider that line
 					myLine = i;
 					lineSize = lineCount[i];
@@ -100,7 +103,7 @@ int getInLine(Monitor *clerk, int socialSecurityNum, int* cash) {
 			}
 		}
 		
-		if(clerk->clerkState[myLine] == 0) { //if the clerk is busy with another customer, we must wait, else just
+		if(clerk->clerkState[myLine] == 0 || clerk->clerkState[myLine]==1) { //if the clerk is busy with another customer, we must wait, else just
 			// bypass this and go straight to transaction
 			if(!didBribe)
 				cout<<"Customer #" << socialSecurityNum << " has gotten in regular line for "<<clerk->clerkType<<" #" << myLine << ".\n";
@@ -165,11 +168,11 @@ int doPicClerkStuff(int socialSecurityNum, int* cash) {
 
 	if(probablity <= 4) { //if we disliked the photo
 			cout<<"Customer #" << socialSecurityNum << " does not like their picture from Picture Clerk #" << myLine << ".\n";
-			customersWithCompletedPics[myLine] = false;
+			customersWithCompletedPics[socialSecurityNum] = false;
 			choice = 1;
 	} else {
 			cout<<"Customer #" << socialSecurityNum << " likes their picture from Picture Clerk #" << myLine << ".\n";
-			customersWithCompletedPics[myLine] = true;
+			customersWithCompletedPics[socialSecurityNum] = true;
 			choice = 0;		
 	}
 
@@ -247,7 +250,7 @@ void doCashierStuff(int mySSN, int* cash){
 	}
 
 	//Now you can pay
-	cout<<"Customer #"<<socialSecurityNum<<" has given Cashier #"<<myLine<<"$100\n";
+	cout<<"Customer #"<<socialSecurityNum<<" has given Cashier #"<<myLine<<" $100\n";
 	payCashier(mySSN,cash);
 	workCV->Signal(workLock);
 	workCV->Wait(workLock);
@@ -327,4 +330,5 @@ void customer(int social) {
 	}
 
 	cout<<"Customer #"<<socialSecurityNum<<" is leaving the Passport Office.\n";
+	numCustomersLeft-=1;
 }
