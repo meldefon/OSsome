@@ -150,15 +150,26 @@ void passportClerk(int id) {
 		//Now the clerk has been woken up and has been told the customer ID
 		//Check
 		int customerSSN = passportClerkCurrentCustomer[myLineID];
-		cout << "Passport Clerk #" << id << " checking on customer #" << customerSSN << " and signalling\n";
+		cout<<"PassportClerk #" << id << " has received SSN " << customerSSN << " from Customer #" << customerSSN << ".\n";
 		passportClerkChecked[customerSSN] =
 				customersWithCompletedApps[customerSSN] && customersWithCompletedPics[customerSSN];
+		if(!passportClerkChecked[customerSSN]){
+			cout<<"PassportClerk #"<<id<<" has determined that Customer #"<<customerSSN<<
+					" does not have both their application and picture completed\n";
+		}
+		else{
+			cout<<"PassportClerk #"<<id<<" has determined that Customer #"<<customerSSN<<
+			" has both their application and picture completed\n";
+		}
 		//And Signal
 		workCV->Signal(workLock);
 		workCV->Wait(workLock);
 
 		//Now customer is gone
-		cout << "Passport Clerk #" << id << " finished with customer #" << customerSSN << "\n";
+		if(passportClerkChecked[customerSSN]) {
+			cout << "PassportClerk #" << id << " has recorded Customer #" << customerSSN <<
+			" passport documentation\n";
+		}
 		firstTime = false;
 		workLock->Release();
 	}
