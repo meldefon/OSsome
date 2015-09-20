@@ -298,3 +298,15 @@ void managerDo(int id) {
 		}
 	}	
 }
+
+
+
+
+
+
+
+
+
+
+
+
