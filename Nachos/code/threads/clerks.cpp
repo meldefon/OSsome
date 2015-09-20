@@ -161,11 +161,12 @@ void cashierDo(int id) {
 
 	int myLineID = id; 	//set ID
 	bool firstTime = true;
+	bool ifBribed;
 
 	while (true) {
 		//Wait fot the next customer to signal
-		//cout << "Cashier #" << id << " about to wait for customer\n";
-		waitForLine(&cashier, id, firstTime);
+		cout << "Cashier #" << id << " about to wait for customer\n";
+		ifBribed = waitForLine(&cashier, id, firstTime);
 
 		//Set up some convenient variables
 		Lock *workLock = &cashier.clerkLock[myLineID];
@@ -194,13 +195,13 @@ void cashierDo(int id) {
 				" has been certified by a PassportClerk\n";
 		cout<<"Cashier #"<<id<<" has recieved $100 from Customer #"<<customerSSN<<
 				" after certification\n";
-		cout<<"Cashier #"<<id<<"has provided Customer #"<<customerSSN<<" their complete passport\n";
+		cout<<"Cashier #"<<id<<" has provided Customer #"<<customerSSN<<" their complete passport\n";
 		gottenPassport[customerSSN] = true;
 		workCV->Signal(workLock);
 		workCV->Wait(workLock);
 
 		//Now customer has left
-		cout<<"Cashier #"<<id<<"has recorded that Customer #"<<customerSSN<<
+		cout<<"Cashier #"<<id<<" has recorded that Customer #"<<customerSSN<<
 				" has been given their completed passport\n";
 		firstTime = false;
 		workLock->Release();
