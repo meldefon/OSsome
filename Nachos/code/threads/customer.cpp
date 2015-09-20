@@ -254,7 +254,7 @@ void doCashierStuff(int mySSN, int* cash){
 	workCV->Wait(workLock);
 
 	//Now you've been woken up because you have the passport, so leave
-	cout<<"Customer #"<<socialSecurityNum<<" got passport and is leaving cashier #"<<myLine<<"\n";
+	//cout<<"Customer #"<<socialSecurityNum<<" got passport and is leaving cashier #"<<myLine<<"\n";
 	workCV->Signal(workLock);
 	workLock->Release();
 
