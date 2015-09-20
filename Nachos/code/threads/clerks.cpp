@@ -138,10 +138,11 @@ void passportClerk(int id) {
 
 	int myLineID = id; 	//set ID
 	bool firstTime = true;
+	bool ifBribed;
 
 	while(true) {
 		//Wait fot the next cust to signal
-		waitForLine(&passPClerk, id, firstTime);
+		ifBribed = waitForLine(&passPClerk, id, firstTime);
 
 		//Set up some convenient variables
 		Lock *workLock = &passPClerk.clerkLock[myLineID];
@@ -170,6 +171,12 @@ void passportClerk(int id) {
 			cout << "PassportClerk #" << id << " has recorded Customer #" << customerSSN <<
 			" passport documentation\n";
 		}
+
+		if(ifBribed) {
+			cout<<"PassportClerk #" << id << " has received $500 from Customer #" << customerSSN << ".\n";
+			passPClerk.cashReceived+=500;
+		}
+
 		firstTime = false;
 		workLock->Release();
 	}
@@ -210,6 +217,7 @@ void cashierDo(int id) {
 		cout<<"Cashier #"<<id<<" has verified that Customer #"<<customerSSN<<" has been certified by a PassportClerk\n";
 		cout<<"Cashier #"<<id<<" has recieved $100 from Customer #"<<customerSSN<<" after certification\n";
 		cout << "Cashier #" << id << " provided Customer #" << customerSSN << " with their completed passport\n";
+		cashier.cashReceived+=100;
 		gottenPassport[customerSSN] = true;
 		workCV->Signal(workLock);
 		workCV->Wait(workLock);
