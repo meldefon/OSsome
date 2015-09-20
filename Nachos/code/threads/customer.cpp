@@ -281,6 +281,22 @@ void customer(int social) {
 
 	while(notCompleted) {
 
+
+		//ERROR CASE: pick the wrong behavior, go ahead and get punished
+		int mistake = rand()%100;
+		if(mistake==0){
+			//Which behavior will the customer pick
+			int choice = rand()%2;
+			if(choice==0){
+				doPassportClerkStuff(socialSecurityNum,&cash);
+				continue;
+			}
+			else{
+				doCashierStuff(socialSecurityNum,&cash);
+				continue;
+			}
+		}
+		//Do the picture/application clerk stuff
 		if(!customersWithCompletedApps[socialSecurityNum] || !customersWithCompletedPics[socialSecurityNum]) {
 			//enter if we choose to go to the appClerk
 			if (picOrAppClerk == 0) {
@@ -295,11 +311,12 @@ void customer(int social) {
 				continue;
 			}
 		}
-
+		//Do the passportClerk stuff
 		else if(!passportClerkChecked[socialSecurityNum]){
 			doPassportClerkStuff(socialSecurityNum,&cash);
 			continue;
 		}
+		//DO the cashier stuff
 		else if(!cashierChecked[socialSecurityNum]){
 			doCashierStuff(socialSecurityNum,&cash);
 			continue;
