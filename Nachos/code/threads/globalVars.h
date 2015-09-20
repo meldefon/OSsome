@@ -25,5 +25,9 @@ extern int* pictureClerkCurrentCustomer;
 extern int* passportClerkCurrentCustomer;
 extern int* cashierCurrentCustomer;
 
+extern Lock* senatorLock;
+extern Condition* senatorCV;
+extern int* isSenator;
+
 
 #endif //GLOBALVARS_H

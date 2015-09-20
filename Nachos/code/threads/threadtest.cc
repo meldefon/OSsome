@@ -34,6 +34,12 @@ void ThreadTest() {
 	cout<<"How many Customers would you like to have? ";
 	cin >> size;
 
+	int numberOfSenators;
+	cout<<"How many Senators would you like to have? ";
+	cin >> numberOfSenators;
+
+	size += numberOfSenators;
+
 	//will hold booleans that indicate whether a customer has
 	//completed application or pictures using the social security
 	//number as an index
@@ -53,8 +59,18 @@ void ThreadTest() {
 		cashierChecked[i] = false;
 		gottenPassport[i] = false;
 		cashReceived[i] = 0;
+		if(i<size-numberOfSenators){
+			isSenator[i]=false;
+		}
+		else{
+			isSenator[i] = true;
+		}
 	}
 
+
+	//Instantiate senator lock/CV
+	senatorLock = new Lock("Senator lock");
+	senatorCV = new Condition("Senator CV");
 
 	//will hold currentCust SSN for checking
 	appClerkCurrentCustomer = new int[appClerk.numOfClerks];

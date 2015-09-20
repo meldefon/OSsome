@@ -22,6 +22,10 @@ int* pictureClerkCurrentCustomer;
 int* passportClerkCurrentCustomer;
 int* cashierCurrentCustomer;
 
+Lock* senatorLock;
+Condition* senatorCV;
+int* isSenator;
+
 int numCustomersLeft;
 
 void punish(int time){
