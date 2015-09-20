@@ -11,34 +11,38 @@ using namespace std;
 void ThreadTest() {
 
   	int size; //will be used to take in user input for the sizes of specific variables
-	cout<<"How many Application Clerks would you like to have? ";
+  	int senatorSize;
+
+	cout<<"Number of ApplicationClerks = ";
 	cin >> size;
 
 	appClerk.initialize("Application Clerk Line Lock","ApplicationClerk", size);
 
-	cout<<"How many Picture Clerks would you like to have? ";
+	cout<<"Number of PictureClerks = ";
 	cin >> size;
 
 	picClerk.initialize("Picture Clerk Line Lock","PictureClerk", size);
 
-	cout<<"How many Passport Clerks would you like to have? ";
+	cout<<"Number of PassportClerks = ";
 	cin >> size;
 
 	passPClerk.initialize("Passport Clerk Line Lock","PassportClerk", size);
 
-	cout<<"How many Cashiers would you like to have? ";
+	cout<<"Number of Cashiers = ";
 	cin >> size;
 
 	cashier.initialize("Cashier Line Lock","Cashier", size);
 
-	cout<<"How many Customers would you like to have? ";
+	cout<<"Number of Customers = ";
 	cin >> size;
 
+	
 	int numberOfSenators;
 	cout<<"How many Senators would you like to have? ";
 	cin >> numberOfSenators;
 
 	size += numberOfSenators;
+
 
 	//will hold booleans that indicate whether a customer has
 	//completed application or pictures using the social security

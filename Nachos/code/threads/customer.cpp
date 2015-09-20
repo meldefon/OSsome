@@ -144,7 +144,7 @@ void doAppClerkStuff(int socialSecurityNum, int* cash) {
 	appClerk.currentCustomer[myLine] = socialSecurityNum; //which customer is currently being served
 	cout<<"Customer #" <<socialSecurityNum << " has given SSN "<< socialSecurityNum << " to ApplicationClerk #" << myLine << ".\n";	
 
-	appClerk.clerkCV[myLine].Signal(&(appClerk.clerkLock[myLine])); 	//signal the AppClerk that we have given him the social security number
+	appClerk.clerkCV[myLine].Signal(&(appClerk.clerkLock[myLine])); //signal the AppClerk that we have given him the social security number
 	appClerk.clerkCV[myLine].Wait(&(appClerk.clerkLock[myLine])); 	//wait for the clerk to confirm
 
 	appClerk.clerkCV[myLine].Signal(&(appClerk.clerkLock[myLine])); //signal the clerk
