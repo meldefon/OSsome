@@ -164,7 +164,7 @@ void cashierDo(int id) {
 
 	while (true) {
 		//Wait fot the next customer to signal
-		cout << "Cashier #" << id << " about to wait for customer\n";
+		//cout << "Cashier #" << id << " about to wait for customer\n";
 		waitForLine(&cashier, id, firstTime);
 
 		//Set up some convenient variables
@@ -174,7 +174,8 @@ void cashierDo(int id) {
 		//Now the clerk has been woken up and has been told the customer ID
 		//Check
 		int customerSSN = cashierCurrentCustomer[myLineID];
-		cout << "Cashier #" << id << " checking on customer #" << customerSSN << " and signalling\n";
+		cout << "Cashier #" << id << " has recieved SSN " << customerSSN <<
+				" from Customer #"<<customerSSN<<"\n";
 		cashierChecked[customerSSN] = passportClerkChecked[customerSSN];
 		//And Signal
 		workCV->Signal(workLock);
@@ -182,18 +183,25 @@ void cashierDo(int id) {
 
 		if (!cashierChecked[customerSSN]) {
 			//Now customer is gone
-			cout << "Passport Clerk #" << id << " finished with customer #" << customerSSN << "\n";
+			cout<<"Cashier #"<<id<<" has recieved $100 from Customer #"<<customerSSN<<
+					" before certification. They are to go to the back of the line\n";
 			workLock->Release();
+			return;
 		}
 
 		//Now customer has paid, so give passport and mark
-		cout << "Cashier #" << id << " marking customer #" << customerSSN << " as having gotten passport\n";
+		cout<<"Cashier #"<<id<<" has verified that Customer #"<<customerSSN<<
+				" has been certified by a PassportClerk\n";
+		cout<<"Cashier #"<<id<<" has recieved $100 from Customer #"<<customerSSN<<
+				" after certification\n";
+		cout<<"Cashier #"<<id<<"has provided Customer #"<<customerSSN<<" their complete passport\n";
 		gottenPassport[customerSSN] = true;
 		workCV->Signal(workLock);
 		workCV->Wait(workLock);
 
 		//Now customer has left
-		cout << "Cashier #" << id << " finished with customer #" << customerSSN << "\n";
+		cout<<"Cashier #"<<id<<"has recorded that Customer #"<<customerSSN<<
+				" has been given their completed passport\n";
 		firstTime = false;
 		workLock->Release();
 	}
