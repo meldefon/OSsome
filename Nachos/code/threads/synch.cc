@@ -256,7 +256,9 @@ void Condition::Broadcast(Lock* conditionLock) {
         return;
     }
     if(waitingLock != conditionLock){ //Checks if locks don't match
-        printf("Error: Locks don't match \n");
+        if(waitingLock!=NULL) {
+            printf("Error: Locks don't match \n");
+        }
         (void) interrupt->SetLevel(oldLevel);  // restore interrupts
         return;
     }

@@ -27,7 +27,10 @@ extern int* cashierCurrentCustomer;
 
 extern Lock* senatorLock;
 extern Condition* senatorCV;
-extern int* isSenator;
+extern bool* isSenator;
+extern int senatorWorking;
+
+extern bool clerksCanWork;
 
 
 #endif //GLOBALVARS_H

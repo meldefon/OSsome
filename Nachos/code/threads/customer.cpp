@@ -24,7 +24,9 @@ int* cashierCurrentCustomer;
 
 Lock* senatorLock;
 Condition* senatorCV;
-int* isSenator;
+bool* isSenator;
+int senatorWorking;
+bool clerksCanWork;
 
 int numCustomersLeft;
 
@@ -50,6 +52,17 @@ void payCashier(int SSN, int *cash){
 
 
 int getInLine(Monitor *clerk, int socialSecurityNum, int* cash) {
+
+	if(senatorWorking!=NULL && senatorWorking==socialSecurityNum){
+		//cout<<"Senator attemting to enter line\n";
+		clerk->lineLock->Acquire();
+		clerk->senLineCount[0]++;
+		//cout<<"SHIT: "<<socialSecurityNum<<"\n";
+		clerk->senLineCV[0].Wait(clerk->lineLock);
+		clerk->senLineCount[0]--;
+		clerk->lineLock->Release();
+		return 0;
+	}
 
 		int* lineCount;
 		Condition* lineCV;
@@ -120,7 +133,10 @@ int getInLine(Monitor *clerk, int socialSecurityNum, int* cash) {
 			lineCount[myLine]++; //get in line
 			lineCV[myLine].Wait(clerk->lineLock); //wait until we are signaled by AppClerk
 			lineCount[myLine]--; //get out of line and move to the counter
+
+
 		}
+
 			
 		clerk->clerkState[myLine] = 0;   //set the clerk status to busy
 		//cout<<"Customer #" << socialSecurityNum << " is being served by "<<clerk->clerkType<<" Clerk #" << myLine <<"!\n";
@@ -271,6 +287,23 @@ void doCashierStuff(int mySSN, int* cash){
 
 }
 
+void senatorClearLines(){
+	clerksCanWork = false;
+	Monitor* allMonitors = new Monitor[4];
+	allMonitors[0] = appClerk;
+	allMonitors[1] = picClerk;
+	allMonitors[2] = passPClerk;
+	allMonitors[3] = cashier;
+
+	//Broadcast to all clerk lines so that custs wake up
+	for(int i = 0;i<4;i++) {
+		allMonitors[i].lineLock->Acquire();
+		allMonitors[i].lineCV->Broadcast(allMonitors[i].lineLock);
+		allMonitors[i].lineLock->Release();
+	}
+
+}
+
 void customer(int social) {
 
 	//Customer variables
@@ -281,6 +314,32 @@ void customer(int social) {
 	int socialSecurityNum;
 	int picOrAppClerk;
 
+	bool canStartWorking = true;
+	if (isSenator[social]) {
+		canStartWorking = false;
+	}
+
+	while(!canStartWorking) {
+		if (isSenator[social]) {
+			int senatorWaitTime = 3;
+			/*for (int i = 0; i < senatorWaitTime; i++) {
+				currentThread->Yield();
+			}*/
+			senatorLock->Acquire();
+			if (senatorWorking == NULL) {
+				senatorWorking = social;
+				canStartWorking = true;
+			}
+			else {
+				senatorCV->Wait(senatorLock);
+			}
+			senatorLock->Release();
+		}
+	}
+
+
+
+	//senatorClearLines();
 
 	
 	socialSecurityNum = social;
@@ -290,6 +349,13 @@ void customer(int social) {
 	bool notCompleted = true; //while we are not done with everything 
 
 	while(notCompleted) {
+
+		//Stop if there's a senator trying to work
+		senatorLock->Acquire();
+		if(senatorWorking!=NULL && senatorWorking!=social){
+			senatorCV->Wait(senatorLock);
+		}
+		senatorLock->Release();
 
 
 		//ERROR CASE: pick the wrong behavior, go ahead and get punished
@@ -336,6 +402,19 @@ void customer(int social) {
 		}
 	}
 
-	cout<<"Customer #"<<socialSecurityNum<<" is leaving the Passport Office.\n";
+	//Clean up, let people wake up
+	if(isSenator[social]){
+		cout<<"Customer (Senator) #"<<socialSecurityNum<<" is leaving the Passport Office.\n";
+		cout<<socialSecurityNum<<"\n";
+		senatorWorking = NULL;
+		senatorLock->Acquire();
+		senatorCV->Broadcast(senatorLock);
+		senatorLock->Release();
+		//senatorClearLines();
+	}
+	else {
+		cout << "Customer #" << socialSecurityNum << " is leaving the Passport Office.\n";
+		cout<<socialSecurityNum<<"\n";
+	}
 	numCustomersLeft-=1;
 }

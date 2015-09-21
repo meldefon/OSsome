@@ -9,9 +9,26 @@ bool waitForLine(Monitor* clerk,int myLineID, bool firstTime){
 	clerk->lineLock->Acquire(); //acquire line lock
 	bool ifBribed = false;
 
+	//cout<<myLineID<<"Waiting for line\n";
 	while(true) {
+
+		if(senatorWorking!=NULL){
+
+			if( clerk->senLineCount[myLineID]>0) {
+				clerk->senLineCV[myLineID].Signal(clerk->lineLock);
+				clerk->clerkState[myLineID] = 0;
+				//cout<<"Serving senator\n";
+				break;
+			}
+			else{
+				clerk->clerkState[myLineID] = 1; //set state to break
+				clerk->breakCV->Wait(clerk->lineLock);
+				//cout<<"Going on senator break\n";
+				continue;
+			}
+		}
 		//if there is someone in the bribe line, signal them first
-		if (clerk->bribeLineCount[myLineID] > 0) {
+		else if (clerk->bribeLineCount[myLineID] > 0) {
 			clerk->bribeLineCV[myLineID].Signal(clerk->lineLock);
 			ifBribed = true;
 			clerk->clerkState[myLineID] = 0; //set state to busy
@@ -61,7 +78,8 @@ void pictureClerk(int id) {
 
 	while(true) {	
 		//cout<<"Picture Clerk #" << id << " about to wait for customer\n";
-		ifBribed = waitForLine(&picClerk, id, firstTime); 
+		ifBribed = waitForLine(&picClerk, id, firstTime);
+
 
 		cout<<"PictureClerk #" << id << " has received SSN " << picClerk.currentCustomer[id] << " from Customer #" << picClerk.currentCustomer[id] << ".\n";
 		cout<<"PictureClerk #" << id << " has taken a picture of Customer #" << picClerk.currentCustomer[id] << ".\n";
@@ -101,7 +119,8 @@ void applicationClerk(int id) {
 
 	while(true) {	
 		//cout<<"Application Clerk #" << id << " about to wait for customer\n";
-		waitForLine(&appClerk, id, firstTime); 
+		waitForLine(&appClerk, id, firstTime);
+
 
 		cout<<"ApplicationClerk #" << id << " has received SSN " << appClerk.currentCustomer[id] << " from Customer #" << appClerk.currentCustomer[id] << ".\n";
 
@@ -143,6 +162,7 @@ void passportClerk(int id) {
 	while(true) {
 		//Wait fot the next cust to signal
 		ifBribed = waitForLine(&passPClerk, id, firstTime);
+
 
 		//Set up some convenient variables
 		Lock *workLock = &passPClerk.clerkLock[myLineID];
@@ -191,6 +211,7 @@ void cashierDo(int id) {
 		//Wait fot the next customer to signal
 		//cout << "Cashier #" << id << " about to wait for customer\n";
 		waitForLine(&cashier, id, firstTime);
+
 
 		//Set up some convenient variables
 		Lock *workLock = &cashier.clerkLock[myLineID];
@@ -245,18 +266,20 @@ void checkForClerkOnBreak(Monitor *clerk) {
 	}
 
 	int lineThreshold = 0;
+	int senLineThreshold = 0;
 	if(clerksOnBreak) {
 		//check if there is a particular line with more than 3 customers waiting
 		for(int i = 0; i < clerk->numOfClerks; i++) {
-			if(clerk->lineCount[i] > lineThreshold || clerk->bribeLineCount[i] > lineThreshold) {
-				
+			if(clerk->senLineCount[0] > senLineThreshold || (senatorWorking==NULL && (clerk->lineCount[i] > lineThreshold ||
+					clerk->bribeLineCount[i] > lineThreshold))) {
+
 				/*if(clerk->numCustomersInLimbo != 0) {
 					clerk->limboLineCV->Broadcast(clerk->lineLock); //wake up all sleeping customers
 					clerk->numCustomersInLimbo = 0;
 				}*/
 
 				for(int j = 0; j < clerk->numOfClerks; j++) {
-					
+
 					if(clerk->clerkState[j] == 1) { //if a clerk is on break, wake them up
 						clerk->breakCV->Signal(clerk->lineLock);
 

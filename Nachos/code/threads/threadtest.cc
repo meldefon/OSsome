@@ -36,7 +36,7 @@ void ThreadTest() {
 	cout<<"Number of Customers = ";
 	cin >> size;
 
-	
+
 	int numberOfSenators;
 	cout<<"How many Senators would you like to have? ";
 	cin >> numberOfSenators;
@@ -54,6 +54,7 @@ void ThreadTest() {
 	cashierChecked = new bool[size];
 	gottenPassport = new bool[size];
 	cashReceived = new int[size];
+	isSenator = new bool[size];
 
 	//Initialize everything
 	for(int i = 0;i<size;i++) {
@@ -70,6 +71,8 @@ void ThreadTest() {
 			isSenator[i] = true;
 		}
 	}
+	senatorWorking = NULL;
+	clerksCanWork = true;
 
 
 	//Instantiate senator lock/CV

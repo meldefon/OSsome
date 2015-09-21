@@ -22,6 +22,8 @@ struct Monitor {
         limboLineCV = new Condition();
         bribeLineCount = new int[size];
         bribeLineCV = new Condition[size]();
+        senLineCV = new Condition[size]();
+        senLineCount = new int[size];
         clerkState = new int[size];
         numOfClerks = size;
         clerkType = clerkType_;
@@ -33,6 +35,7 @@ struct Monitor {
         for(int i = 0; i < size; i++) {
             lineCount[i] = 0;
             bribeLineCount[i] = 0;
+            senLineCount[i] = 0;
             clerkState[i] = 0;
             currentCustomer[i] = -1;
         }
@@ -41,18 +44,21 @@ struct Monitor {
     Lock *lineLock;
     Condition *lineCV;
     Condition *bribeLineCV;
+    Condition *senLineCV;
     Condition *limboLineCV;
     Lock *clerkLock;
     Condition *clerkCV;
     Condition *breakCV;
     int *lineCount;
     int *bribeLineCount;
+    int *senLineCount;
     int *clerkState;
     int numOfClerks;
     char* clerkType;
     int cashReceived;
     int *currentCustomer;
     int numCustomersInLimbo;
+
 };
 
 
