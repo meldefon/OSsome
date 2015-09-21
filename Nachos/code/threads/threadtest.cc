@@ -150,15 +150,29 @@ void TestSuite() {
 			//initialze globals
 			customersWithCompletedApps = new bool[10];
 			customersWithCompletedPics = new bool[10];
-			
+			isSenator = new bool[10];
+			numCustomersLeft = 10;
+			senatorWorking = NULL;
+			clerksCanWork = true;
+
 			//initialize customer threads
 			for(int i = 0; i < 10; i++) {
 				customersWithCompletedApps[i] = false;
 				customersWithCompletedPics[i] = false;
+
+				if(i<10){
+					isSenator[i]=false;
+				}
+				else{
+					isSenator[i] = true;
+				}
+
 				c = new Thread("Customer Thread");
 				c->Fork((VoidFunctionPtr)customer,i);
 			}
 
+			senatorLock = new Lock("Senator lock");
+			senatorCV = new Condition("Senator CV");
 			userChoice = 8;
 		} else if(userChoice == 2) {
 
@@ -175,6 +189,12 @@ void TestSuite() {
 			gottenPassport = new bool[5];
 			cashReceived = new int[5];
 			cashierCurrentCustomer = new int[1];
+			isSenator = new bool[5];
+			numCustomersLeft = 5;
+			senatorWorking = NULL;
+			clerksCanWork = true;
+			senatorLock = new Lock("Senator lock");
+			senatorCV = new Condition("Senator CV");
 
 			//make five customers
 			for(int i = 0; i < 5; i++) {
@@ -184,6 +204,13 @@ void TestSuite() {
 				cashierChecked[i] = false;
 				gottenPassport[i] = false;
 				cashReceived[i] = 0;
+
+				if(i<5){
+					isSenator[i]=false;
+				}
+				else{
+					isSenator[i] = true;
+				}
 
 				c = new Thread("Customer Thread");
 				c->Fork((VoidFunctionPtr)customer,i);
@@ -199,6 +226,14 @@ void TestSuite() {
 			picClerk.initialize("Picture Clerk Line Lock","PictureClerk", 1);
 			passPClerk.initialize("Passport Clerk Line Lock","PassportClerk", 1);
 			cashier.initialize("Cashier Line Lock","Cashier", 1);
+
+			isSenator = new bool[1];
+			isSenator[0] = false;
+			numCustomersLeft = 1;
+			senatorWorking = NULL;
+			clerksCanWork = true;
+			senatorLock = new Lock("Senator lock");
+			senatorCV = new Condition("Senator CV");
 
 			//-1 indicates a test case
 			for(int i = 0; i < appClerk.numOfClerks; i++) {
@@ -238,7 +273,13 @@ void TestSuite() {
 			cashReceived = new int[5];
 			cashierCurrentCustomer = new int[1];
 			numCustomersLeft = 5;
-			
+			isSenator = new bool[5];
+			numCustomersLeft = 5;
+			senatorWorking = NULL;
+			clerksCanWork = true;
+			senatorLock = new Lock("Senator lock");
+			senatorCV = new Condition("Senator CV");
+
 			//make one cashier
 			c = new Thread("Cashier Thread");
 			c->Fork((VoidFunctionPtr)cashierDo, 0);
@@ -251,7 +292,14 @@ void TestSuite() {
 				cashierChecked[i] = false;
 				gottenPassport[i] = false;
 				cashReceived[i] = 0;
-
+				
+				if(i<5){
+					isSenator[i]=false;
+				}
+				else{
+					isSenator[i] = true;
+				}
+				
 				c = new Thread("Customer Thread");
 				c->Fork((VoidFunctionPtr)customer,i);
 			}
