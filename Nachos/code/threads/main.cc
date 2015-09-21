@@ -90,15 +90,10 @@ main(int argc, char **argv)
     DEBUG('t', "Entering main");
     (void) Initialize(argc, argv);
     
-<<<<<<< HEAD
-//#ifdef THREADS
-    //ThreadTest();
-//#endif
-=======
+
 #ifdef THREADS
     //ThreadTest();
 #endif
->>>>>>> 48c22532e51ca0d6436a0fee8c5e479e62ef137f
 
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
 	argCount = 1;
