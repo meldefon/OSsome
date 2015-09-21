@@ -38,7 +38,7 @@ void ThreadTest() {
 
 
 	int numberOfSenators;
-	cout<<"How many Senators would you like to have? ";
+	cout<<"Number of Senators = ";
 	cin >> numberOfSenators;
 
 	size += numberOfSenators;
