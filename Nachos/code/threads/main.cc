@@ -63,10 +63,6 @@ extern void MailTest(int networkID);
 #ifdef THREADS
 extern void Part2(void), TestSuite(void);
 #endif
-<<<<<<< HEAD
-
-=======
->>>>>>> 48c22532e51ca0d6436a0fee8c5e479e62ef137f
 //----------------------------------------------------------------------
 // main
 // 	Bootstrap the operating system kernel.  
@@ -90,26 +86,21 @@ main(int argc, char **argv)
     DEBUG('t', "Entering main");
     (void) Initialize(argc, argv);
     
-<<<<<<< HEAD
-//#ifdef THREADS
-    //ThreadTest();
-//#endif
-=======
 #ifdef THREADS
     //ThreadTest();
 #endif
->>>>>>> 48c22532e51ca0d6436a0fee8c5e479e62ef137f
 
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
 	argCount = 1;
         if (!strcmp(*argv, "-z"))               // print copyright
             printf (copyright);
 #ifdef THREADS
-		if (!strcmp(*argv, "-T"))               // Test Suite
-            //TestSuite();
+        if (!strcmp(*argv, "-T"))               // Test Suite
+            printf("run test suite\n");
+			//TestSuite();
         if (!strcmp(*argv, "-P2"))               // Problem 2
-            ThreadTest();
-
+            //Problem2();
+			ThreadTest();
 #endif //THREADS
 #ifdef USER_PROGRAM
         if (!strcmp(*argv, "-x")) {        	// run a user program
