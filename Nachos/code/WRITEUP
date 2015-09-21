@@ -16,7 +16,15 @@ I. Requirements:
 
 
 II. Assumptions:
-	For our assumptions, we assumed that: clerks and customers would be not objects, but individual functions serving as objects; we need a variety of global variables to share data between functions; we needed a main function to initialize all the threads, data structures, and variables; assumed that when clerks go on break, customers can still line up since this would avoid clerks going back on break again once being woken up; and data sharing in thread-to-thread interaction could be done in anyway we wanted as long as it happened in the correct order.
+	For our assumptions, we assumed that: 
+		Clerks and customers would be not objects, but individual functions serving as objects.
+		We need a variety of global variables to share data between functions.
+		We needed a main function to initialize all the threads, data structures, and variables. 
+		When clerks go on break, customers can still line up since this would avoid clerks going back on break again once being woken up. 
+		The user would not enter bad input since it was not specified in the guidelines to be handled. 
+		For the money collected by the clerks, the received money amount was shared among each type of clerk rather than each individual clerk. 
+		For the test suite, the program would quit once the user selected one test since it was not specified in the guidelines as to how it should be handled; and data sharing in thread-to-thread interaction could be done in anyway we wanted as long as it happened in the correct order.
+	
 
 III. Design:
 	+ Part 1
@@ -26,7 +34,7 @@ III. Design:
 
 	+ Part 2 
 		For Part 2, we began our design by first discussing what data structures and variables we would need. During this process, realized the need for a lot of data sharing between threads and thus devised a way for global data sharing primarily using a struct and a few other primitive global variables. To do this, we first created a struct called Monitor that holds all of our locks, monitor variables, and condition variables needed to implement thread synchronization. Each monitor would be associated with each respective clerk, and would contain all necessary tools to make synchronization happen; we also felt this would be a cleaner approach since we could simply pass around pointers to monitors while calling the same functions. Using the struct Monitor, we then created four global monitor variables for each clerk that would be passed around our code. Alongside the four global struct Monitors, we also created a few primitive global variables that would be used to record shared data such as cash received, customers with completed applications or pictures, the number of customers left, and etc.. 
-Having discussed the necessary data structures and variables needed for the simulation, we can now discuss the functions and flow of the program needed to make it all work. Firstly, we created two new files called clerks.cpp and customer.cpp. In clerks.cpp, we placed all the clerks--including the manager--in their own functions for the specific thread-to-thread interaction with the customer. Alongside, we also created and used a variety of general helper functions for the clerks that would do tasks such as managing the lines or signalling customers in order to avoid copy-pasting the same code every time. In customer.cpp, we had a function called customer that is essentially a scheduler that would dictate what tasks a customer had left to do by calling other specific functions in the file; these specific functions would be the thread-to-thread interaction code between a clerk and customer. In addition, we also placed the Senator function in customers.cpp with the same approach since a Senator is essentially a special type of customer. Last but not least, the “main” of our simulation where all the threads, data structures, and global variables are initialized is in threadtest.cc. In threadtest.cc, we ask the user to input specific parameters regarding the number of clerks and customers, then initialize all the threads and necessary variables to make the simulation work.  
+		Having discussed the necessary data structures and variables needed for the simulation, we can now discuss the functions and flow of the program needed to make it all work. Firstly, we created two new files called clerks.cpp and customer.cpp. In clerks.cpp, we placed all the clerks--including the manager--in their own functions for the specific thread-to-thread interaction with the customer. Alongside, we also created and used a variety of general helper functions for the clerks that would do tasks such as managing the lines or signalling customers in order to avoid copy-pasting the same code every time. In customer.cpp, we had a function called customer that is essentially a scheduler that would dictate what tasks a customer had left to do by calling other specific functions in the file; these specific functions would be the thread-to-thread interaction code between a clerk and customer. In addition, we also placed the Senator function in customers.cpp with the same approach since a Senator is essentially a special type of customer. Last but not least, the “main” of our simulation where all the threads, data structures, and global variables are initialized is in threadtest.cc. In threadtest.cc, we ask the user to input specific parameters regarding the number of clerks and customers, then initialize all the threads and necessary variables to make the simulation work.  
 
 
 IV. Implementation:
@@ -128,17 +136,17 @@ V. Testing:
 		7. The behavior of Customers is proper when Senators arrive. This is before, during, and after.
 
 	+ How to test
-		To test each criteria, type in the nachos command “nachos -P2” to bring up the test menu. You will be provided with a menu that lists seven test options, each of which exactly say what each test is ready to show. To run a test, simply enter the number of the test as an integer argument. The test will run and show the behavior that is indicated in the criteria and then return the user to the beginning of the test menu again. 
+		To test each criteria, type in the nachos command “nachos -T” to bring up the test menu. You will be provided with a menu that lists seven test options, each of which exactly say what each test is ready to show. To run a test, simply enter the number of the test as an integer argument. The test will run and show the behavior that is indicated in the criteria and then return the user to the beginning of the test menu again. 
 
 	+ Test Output
 		Here the outputs that will be shown by each test which are specified by the test number.
 		1: There will be 10 customer threads started with no other clerk threads present. There will be 3 inactive application clerks and 3 inactive picture clerks. It will be shown that customers get into line one at a time, and that they will always pick either the shortest bribe line or regular line. The correct flow of customers will be demonstrated by following the output as to who gets in line first and in which line. All lines start with zero count.
-		2:
+		2: We instantiate 5 customers and 1 clerk each. The manager periodically prints totals, which show that office sales are correctly tracked. Note that depending on the random seed used,  the manager does not print the totals after every change, and also that he may not report the totals at the end. This is an unavoidable thread issue. But by checking the totals as they change, we see that the manager is behaving as expected.
 		3: There will be 5 customer threads and 1 cashier thread in this test. In this test, the customers will approach the Cashier one at a time and leave once they have paid; for the purpose of this test, the customer has been assumed to have completed all interactions with the other clerks. In addition, the Cashier will only serve another customer once the customer has left the passport office. The correct output will be demonstrated by observing that the customer leaves then the Cashier begins to conduct transactions again once he is gone.
 		4: There will be 1 thread of each type of clerk in this test. The clerk threads will all start and then go on break since there will be no customers in line for any of them. The output will show clerks going on break followed by the test terminating once they are all gone.
 		5: There will be 5 customer threads, 1 cashier thread, and 1 manager. The cashier will start on break and the customers will begin to line up behind the cashier. Once the cashier’s line count exceeds 3, the cashier will then be woken up by the manager and the customer’s will effectively be able to conduct their business and leave the passport office. The output should show the cashier going on break followed by the customer’s lining up; it should then show the manager waking up the cashier and the customers then conducting business then leaving.
-		6:
-		7:
+		6: We instantiate 10 customers and 1 clerk each. If there were race conditions affecting the total office sales, one would expect that with so many customers, the total sales might differ from run to run. By running this scenario multiple times and verifying that the total sales are always 1000, this test demonstrates that the total sales are not subject to a race condition.
+		7: We run a scenario with 4 customers, 1 clerk each, and 1 senator. You can verify that the normal customers (customers 0-3) are served and leave the passport office, but ONLY AFTER the senator (customer 4) is served and leaves. Running the scenario multiple times adds certainty that the customers and senators are behaving as expected.
 
 
 VI. Discussion:
@@ -148,8 +156,10 @@ VI. Discussion:
 		Our result was that everything did run in synchronized order as the guidelines had specified; this can be see in the output of the tests alongside the complete passport office simulation.
 	+ Explanation
 		Our explanation for why everything worked is quite simple: we effectively used locks with shared data, and condition variables when dictating the order by which threads access this shared data. All of our tests, including the simulation, run the clerk and customer functions without any modification; nothing is hard-coded or pseudo. 
-	
-VIII. Miscellaneous:
+
+
+
+
 
 
 
