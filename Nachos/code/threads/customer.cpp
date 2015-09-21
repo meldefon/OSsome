@@ -16,6 +16,7 @@ bool *passportClerkChecked;
 bool *cashierChecked;
 bool *gottenPassport;
 int *cashReceived;
+bool bribesEnabled;
 
 int* appClerkCurrentCustomer;
 int* pictureClerkCurrentCustomer;
@@ -73,7 +74,7 @@ int getInLine(Monitor *clerk, int socialSecurityNum, int* cash) {
 			wantToBribe = 1;
 		}
 		//bool wantToBribe = socialSecurityNum==4;
-		if(wantToBribe==0 && *cash>100){
+		if(wantToBribe==0 && *cash>100 && bribesEnabled){
 			*cash-=500;
 			lineCount = clerk->bribeLineCount;
 			lineCV = clerk->bribeLineCV;
@@ -405,7 +406,7 @@ void customer(int social) {
 	//Clean up, let people wake up
 	if(isSenator[social]){
 		cout<<"Customer (Senator) #"<<socialSecurityNum<<" is leaving the Passport Office.\n";
-		cout<<socialSecurityNum<<"\n";
+		//cout<<socialSecurityNum<<"\n";
 		senatorWorking = NULL;
 		senatorLock->Acquire();
 		senatorCV->Broadcast(senatorLock);
@@ -414,7 +415,12 @@ void customer(int social) {
 	}
 	else {
 		cout << "Customer #" << socialSecurityNum << " is leaving the Passport Office.\n";
-		cout<<socialSecurityNum<<"\n";
+		//cout<<socialSecurityNum<<"\n";
 	}
 	numCustomersLeft-=1;
+	if(numCustomersLeft==0 && !bribesEnabled){
+		int totalSales = appClerk.cashReceived + picClerk.cashReceived +
+						 passPClerk.cashReceived + cashier.cashReceived;
+		cout<<"TOTAL SALES: "<<totalSales<<"\n";
+	}
 }

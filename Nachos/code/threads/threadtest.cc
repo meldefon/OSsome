@@ -55,6 +55,7 @@ void ThreadTest() {
 	gottenPassport = new bool[size];
 	cashReceived = new int[size];
 	isSenator = new bool[size];
+	bribesEnabled = true;
 
 	//Initialize everything
 	for(int i = 0;i<size;i++) {
@@ -125,7 +126,7 @@ void ThreadTest() {
 void TestSuite() {
 
 	Thread *c;
-	int userChoice = 1;
+	int userChoice;
 	cout<<"Test Suite\n\n";
 
 	while(userChoice != 8) {
@@ -175,6 +176,69 @@ void TestSuite() {
 			senatorCV = new Condition("Senator CV");
 			userChoice = 8;
 		} else if(userChoice == 2) {
+			//This test sends 5 customers in plus 1 of each type of clerk. Demonstrates that each type of
+			//clerk's money is tracked correctly by the manager
+			cashier.initialize("Cashier Line Lock","Cashier", 1);
+			picClerk.initialize("Picture Clerk Line Lock","PictureClerk", 1);
+			passPClerk.initialize("Passport Clerk Line Lock","PassportClerk", 1);
+			appClerk.initialize("Application Clerk Line Lock","ApplicationClerk", 1);
+
+			//initialze globals
+			customersWithCompletedApps = new bool[5];
+			customersWithCompletedPics = new bool[5];
+			passportClerkChecked = new bool[5];
+			cashierChecked = new bool[5];
+			gottenPassport = new bool[5];
+			cashReceived = new int[5];
+			cashierCurrentCustomer = new int[1];
+			numCustomersLeft = 5;
+			isSenator = new bool[5];
+			numCustomersLeft = 5;
+			senatorWorking = NULL;
+			clerksCanWork = true;
+			senatorLock = new Lock("Senator lock");
+			senatorCV = new Condition("Senator CV");
+
+			//make one appClerk
+			c = new Thread("AppClerk Thread");
+			c->Fork((VoidFunctionPtr)applicationClerk, 0);
+
+			//make one appClerk
+			c = new Thread("PicClerk Thread");
+			c->Fork((VoidFunctionPtr)pictureClerk, 0);
+
+			//make one passportClerk
+			c = new Thread("passportClerk Thread");
+			c->Fork((VoidFunctionPtr)passportClerk, 0);
+
+			//make one cashier
+			c = new Thread("Cashier Thread");
+			c->Fork((VoidFunctionPtr)cashierDo, 0);
+
+			//make five customers
+			for(int i = 0; i < 5; i++) {
+				customersWithCompletedApps[i] = true;
+				customersWithCompletedPics[i] = true;
+				passportClerkChecked[i] = true;
+				cashierChecked[i] = false;
+				gottenPassport[i] = false;
+				cashReceived[i] = 0;
+
+				if(i<5){
+					isSenator[i]=false;
+				}
+				else{
+					isSenator[i] = true;
+				}
+
+				c = new Thread("Customer Thread");
+				c->Fork((VoidFunctionPtr)customer,i);
+			}
+
+			c = new Thread("Manager Thread");
+			c->Fork((VoidFunctionPtr)managerDo, 0);
+
+
 
 			userChoice = 8;
 		} else if(userChoice == 3) { //cashier and customer passport test
@@ -309,10 +373,135 @@ void TestSuite() {
 			userChoice = 8;
 
 		} else if(userChoice == 6) {
+			//This test sends 4 customers in plus 1 senator
+			cashier.initialize("Cashier Line Lock","Cashier", 1);
+			picClerk.initialize("Picture Clerk Line Lock","PictureClerk", 1);
+			passPClerk.initialize("Passport Clerk Line Lock","PassportClerk", 1);
+			appClerk.initialize("Application Clerk Line Lock","ApplicationClerk", 1);
 
+			bribesEnabled = false;
+			//initialze globals
+			int numCustsForTest = 10;
+			customersWithCompletedApps = new bool[numCustsForTest];
+			customersWithCompletedPics = new bool[numCustsForTest];
+			passportClerkChecked = new bool[numCustsForTest];
+			cashierChecked = new bool[numCustsForTest];
+			gottenPassport = new bool[numCustsForTest];
+			cashReceived = new int[numCustsForTest];
+			cashierCurrentCustomer = new int[1];
+			numCustomersLeft = numCustsForTest;
+			isSenator = new bool[numCustsForTest];
+			numCustomersLeft = numCustsForTest;
+			senatorWorking = NULL;
+			clerksCanWork = true;
+			senatorLock = new Lock("Senator lock");
+			senatorCV = new Condition("Senator CV");
+
+			//make one appClerk
+			c = new Thread("AppClerk Thread");
+			c->Fork((VoidFunctionPtr)applicationClerk, 0);
+
+			//make one appClerk
+			c = new Thread("PicClerk Thread");
+			c->Fork((VoidFunctionPtr)pictureClerk, 0);
+
+			//make one passportClerk
+			c = new Thread("passportClerk Thread");
+			c->Fork((VoidFunctionPtr)passportClerk, 0);
+
+			//make one cashier
+			c = new Thread("Cashier Thread");
+			c->Fork((VoidFunctionPtr)cashierDo, 0);
+
+			//make five customers
+			for(int i = 0; i < numCustsForTest; i++) {
+				customersWithCompletedApps[i] = true;
+				customersWithCompletedPics[i] = true;
+				passportClerkChecked[i] = true;
+				cashierChecked[i] = false;
+				gottenPassport[i] = false;
+				cashReceived[i] = 0;
+
+				if(i<numCustsForTest){
+					isSenator[i]=false;
+				}
+				else{
+					isSenator[i] = true;
+				}
+
+				c = new Thread("Customer Thread");
+				c->Fork((VoidFunctionPtr)customer,i);
+			}
+
+			c = new Thread("Manager Thread");
+			c->Fork((VoidFunctionPtr)managerDo, 0);
 			userChoice = 8;
+
+
 		} else if(userChoice == 7) {
-			
+			//This test sends 4 customers in plus 1 senator
+			cashier.initialize("Cashier Line Lock","Cashier", 1);
+			picClerk.initialize("Picture Clerk Line Lock","PictureClerk", 1);
+			passPClerk.initialize("Passport Clerk Line Lock","PassportClerk", 1);
+			appClerk.initialize("Application Clerk Line Lock","ApplicationClerk", 1);
+
+			//initialze globals
+			customersWithCompletedApps = new bool[5];
+			customersWithCompletedPics = new bool[5];
+			passportClerkChecked = new bool[5];
+			cashierChecked = new bool[5];
+			gottenPassport = new bool[5];
+			cashReceived = new int[5];
+			cashierCurrentCustomer = new int[1];
+			numCustomersLeft = 5;
+			isSenator = new bool[5];
+			numCustomersLeft = 5;
+			senatorWorking = NULL;
+			clerksCanWork = true;
+			senatorLock = new Lock("Senator lock");
+			senatorCV = new Condition("Senator CV");
+
+			//make one appClerk
+			c = new Thread("AppClerk Thread");
+			c->Fork((VoidFunctionPtr)applicationClerk, 0);
+
+			//make one appClerk
+			c = new Thread("PicClerk Thread");
+			c->Fork((VoidFunctionPtr)pictureClerk, 0);
+
+			//make one passportClerk
+			c = new Thread("passportClerk Thread");
+			c->Fork((VoidFunctionPtr)passportClerk, 0);
+
+			//make one cashier
+			c = new Thread("Cashier Thread");
+			c->Fork((VoidFunctionPtr)cashierDo, 0);
+
+			//make five customers
+			for(int i = 0; i < 5; i++) {
+				customersWithCompletedApps[i] = true;
+				customersWithCompletedPics[i] = true;
+				passportClerkChecked[i] = true;
+				cashierChecked[i] = false;
+				gottenPassport[i] = false;
+				cashReceived[i] = 0;
+
+				if(i<4){
+					isSenator[i]=false;
+				}
+				else{
+					isSenator[i] = true;
+				}
+
+				c = new Thread("Customer Thread");
+				c->Fork((VoidFunctionPtr)customer,i);
+			}
+
+			c = new Thread("Manager Thread");
+			c->Fork((VoidFunctionPtr)managerDo, 0);
+			userChoice = 8;
+
+
 			userChoice = 8;
 		}
 	}
