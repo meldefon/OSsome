@@ -97,7 +97,7 @@ main(int argc, char **argv)
 #ifdef THREADS
         if (!strcmp(*argv, "-T"))               // Test Suite
             printf("run test suite\n");
-			//TestSuite();
+			TestSuite();
         if (!strcmp(*argv, "-P2"))               // Problem 2
             //Problem2();
 			ThreadTest();
