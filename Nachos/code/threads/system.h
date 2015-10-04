@@ -16,6 +16,9 @@
 #include "stats.h"
 #include "timer.h"
 
+// Includes for assignment two, keeping them separate for clarity
+#include "structs.h" 
+
 // Initialization and cleanup routines
 extern void Initialize(int argc, char **argv); 	// Initialization,
 						// called before anything else
