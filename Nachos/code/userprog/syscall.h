@@ -148,13 +148,13 @@ void Yield();
  int CreateLock();	
 
  /* Destroys a lock for the user program */
- void DestroyLock(int id);
+ bool DestroyLock(int id);
 
  /* Acquires a lock for the user program */
- void Acquire(int id);
+ bool Acquire(int id);
 
  /* Release a lock for the user program */	
- void Release(int id);
+ bool Release(int id);
 
  /* User-level Condition operations: CreateCondition, DestroyCondition, Signal, Wait, Broadcast.
  * Allows threads to run within a user program while using condition variables.   
@@ -164,16 +164,16 @@ void Yield();
  int CreateCondition();
 
  /* Destroys a condition variable for the user program */
- void DestroyCondition(int id);
+ bool DestroyCondition(int id);
 
  /* Signals a thread for the user program */	
- void Signal(int id);
+ bool Signal(int c, int l);
 
  /* Allows a thread to wait in the user program */
- void Wait(int id);
+ bool Wait(int c, int l);
 
  /* Broadcasts to threads for the user program */	
- void Broadcast(int id);
+ bool Broadcast(int c, int l);
 
 #endif /* IN_ASM */
 

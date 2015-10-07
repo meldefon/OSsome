@@ -15,9 +15,9 @@
 #include "interrupt.h"
 #include "stats.h"
 #include "timer.h"
-
-// Includes for assignment two, keeping them separate for clarity
-#include "structs.h" 
+#include <vector>
+#include "structs.h"
+using namespace std;
 
 // Initialization and cleanup routines
 extern void Initialize(int argc, char **argv); 	// Initialization,
@@ -31,6 +31,10 @@ extern Scheduler *scheduler;			// the ready list
 extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
 extern Timer *timer;				// the hardware alarm clock
+
+// New globals implemented for assignment 2, holds user locks and condtions
+extern vector<KernelLock*> locks;
+extern vector<KernelCondition*> conditions;
 
 #ifdef USER_PROGRAM
 #include "machine.h"

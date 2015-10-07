@@ -1,4 +1,4 @@
-// struct.h 
+// structs.h 
 // Structs used in kernel mode for Nachos are defined here
 // Created for assignment two, will be used for system calls by user
 
@@ -6,6 +6,7 @@
 #define STRUCTS_H
 
 #include "synch.h"
+class AddrSpace; 
 
 // Struct for the assignment two system calls, we shall call it KernelLock
 // It will contain the neccessary variables to implement system call functions
