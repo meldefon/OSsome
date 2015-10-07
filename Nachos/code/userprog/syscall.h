@@ -30,6 +30,20 @@
 #define SC_Fork		9
 #define SC_Yield	10
 
+/* Assignment 3 systems call that are going to be implemented
+* we will keep them separate since we do not want to mix up
+* old code with new code for debugging purposes
+*/
+#define SC_Acquire			11
+#define SC_Release			12
+#define SC_Wait				13
+#define SC_Signal			14
+#define	SC_Broadcast		15
+#define SC_CreateLock		16
+#define SC_DestroyLock		17
+#define SC_CreateCondition	18
+#define SC_DestroyCondition	19
+
 #define MAXFILENAME 256
 
 #ifndef IN_ASM
@@ -124,7 +138,42 @@ void Fork(void (*func)());
 /* Yield the CPU to another runnable thread, whether in this address space 
  * or not. 
  */
-void Yield();		
+void Yield();
+
+/* User-level Lock operations: CreateLock, DestroyLock, Acquire, Release.
+ * Allows threads to run within a user program while using synchronization.   
+ */
+
+/* Creates a lock for the user program */
+ int CreateLock();	
+
+ /* Destroys a lock for the user program */
+ bool DestroyLock(int id);
+
+ /* Acquires a lock for the user program */
+ bool Acquire(int id);
+
+ /* Release a lock for the user program */	
+ bool Release(int id);
+
+ /* User-level Condition operations: CreateCondition, DestroyCondition, Signal, Wait, Broadcast.
+ * Allows threads to run within a user program while using condition variables.   
+ */
+
+ /* Creates a condition variable for the user program */	
+ int CreateCondition();
+
+ /* Destroys a condition variable for the user program */
+ bool DestroyCondition(int id);
+
+ /* Signals a thread for the user program */	
+ bool Signal(int c, int l);
+
+ /* Allows a thread to wait in the user program */
+ bool Wait(int c, int l);
+
+ /* Broadcasts to threads for the user program */	
+ bool Broadcast(int c, int l);
 
 #endif /* IN_ASM */
 

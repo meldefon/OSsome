@@ -19,6 +19,14 @@ Statistics *stats;			// performance metrics
 Timer *timer;				// the hardware timer device,
 					// for invoking context switches
 
+// New globals implemented for assignment 2, holds user locks and condtions
+vector<KernelLock*> locks;
+vector<KernelCondition*> conditions;
+
+// Locks and Conditions containers 
+//vector<KernelLock> locks;
+//vector<KernelCondition> conditions;
+
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
 #endif
