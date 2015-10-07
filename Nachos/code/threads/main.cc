@@ -95,12 +95,19 @@ main(int argc, char **argv)
         if (!strcmp(*argv, "-z"))               // print copyright
             printf (copyright);
 #ifdef THREADS
-        if (!strcmp(*argv, "-T"))               // Test Suite
+
+        if (!strcmp(*argv, "-T")){           // Test Suite
             printf("run test suite\n");
 			TestSuite();
-        if (!strcmp(*argv, "-P2"))               // Problem 2
+			}
+        if (!strcmp(*argv, "-P2")){           // Problem 2
             //Problem2();
+            printf("Run scenario\n");
 			ThreadTest();
+		}
+		if(!strcmp(*argv, "-SyTest")){
+			ThreadTest();
+		}
 #endif //THREADS
 #ifdef USER_PROGRAM
         if (!strcmp(*argv, "-x")) {        	// run a user program

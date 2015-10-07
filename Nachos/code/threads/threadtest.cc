@@ -1,6 +1,7 @@
 #include "copyright.h"
 #include "system.h"
 #include <iostream>
+#include <test_code.cc>
 using namespace std;
 #include "synch.h"
 #include "monitor.h"
@@ -9,6 +10,7 @@ using namespace std;
 #include "globalVars.h"
 
 void ThreadTest() {
+	STestSuite();
 
   	int size; //will be used to take in user input for the sizes of specific variables
   	int senatorSize;
