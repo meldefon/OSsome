@@ -231,9 +231,9 @@ void Close_Syscall(int fd) {
     }
 }
 
-bool Acquire_Syscall(int id) { 
+int Acquire_Syscall(int id) { 
   if(id > (locks.size() - 1) || id < 0) { 
-    return false; //if the id they gave us is bad, return false
+    return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
 
@@ -242,13 +242,13 @@ bool Acquire_Syscall(int id) {
     }
 
     kl->lock->Acquire(); //acquire the lock
-    return true; //return true once acquired
+    return 0; //return 0 once acquired
   }
 }
 
-bool Release_Syscall(int id) { 
+int Release_Syscall(int id) { 
   if(id > (locks.size() - 1) || id < 0) { 
-    return false; //if the id they gave us is bad, return false
+    return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
 
@@ -257,13 +257,13 @@ bool Release_Syscall(int id) {
     }
 
     kl->lock->Release(); //release the lock
-    return true; //return true once released
+    return 0; //return 0 once released
   }
 }
 
-bool Wait_Syscall(int c, int l) { 
+int Wait_Syscall(int c, int l) { 
   if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
-    return false; //if the id they gave us is bad, return false
+    return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
     KernelCondition *kc = conditions[c]; //grab the struct
@@ -273,13 +273,13 @@ bool Wait_Syscall(int c, int l) {
     }
 
     kc->condition->Wait(kl->lock); //wait
-    return true; //we were able to wait
+    return 0; //we were able to wait
   } 
 }
 
-bool Signal_Syscall(int c, int l) { 
+int Signal_Syscall(int c, int l) { 
   if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
-    return false; //if the id they gave us is bad, return false
+    return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
     KernelCondition *kc = conditions[c]; //grab the struct
@@ -289,13 +289,13 @@ bool Signal_Syscall(int c, int l) {
     }
 
     kc->condition->Signal(kl->lock); //signal
-    return true; //we were able to signal
+    return 0; //we were able to signal
   } 
 }
 
-bool Broadcast_Syscall(int c, int l) {
+int Broadcast_Syscall(int c, int l) {
   if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
-    return false; //if the id they gave us is bad, return false
+    return -1; //if the id they gave us is bad, return false
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
     KernelCondition *kc = conditions[c]; //grab the struct
@@ -305,7 +305,7 @@ bool Broadcast_Syscall(int c, int l) {
     }
 
     kc->condition->Broadcast(kl->lock); //broadcast
-    return true; //we were able to broadcast
+    return 0; //we were able to broadcast
   }
 }
 
@@ -320,9 +320,9 @@ int CreateLock_Syscall() {
   return (locks.size() - 1); //return new index of lock
 }
 
-bool DestroyLock_Syscall(int id) { 
+int DestroyLock_Syscall(int id) { 
   if(id > (locks.size() - 1) || id < 0) { 
-    return false; //if the id they gave us is bad, return false
+    return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
 
@@ -331,7 +331,7 @@ bool DestroyLock_Syscall(int id) {
     }
 
     kl->isToBeDeleted = true; //set it to be deleted
-    return true; //return true
+    return 0; //return 0
   } 
 }
 
@@ -346,9 +346,9 @@ int CreateCondition_Syscall() {
   return (conditions.size() - 1); //return new index of condition 
 }
 
-bool DestroyCondition_Syscall(int id) { 
+int DestroyCondition_Syscall(int id) { 
   if(id > (conditions.size() - 1) || id < 0) { 
-    return false; //if the id they gave us is bad, return false
+    return -1; //if the id they gave us is bad, return false
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelCondition *kc = conditions[id]; //grab the struct
 
@@ -357,7 +357,7 @@ bool DestroyCondition_Syscall(int id) {
     }
 
     kc->isToBeDeleted = true; //set it to be deleted
-    return true; //return true
+    return 0; //return 0
   }
 }
 

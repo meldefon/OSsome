@@ -1,4 +1,4 @@
-/* syscalls.h 
+x/* syscalls.h 
  * 	Nachos system call interface.  These are Nachos kernel operations
  * 	that can be invoked from user programs, by trapping to the kernel
  *	via the "syscall" instruction.
@@ -148,13 +148,13 @@ void Yield();
  int CreateLock();	
 
  /* Destroys a lock for the user program */
- bool DestroyLock(int id);
+ int DestroyLock(int id);
 
  /* Acquires a lock for the user program */
- bool Acquire(int id);
+ int Acquire(int id);
 
  /* Release a lock for the user program */	
- bool Release(int id);
+ int Release(int id);
 
  /* User-level Condition operations: CreateCondition, DestroyCondition, Signal, Wait, Broadcast.
  * Allows threads to run within a user program while using condition variables.   
@@ -164,16 +164,16 @@ void Yield();
  int CreateCondition();
 
  /* Destroys a condition variable for the user program */
- bool DestroyCondition(int id);
+ int DestroyCondition(int id);
 
  /* Signals a thread for the user program */	
- bool Signal(int c, int l);
+ int Signal(int c, int l);
 
  /* Allows a thread to wait in the user program */
- bool Wait(int c, int l);
+ int Wait(int c, int l);
 
  /* Broadcasts to threads for the user program */	
- bool Broadcast(int c, int l);
+ int Broadcast(int c, int l);
 
 #endif /* IN_ASM */
 
