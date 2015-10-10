@@ -362,16 +362,30 @@ bool DestroyCondition_Syscall(int id) {
 }
 
 void Exit_Syscall(int status) {
+    currentThread->Finish(); //Stop running the current thread
 
+    //Simplest case - if nothing is left, just halt the whole run
+    interrupt->Halt();
 }
 
 /*SpaceId Exec_Syscall(char *name) {
 
+}*/
+
+void kernel_thread(int vaddr){
+    DEBUG('a', "In kernel_thread about to run new thread\n");
+    //Need to set the registers
+    machine->Run();
 }
 
-void Fork_Syscall(void (*func)()) {
+void Fork_Syscall(int forkArg) {
+    DEBUG('a',"Fork syscall being executed");
+    Thread* t = new Thread("");
+    t->space = currentThread->space;
+    //int forkArg = machine->ReadRegister(4);
+    t->Fork(kernel_thread,forkArg);
+}
 
-} */
 
 void Yield_Syscall() {
   currentThread->Yield();
@@ -397,11 +411,13 @@ void ExceptionHandler(ExceptionType which) {
     DEBUG('a', "Exec syscall.\n");
     Exec_Syscall(machine->ReadRegister(4));
     break;
-      case SC_Fork:
+            */
+    case SC_Fork:
     DEBUG('a', "Fork syscall.\n");
     Fork_Syscall(machine->ReadRegister(4));
-    break; */
-      case SC_Yield:
+    break;
+
+    case SC_Yield:
     DEBUG('a', "Yield syscall.\n");
     Yield_Syscall();
     break;

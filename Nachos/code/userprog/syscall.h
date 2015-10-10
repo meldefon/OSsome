@@ -133,7 +133,7 @@ void Close(OpenFileId id);
 /* Fork a thread to run a procedure ("func") in the *same* address space 
  * as the current thread.
  */
-void Fork(void (*func)());
+void Fork(int forkArg);
 
 /* Yield the CPU to another runnable thread, whether in this address space 
  * or not. 
@@ -145,35 +145,35 @@ void Yield();
  */
 
 /* Creates a lock for the user program */
- int CreateLock();	
+int CreateLock();
 
  /* Destroys a lock for the user program */
- bool DestroyLock(int id);
+bool DestroyLock(int id);
 
  /* Acquires a lock for the user program */
- bool Acquire(int id);
+bool Acquire(int id);
 
  /* Release a lock for the user program */	
- bool Release(int id);
+bool Release(int id);
 
  /* User-level Condition operations: CreateCondition, DestroyCondition, Signal, Wait, Broadcast.
  * Allows threads to run within a user program while using condition variables.   
  */
 
  /* Creates a condition variable for the user program */	
- int CreateCondition();
+int CreateCondition();
 
  /* Destroys a condition variable for the user program */
- bool DestroyCondition(int id);
+bool DestroyCondition(int id);
 
  /* Signals a thread for the user program */	
- bool Signal(int c, int l);
+bool Signal(int c, int l);
 
  /* Allows a thread to wait in the user program */
- bool Wait(int c, int l);
+bool Wait(int c, int l);
 
  /* Broadcasts to threads for the user program */	
- bool Broadcast(int c, int l);
+bool Broadcast(int c, int l);
 
 #endif /* IN_ASM */
 
