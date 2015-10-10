@@ -10,7 +10,7 @@ using namespace std;
 #include "globalVars.h"
 
 void ThreadTest() {
-	STestSuite();
+	//STestSuite();
 
   	int size; //will be used to take in user input for the sizes of specific variables
   	int senatorSize;
@@ -51,46 +51,68 @@ void ThreadTest() {
 	//number as an index
 	numCustomersLeft = size;
 	customersWithCompletedApps = new bool[size];
+	//customersWithCompletedApps = (int*) malloc(size * sizeof(int));
 	customersWithCompletedPics = new bool[size];
+	//customersWithCompletedPics = (int*) malloc(size * sizeof(int));
 	passportClerkChecked = new bool[size];
+	//passportClerkChecked = (int*) malloc(size * sizeof(int));
 	cashierChecked = new bool[size];
+	//cashierChecked = (int*) malloc(size * sizeof(int));
 	gottenPassport = new bool[size];
+	//gottenPassport = (int*) malloc(size * sizeof(int));
 	cashReceived = new int[size];
+	//cashReceived = (int*) malloc(size * sizeof(int));
 	isSenator = new bool[size];
+	//isSenator = (int*) malloc(size * sizeof(int));
 	bribesEnabled = true;
+	//bribesEnabled = 1;
 
 	//Initialize everything
+	//int sizeOfInt = sizeof(int);
 	for(int i = 0;i<size;i++) {
 		customersWithCompletedApps[i] = false;
+		//*(customersWithCompletedApps + (i * sizeOfInt)) = 0;
 		customersWithCompletedPics[i] = false;
+		//*(customersWithCompletedPics + (i * sizeOfInt)) = 0;
 		passportClerkChecked[i] = false;
+		//*(passportClerkChecked + (i * sizeOfInt)) = 0;
 		cashierChecked[i] = false;
+		//*(cashierChecked + (i * sizeOfInt)) = 0;
 		gottenPassport[i] = false;
+		//*(gottenPassport + (i * sizeOfInt)) = 0;		
 		cashReceived[i] = 0;
+		//*(cashReceived + (i * sizeOfInt)) = 0;		
 		if(i<size-numberOfSenators){
 			isSenator[i]=false;
+			//*(isSenator + (i * sizeOfInt)) = 0;		
 		}
 		else{
 			isSenator[i] = true;
+			//*(isSenator + (i * sizeOfInt)) = 1;		
 		}
 	}
 	senatorWorking = NULL;
 	clerksCanWork = true;
-
+	//clerksCanWork = 1;
 
 	//Instantiate senator lock/CV
 	senatorLock = new Lock("Senator lock");
+	//senatorLock = CreateLock();
 	senatorCV = new Condition("Senator CV");
+	//senatorCV = CreateCondition();
 
 	//will hold currentCust SSN for checking
 	appClerkCurrentCustomer = new int[appClerk.numOfClerks];
+	//appClerkCurrentCustomer = (int*) malloc(appClerk.numOfClerks * sizeOfInt);
 	pictureClerkCurrentCustomer = new int[picClerk.numOfClerks];
+	//pictureClerkCurrentCustomer = (int*) malloc(picClerk.numOfClerks * sizeOfInt);	
 	passportClerkCurrentCustomer = new int[passPClerk.numOfClerks];
+	//passportClerkCurrentCustomer = (int*) malloc(passPClerk.numOfClerks * sizeOfInt);	
 	cashierCurrentCustomer = new int[cashier.numOfClerks];
+	//cashierCurrentCustomer = (int*) malloc(cashier.numOfClerks * sizeOfInt);	
 
 	//initialize all the threads here 
 	Thread *c;
-
 
 	for(int i = 0; i < size; i++) {
 		c = new Thread("Customer Thread");
@@ -126,7 +148,7 @@ void ThreadTest() {
 }
 
 void TestSuite() {
-
+/*
 	Thread *c;
 	int userChoice;
 	cout<<"Test Suite\n\n";
@@ -507,4 +529,5 @@ void TestSuite() {
 			userChoice = 8;
 		}
 	}
+*/
 }
