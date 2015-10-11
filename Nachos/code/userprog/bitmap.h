@@ -18,6 +18,7 @@
 #include "copyright.h"
 #include "utility.h"
 #include "openfile.h"
+//#include "synch.h"
 
 // Definitions helpful for representing a bitmap as an array of integers
 #define BitsInByte 	8
@@ -58,7 +59,8 @@ class BitMap {
 					// (rounded up if numBits is not a
 					//  multiple of the number of bits in
 					//  a word)
-    unsigned int *map;			// bit storage
+    //unsigned int *map;			// bit storage
+    unsigned int map[100];
 };
 
 #endif // BITMAP_H

@@ -17,6 +17,10 @@
 #include "timer.h"
 #include <vector>
 #include "structs.h"
+#include "bitmap.h"
+
+//#include "table.h"
+//#include "addrspace.h"
 using namespace std;
 
 // Initialization and cleanup routines
@@ -31,6 +35,9 @@ extern Scheduler *scheduler;			// the ready list
 extern Interrupt *interrupt;			// interrupt status
 extern Statistics *stats;			// performance metrics
 extern Timer *timer;				// the hardware alarm clock
+
+//class BitMap;
+extern BitMap* freePageBitMap;
 
 // New globals implemented for assignment 2, holds user locks and condtions
 extern vector<KernelLock*> locks;

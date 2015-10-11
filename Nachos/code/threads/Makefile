@@ -8,7 +8,8 @@
 # of liability and disclaimer of warranty provisions.
 
 DEFINES = -DTHREADS
-INCPATH = -I../threads -I../machine
+#INCPATH = -I../threads -I../machine -I../userprog
+INCPATH = -I../bin -I../filesys -I../userprog -I../threads -I../machine
 HFILES = $(THREAD_H)
 CFILES = $(THREAD_C)
 C_OFILES = $(THREAD_O)

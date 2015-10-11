@@ -368,18 +368,64 @@ void Exit_Syscall(int status) {
     interrupt->Halt();
 }
 
-/*SpaceId Exec_Syscall(char *name) {
+void kernel_exec(int unused){
 
-}*/
+
+    currentThread->space->InitRegisters();		// set the initial register values
+    currentThread->space->RestoreState();		// load page table register
+
+    int nextStackAddr = currentThread->space->getNextStackAddr(); //Get next stack address
+    machine->WriteRegister(StackReg, nextStackAddr); //Set next stack address
+    DEBUG('e',"Setting first thread's stack address to %d\n",nextStackAddr);
+
+
+    machine->Run();			// jump to the user progam
+    ASSERT(FALSE);			// machine->Run never returns;
+    // the address space exits
+    // by doing the syscall "exit"
+}
+
+SpaceId Exec_Syscall(int fileID) {
+
+    //Get executable from open list, initialize address space
+    //TODO This will break if the user is stupid, so we need to check if the ID is valid
+    OpenFile *executable = (OpenFile *) currentThread->space->fileTable.Get(fileID);
+    AddrSpace *space;
+
+    if (executable == NULL) {
+        printf("Unable to open file %d\n", fileID);
+        return 0; //TODO fix
+    }
+
+    space = new AddrSpace(executable);
+    delete executable;			// close file
+
+    //Make new thread, set its new address space
+    Thread* t = new Thread("");
+    t->space = space;
+
+    //After this point, we have no more control of the new process from here
+    t->Fork(kernel_exec,0);
+
+    return 0; //TODO fix
+
+}
 
 void kernel_thread(int vaddr){
-    DEBUG('a', "In kernel_thread about to run new thread\n");
+    //DEBUG('a', "In kernel_thread about to run new thread\n");
     //Need to set the registers
+    currentThread->space->InitRegisters();
+    machine->WriteRegister(PCReg, vaddr);
+    machine->WriteRegister(NextPCReg, vaddr + 4);
+    int nextStackAddr = currentThread->space->getNextStackAddr();
+    machine->WriteRegister(StackReg, nextStackAddr);
+    DEBUG('f',"Assigning new thread's stack address to %d \n",nextStackAddr);
+    //machine->WriteRegister(StackReg, numPages * PageSize - 16);
     machine->Run();
 }
 
 void Fork_Syscall(int forkArg) {
-    DEBUG('a',"Fork syscall being executed");
+    //DEBUG('a',"Fork syscall being executed\n");
     Thread* t = new Thread("");
     t->space = currentThread->space;
     //int forkArg = machine->ReadRegister(4);
@@ -394,6 +440,7 @@ void Yield_Syscall() {
 void ExceptionHandler(ExceptionType which) {
     int type = machine->ReadRegister(2); // Which syscall?
     int rv=0; 	// the return value from a syscall
+    DEBUG('a',"Syscall: %d \n",type);
 
     if ( which == SyscallException ) {
 	switch (type) {
@@ -406,12 +453,12 @@ void ExceptionHandler(ExceptionType which) {
       case SC_Exit:
     DEBUG('a', "Exit syscall.\n");
     Exit_Syscall(machine->ReadRegister(4));
-    break; /*
+    break;
       case SC_Exec:
     DEBUG('a', "Exec syscall.\n");
     Exec_Syscall(machine->ReadRegister(4));
     break;
-            */
+
     case SC_Fork:
     DEBUG('a', "Fork syscall.\n");
     Fork_Syscall(machine->ReadRegister(4));

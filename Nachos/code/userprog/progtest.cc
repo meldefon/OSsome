@@ -42,6 +42,11 @@ StartProcess(char *filename)
     space->InitRegisters();		// set the initial register values
     space->RestoreState();		// load page table register
 
+    int nextStackAddr = space->getNextStackAddr(); //Get next stack address
+    machine->WriteRegister(StackReg, nextStackAddr); //Set next stack address
+    DEBUG('a',"Setting first thread's stack address to %d\n",nextStackAddr);
+
+
     machine->Run();			// jump to the user progam
     ASSERT(FALSE);			// machine->Run never returns;
 					// the address space exits

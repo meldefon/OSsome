@@ -117,9 +117,13 @@ SwapHeader (NoffHeader *noffH)
 //      constructed set to false.
 //----------------------------------------------------------------------
 
-AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
+AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMap(0) {
     NoffHeader noffH;
     unsigned int i, size;
+    int maximumThreads = 10;
+
+
+    //stackLock = Lock("Stack Lock");
 
     // Don't allocate the input or output to disk files
     fileTable.Put(0);
@@ -132,7 +136,9 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     ASSERT(noffH.noffMagic == NOFFMAGIC);
 
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size ;
-    numPages = divRoundUp(size, PageSize) + divRoundUp(UserStackSize,PageSize);
+    numNonStackPages = divRoundUp(size,PageSize); //Store this for later use
+    //Add in enough stack pages to accomodate up to 50 threads
+    numPages = divRoundUp(size, PageSize) + maximumThreads*divRoundUp(UserStackSize,PageSize);
                                                 // we need to increase the size
 						// to leave room for the stack
     size = numPages * PageSize;
@@ -149,6 +155,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
     for (i = 0; i < numPages; i++) {
 	pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
 	pageTable[i].physicalPage = i;
+    //pageTable[i].physicalPage = freePageBitMap.Find();
 	pageTable[i].valid = TRUE;
 	pageTable[i].use = FALSE;
 	pageTable[i].dirty = FALSE;
@@ -156,10 +163,15 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
 					// a separate page, we could set its 
 					// pages to be read-only
     }
+
+
+    //Initialize stack bitmap variables
+    stackBitMap = BitMap(maximumThreads);
+    //stackLock = &Lock("Stack Lock");
     
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
-    bzero(machine->mainMemory, size);
+    //bzero(machine->mainMemory, size);
 
 // then, copy in the code and data segments into memory
     if (noffH.code.size > 0) {
@@ -187,6 +199,24 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles) {
 AddrSpace::~AddrSpace()
 {
     delete pageTable;
+}
+
+//----------------------------------------------------------------------
+// AddrSpace::getNextStackAddr()
+// Returns the next stack address for a new thread or process
+//----------------------------------------------------------------------
+int AddrSpace::getNextStackAddr() {
+    //Bitmap tells you which stack to use
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); //disable interrupts
+    //stackLock->Acquire();
+    int stackNum = stackBitMap.Find();
+    //stackLock->Release();
+    (void) interrupt->SetLevel(oldLevel);  // restore interrupts
+    //DEBUG('b',"Stack bitmap returning %d \n",stackNum);
+    //stackBitMap.Print();
+
+    //Next address offsets with code and data, goes to end of that stack num, and then comes back 16
+    int nextAddress = PageSize*(numNonStackPages + (stackNum+1)*divRoundUp(UserStackSize,PageSize)) - 16;
 }
 
 //----------------------------------------------------------------------
@@ -218,7 +248,7 @@ AddrSpace::InitRegisters()
    // allocated the stack; but subtract off a bit, to make sure we don't
    // accidentally reference off the end!
     machine->WriteRegister(StackReg, numPages * PageSize - 16);
-    DEBUG('a', "Initializing stack register to %x\n", numPages * PageSize - 16);
+    //DEBUG('a', "Initializing stack register to %x\n", numPages * PageSize - 16);
 }
 
 //----------------------------------------------------------------------

@@ -21,9 +21,11 @@ BitMap::BitMap(int nitems)
 { 
     numBits = nitems;
     numWords = divRoundUp(numBits, BitsInWord);
-    map = new unsigned int[numWords];
+    //map = new unsigned int[numWords];
+    //map = unsigned int [100];
     for (int i = 0; i < numBits; i++) 
         Clear(i);
+    //Print();
 }
 
 //----------------------------------------------------------------------

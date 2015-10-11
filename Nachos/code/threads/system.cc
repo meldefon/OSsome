@@ -7,6 +7,8 @@
 
 #include "copyright.h"
 #include "system.h"
+#include "machine.h"
+//#include "bitmap.cc"
 
 // This defines *all* of the global data structures used by Nachos.
 // These are all initialized and de-allocated by this file.
@@ -18,6 +20,9 @@ Interrupt *interrupt;			// interrupt status
 Statistics *stats;			// performance metrics
 Timer *timer;				// the hardware timer device,
 					// for invoking context switches
+
+//BitMap* freePageBitMap = new BitMap(NumPhysPages);
+BitMap* freePageBitMap;
 
 // New globals implemented for assignment 2, holds user locks and condtions
 vector<KernelLock*> locks;
@@ -148,7 +153,8 @@ Initialize(int argc, char **argv)
 
     // We didn't explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a Thread
-    // object to save its state. 
+    // object to save its state.
+    //freePageBitMap = new BitMap(NumPhysPages);
     currentThread = new Thread("main");		
     currentThread->setStatus(RUNNING);
 

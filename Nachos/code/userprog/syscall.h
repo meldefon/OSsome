@@ -1,4 +1,4 @@
-x/* syscalls.h 
+/* syscalls.h
  * 	Nachos system call interface.  These are Nachos kernel operations
  * 	that can be invoked from user programs, by trapping to the kernel
  *	via the "syscall" instruction.
@@ -59,7 +59,7 @@ x/* syscalls.h
  */
 
 /* Stop Nachos, and print out performance stats */
-void Halt();		
+void Halt();
  
 
 /* Address space control operations: Exit, Exec, and Join */
