@@ -238,7 +238,7 @@ int Acquire_Syscall(int id) {
     KernelLock *kl = locks[id]; //grab the struct
 
     if(kl->addrSpace != currentThread->space) {
-      return false; //if not the same address space, return false
+      return -1; //if not the same address space, return -1
     }
 
     kl->lock->Acquire(); //acquire the lock
@@ -253,7 +253,7 @@ int Release_Syscall(int id) {
     KernelLock *kl = locks[id]; //grab the struct
 
     if(kl->addrSpace != currentThread->space) {
-      return false; //if not the same address space, return false
+      return -1; //if not the same address space, return -1
     }
 
     kl->lock->Release(); //release the lock
@@ -269,7 +269,7 @@ int Wait_Syscall(int c, int l) {
     KernelCondition *kc = conditions[c]; //grab the struct
 
     if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-      return false; //if not the same address space, return false
+      return -1; //if not the same address space, return -1
     }
 
     kc->condition->Wait(kl->lock); //wait
@@ -285,7 +285,7 @@ int Signal_Syscall(int c, int l) {
     KernelCondition *kc = conditions[c]; //grab the struct
 
     if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-      return false; //if not the same address space, return false
+      return -1; //if not the same address space, return -1
     }
 
     kc->condition->Signal(kl->lock); //signal
@@ -295,13 +295,13 @@ int Signal_Syscall(int c, int l) {
 
 int Broadcast_Syscall(int c, int l) {
   if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
-    return -1; //if the id they gave us is bad, return false
+    return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
     KernelCondition *kc = conditions[c]; //grab the struct
 
     if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-      return false; //if not the same address space, return false
+      return -1; //if not the same address space, return -1
     }
 
     kc->condition->Broadcast(kl->lock); //broadcast
@@ -327,8 +327,11 @@ int DestroyLock_Syscall(int id) {
     KernelLock *kl = locks[id]; //grab the struct
 
     if(kl->addrSpace != currentThread->space) {
-      return false; //if not the same address space, return false
+      return -1; //if not the same address space, return -1
     }
+
+    if(kl->isToBeDeleted == true)
+      return -1;
 
     kl->isToBeDeleted = true; //set it to be deleted
     return 0; //return 0
@@ -348,13 +351,16 @@ int CreateCondition_Syscall() {
 
 int DestroyCondition_Syscall(int id) { 
   if(id > (conditions.size() - 1) || id < 0) { 
-    return -1; //if the id they gave us is bad, return false
+    return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelCondition *kc = conditions[id]; //grab the struct
 
     if(kc->addrSpace != currentThread->space) {
-      return false; //if not the same address space, return false
+      return -1; //if not the same address space, return -1
     }
+
+    if(kc->isToBeDeleted == true)
+      return -1;
 
     kc->isToBeDeleted = true; //set it to be deleted
     return 0; //return 0
