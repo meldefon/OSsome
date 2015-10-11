@@ -1,5 +1,10 @@
 /* testpart1.c
 *	Test suite for Project 2, part 1
+*	Testing Syscalls:
+*		Acquire, Release
+*		Wait, Signal, Broadcast
+*		CreateLock, DestroyLock
+*		CreateCondition, DestroyCondition
 */
 
 # include "syscall.h"
@@ -28,11 +33,9 @@ void LockTest(){
 	result = DestroyLock(lock1);
 	Write("Result: ", 8, ConsoleOutput);
 	if (result == -1){ /*returned bad id*/
-		Write("-1", 1, ConsoleOutput); 
+		Write("Success", 7, ConsoleOutput); 
 	}else if(result == 0){ /*lock destroyed*/
-		Write("0", 1, ConsoleOutput); 
-	}else{
-		Write("?", 1, ConsoleOutput); 
+		Write("Fail", 4, ConsoleOutput); 
 	}
 	Write("\n\n", 2, ConsoleOutput);
 
@@ -44,6 +47,11 @@ void LockTest(){
 	lock4 = CreateLock();
 	lock5 = CreateLock();
 	Write("Result: Success\n\n", 18, ConsoleOutput);
+
+lock1=1;
+Write("lock1 is: ", 10, ConsoleOutput);
+Write(lock1, 1, ConsoleOutput);
+Write("\n\n", 2, ConsoleOutput);
 
 	/*Destroy lock that doesn't exist*/
 	Write("Test: Destroy invalid lock\n", 27, ConsoleOutput);
@@ -58,6 +66,7 @@ void LockTest(){
 	}
 	Write("\n\n", 2, ConsoleOutput);
 	
+
 	/*Destroy multiple locks*/
 	Write("Test: Destroy mulitple locks\n", 29, ConsoleOutput);
 	result = DestroyLock(lock1);
@@ -71,8 +80,9 @@ void LockTest(){
 		Write("Result: fail - Unable to destroy mulitple locks\n\n", 40, ConsoleOutput);
 	}
 	
-	/*Destroy lock in use by thread*/
-	Write("Test: Destroy lock used by thread\n", 23, ConsoleOutput);
+	/*Destroy lock in use by thread - only current owner can delete lock*/
+	
+	
 	
 	
 	Write("**Lock Tests Finished**\n\n", 25, ConsoleOutput);
@@ -110,7 +120,7 @@ void ConditionTest(){
 	Write("Test: Destroy CV that doesn't exist\n", 36, ConsoleOutput);
 	
 	/*Destroy CV in use*/
-	Write("Test: Destroy a CV in use\n", 26, ConsoleOutput);
+
 	
 
 
@@ -145,12 +155,12 @@ void AcquireAndReleaseTest(){
 int main(){
 
 	Write("\nProject 2, Part 1 Tests\n\n", 26, ConsoleOutput);
-
-	/*Test CreateCondition and DestroyCondition*/
-	ConditionTest();
 	
 	/*Test CreateLock and DestroyLock*/		
 	LockTest();
+
+	/*Test CreateCondition and DestroyCondition*/
+	ConditionTest();
 
 	/*Test Acquire and Release*/
 	AcquireAndReleaseTest();

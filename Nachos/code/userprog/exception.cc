@@ -317,23 +317,31 @@ int CreateLock_Syscall() {
   kl->addrSpace = currentThread->space; //assign address space
 
   locks.push_back(kl); //add new struct to our locks vector
+  cout<<"Exception: "<<"New Lock index: "<<locks.size() - 1<<"\n";
   return (locks.size() - 1); //return new index of lock
 }
 
 int DestroyLock_Syscall(int id) { 
+  cout<<"Exception: "<<"Input id: "<<id<<"\n";
   if(id > (locks.size() - 1) || id < 0) { 
+    cout<<"Exception: "<<id<<" is an invalid id\n";
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
 
     if(kl->addrSpace != currentThread->space) {
+      cout<<"Exception: "<<id<<" is not in the same address space\n";
       return -1; //if not the same address space, return -1
     }
 
-    if(kl->isToBeDeleted == true)
+    if(kl->isToBeDeleted == true){
+      cout<<"Exception: "<<"Lock "<<id<<" is already deleted\n";
       return -1;
+    }
 
     kl->isToBeDeleted = true; //set it to be deleted
+     cout<<"Exception: "<<"Deleted Lock "<<id<<"\n";
+
     return 0; //return 0
   } 
 }
