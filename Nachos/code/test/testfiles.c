@@ -5,7 +5,7 @@
 #include "syscall.h"
 
 void doIt(){
-  Write("Do it called\n", 13, ConsoleOutput);
+  Write("doIt called\n", 13, ConsoleOutput);
   Exit(0);
   return;
 }
@@ -16,17 +16,11 @@ int main() {
     char buf[20];
 
 
-    Fork(doIt);
-    Fork(doIt);
-    Fork(doIt);
-    Fork(doIt);
-    Fork(doIt);
-    Fork(doIt);
-    Fork(doIt);
-    Fork(doIt);
-    Fork(doIt);
-    Fork(doIt);
+
+    fd = Open("matmult",9);
+    Exec(fd);
 
 
+    Fork(doIt);
 
 }

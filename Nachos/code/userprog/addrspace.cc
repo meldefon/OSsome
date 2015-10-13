@@ -154,8 +154,8 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMa
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
 	pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
-	pageTable[i].physicalPage = i;
-    //pageTable[i].physicalPage = freePageBitMap.Find();
+	//pageTable[i].physicalPage = i;
+    pageTable[i].physicalPage = freePageBitMap->Find();
 	pageTable[i].valid = TRUE;
 	pageTable[i].use = FALSE;
 	pageTable[i].dirty = FALSE;
@@ -167,8 +167,12 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMa
 
     //Initialize stack bitmap variables
     stackBitMap = BitMap(maximumThreads);
-    //stackLock = &Lock("Stack Lock");
-    
+    stackLock = new Lock("Stack Lock");
+
+    //Initialize thread count variables
+    numThreads = 1;
+    numThreadsLock = new Lock("Num Threads Lock");
+
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
     //bzero(machine->mainMemory, size);
@@ -207,11 +211,11 @@ AddrSpace::~AddrSpace()
 //----------------------------------------------------------------------
 int AddrSpace::getNextStackAddr() {
     //Bitmap tells you which stack to use
-    IntStatus oldLevel = interrupt->SetLevel(IntOff); //disable interrupts
-    //stackLock->Acquire();
+    //IntStatus oldLevel = interrupt->SetLevel(IntOff); //disable interrupts
+    stackLock->Acquire();
     int stackNum = stackBitMap.Find();
-    //stackLock->Release();
-    (void) interrupt->SetLevel(oldLevel);  // restore interrupts
+    stackLock->Release();
+    //(void) interrupt->SetLevel(oldLevel);  // restore interrupts
     //DEBUG('b',"Stack bitmap returning %d \n",stackNum);
     //stackBitMap.Print();
 

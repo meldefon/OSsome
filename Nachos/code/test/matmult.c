@@ -20,7 +20,11 @@ int C[Dim][Dim];
 int
 main()
 {
+
+
     int i, j, k;
+
+	Write("Exec called mat_mult!\n",23,ConsoleOutput);
 
     for (i = 0; i < Dim; i++)		/* first initialize the matrices */
 	for (j = 0; j < Dim; j++) {

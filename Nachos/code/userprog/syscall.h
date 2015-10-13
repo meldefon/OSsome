@@ -48,6 +48,9 @@
 
 #ifndef IN_ASM
 
+/* A unique identifier for an open Nachos file. */
+typedef int OpenFileId;
+
 /* The system call interface.  These are the operations the Nachos
  * kernel needs to support, to be able to run user programs.
  *
@@ -73,7 +76,7 @@ typedef int SpaceId;
 /* Run the executable, stored in the Nachos file "name", and return the 
  * address space identifier
  */
-SpaceId Exec(char *name);
+SpaceId Exec(OpenFileId id);
  
 /* Only return once the the user program "id" has finished.  
  * Return the exit status.
@@ -90,8 +93,7 @@ int Join(SpaceId id);
  * will work for the purposes of testing out these routines.
  */
  
-/* A unique identifier for an open Nachos file. */
-typedef int OpenFileId;	
+
 
 /* when an address space starts up, it has two open files, representing 
  * keyboard input and display output (in UNIX terms, stdin and stdout).

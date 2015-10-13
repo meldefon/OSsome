@@ -8,7 +8,7 @@
 #include "copyright.h"
 #include "system.h"
 #include "machine.h"
-//#include "bitmap.cc"
+//#include "bitmap.h"
 
 // This defines *all* of the global data structures used by Nachos.
 // These are all initialized and de-allocated by this file.
@@ -154,7 +154,7 @@ Initialize(int argc, char **argv)
     // We didn't explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a Thread
     // object to save its state.
-    //freePageBitMap = new BitMap(NumPhysPages);
+    freePageBitMap = new BitMap(NumPhysPages);
     currentThread = new Thread("main");		
     currentThread->setStatus(RUNNING);
 

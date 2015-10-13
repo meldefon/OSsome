@@ -19,6 +19,7 @@
 
 #include "copyright.h"
 #include "thread.h"
+
 #include "list.h"
 
 // The following class defines a "semaphore" whose value is a non-negative

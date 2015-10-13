@@ -372,7 +372,7 @@ void kernel_exec(int unused){
 
 
     currentThread->space->InitRegisters();		// set the initial register values
-    currentThread->space->RestoreState();		// load page table register
+    currentThread->space->RestoreState();		// load page table
 
     int nextStackAddr = currentThread->space->getNextStackAddr(); //Get next stack address
     machine->WriteRegister(StackReg, nextStackAddr); //Set next stack address
@@ -428,6 +428,7 @@ void Fork_Syscall(int forkArg) {
     //DEBUG('a',"Fork syscall being executed\n");
     Thread* t = new Thread("");
     t->space = currentThread->space;
+    t->space->numThreads = t->space->numThreads+1;
     //int forkArg = machine->ReadRegister(4);
     t->Fork(kernel_thread,forkArg);
 }

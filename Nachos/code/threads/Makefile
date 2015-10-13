@@ -7,12 +7,17 @@
 # All rights reserved.  See copyright.h for copyright notice and limitation 
 # of liability and disclaimer of warranty provisions.
 
-DEFINES = -DTHREADS
+DEFINES = -DTHREADS -DFILESYS -DFILESYS_NEEDED
 #INCPATH = -I../threads -I../machine -I../userprog
-INCPATH = -I../bin -I../filesys -I../userprog -I../threads -I../machine
-HFILES = $(THREAD_H)
-CFILES = $(THREAD_C)
-C_OFILES = $(THREAD_O)
+#INCPATH = -I../bin -I../filesys -I../userprog -I../threads -I../machine
+#INCPATH = -I../filesys -I../userprog -I../threads -I../machine
+INCPATH = -I../threads -I../machine -I../userprog -I../filesys -I../bin
+#HFILES = $(THREAD_H)
+#CFILES = $(THREAD_C)
+#C_OFILES = $(THREAD_O)
+HFILES = $(THREAD_H) $(BITMAP_H) $(FILESYS_H)
+CFILES = $(THREAD_C) $(BITMAP_C) $(FILESYS_C)
+C_OFILES = $(THREAD_O) $(BITMAP_O) $(FILESYS_O)
 
 include ../Makefile.common
 include ../Makefile.dep

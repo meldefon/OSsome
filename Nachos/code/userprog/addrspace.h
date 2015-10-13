@@ -16,7 +16,7 @@
 #include "copyright.h"
 #include "filesys.h"
 #include "table.h"
-#include "bitmap.h"
+//#include "bitmap.h"
 //#include "synch.h"
 
 #define UserStackSize		1024 	// increase this as necessary!
@@ -41,6 +41,9 @@ class AddrSpace {
     Table fileTable;			// Table of openfiles
 
     int getNextStackAddr(); //Will return the next stack pointer address
+
+    int numThreads;
+    Lock* numThreadsLock;
 
  private:
     TranslationEntry *pageTable;	// Assume linear page table translation
