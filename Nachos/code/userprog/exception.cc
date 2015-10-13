@@ -238,7 +238,7 @@ int Acquire_Syscall(int id) {
     KernelLock *kl = locks[id]; //grab the struct
 
     if(kl->addrSpace != currentThread->space) {
-      return false; //if not the same address space, return false
+      return -1; //if not the same address space, return -1
     }
 
     kl->lock->Acquire(); //acquire the lock
@@ -253,7 +253,7 @@ int Release_Syscall(int id) {
     KernelLock *kl = locks[id]; //grab the struct
 
     if(kl->addrSpace != currentThread->space) {
-      return false; //if not the same address space, return false
+      return -1; //if not the same address space, return -1
     }
 
     kl->lock->Release(); //release the lock
@@ -269,7 +269,7 @@ int Wait_Syscall(int c, int l) {
     KernelCondition *kc = conditions[c]; //grab the struct
 
     if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-      return false; //if not the same address space, return false
+      return -1; //if not the same address space, return -1
     }
 
     kc->condition->Wait(kl->lock); //wait
@@ -285,7 +285,7 @@ int Signal_Syscall(int c, int l) {
     KernelCondition *kc = conditions[c]; //grab the struct
 
     if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-      return false; //if not the same address space, return false
+      return -1; //if not the same address space, return -1
     }
 
     kc->condition->Signal(kl->lock); //signal
@@ -295,13 +295,13 @@ int Signal_Syscall(int c, int l) {
 
 int Broadcast_Syscall(int c, int l) {
   if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
-    return -1; //if the id they gave us is bad, return false
+    return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
     KernelCondition *kc = conditions[c]; //grab the struct
 
     if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-      return false; //if not the same address space, return false
+      return -1; //if not the same address space, return -1
     }
 
     kc->condition->Broadcast(kl->lock); //broadcast
@@ -317,20 +317,31 @@ int CreateLock_Syscall() {
   kl->addrSpace = currentThread->space; //assign address space
 
   locks.push_back(kl); //add new struct to our locks vector
+  cout<<"Exception: "<<"New Lock index: "<<locks.size() - 1<<"\n";
   return (locks.size() - 1); //return new index of lock
 }
 
 int DestroyLock_Syscall(int id) { 
+  cout<<"Exception: "<<"Input id: "<<id<<"\n";
   if(id > (locks.size() - 1) || id < 0) { 
+    cout<<"Exception: "<<id<<" is an invalid id\n";
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
 
     if(kl->addrSpace != currentThread->space) {
-      return false; //if not the same address space, return false
+      cout<<"Exception: "<<id<<" is not in the same address space\n";
+      return -1; //if not the same address space, return -1
+    }
+
+    if(kl->isToBeDeleted == true){
+      cout<<"Exception: "<<"Lock "<<id<<" is already deleted\n";
+      return -1;
     }
 
     kl->isToBeDeleted = true; //set it to be deleted
+     cout<<"Exception: "<<"Deleted Lock "<<id<<"\n";
+
     return 0; //return 0
   } 
 }
@@ -348,13 +359,16 @@ int CreateCondition_Syscall() {
 
 int DestroyCondition_Syscall(int id) { 
   if(id > (conditions.size() - 1) || id < 0) { 
-    return -1; //if the id they gave us is bad, return false
+    return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelCondition *kc = conditions[id]; //grab the struct
 
     if(kc->addrSpace != currentThread->space) {
-      return false; //if not the same address space, return false
+      return -1; //if not the same address space, return -1
     }
+
+    if(kc->isToBeDeleted == true)
+      return -1;
 
     kc->isToBeDeleted = true; //set it to be deleted
     return 0; //return 0
@@ -496,39 +510,39 @@ void ExceptionHandler(ExceptionType which) {
 		break;
       case SC_Acquire:
     DEBUG('a', "Acquire syscall.\n");
-    Acquire_Syscall(machine->ReadRegister(4));
+    rv = Acquire_Syscall(machine->ReadRegister(4));
     break;
       case SC_Release:
     DEBUG('a', "Release syscall.\n");
-    Release_Syscall(machine->ReadRegister(4));
+    rv = Release_Syscall(machine->ReadRegister(4));
     break;
       case SC_Wait:
     DEBUG('a', "Wait syscall.\n");
-    Wait_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+    rv = Wait_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
     break;
       case SC_Signal:
     DEBUG('a', "Signal syscall.\n");
-    Signal_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+    rv = Signal_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
     break;
       case SC_Broadcast:
     DEBUG('a', "Broadcast syscall.\n");
-    Broadcast_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+    rv = Broadcast_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
     break;
       case SC_CreateLock:
     DEBUG('a', "CreateLock syscall.\n");
-    CreateLock_Syscall();
+    rv = CreateLock_Syscall();
     break;
       case SC_DestroyLock:
     DEBUG('a', "DestroyLock syscall.\n");
-    DestroyLock_Syscall(machine->ReadRegister(4));
+    rv = DestroyLock_Syscall(machine->ReadRegister(4));
     break;
       case SC_CreateCondition:
     DEBUG('a', "CreateCondition syscall.\n");
-    CreateCondition_Syscall();
+    rv = CreateCondition_Syscall();
     break;
       case SC_DestroyCondition:
     DEBUG('a', "DestroyCondition syscall.\n");
-    DestroyCondition_Syscall(machine->ReadRegister(4));
+    rv = DestroyCondition_Syscall(machine->ReadRegister(4));
     break;
 	}
 
