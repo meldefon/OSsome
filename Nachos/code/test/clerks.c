@@ -1,9 +1,10 @@
 #include "globalVars.h"
 #define NULL = 0
 
-int waitForLine(typedef struct Monitor* clerk,int myLineID, int firstTime){
+int waitForLine(typedef struct Monitor *clerk,int myLineID, int firstTime){
 	Acquire(clerk->lineLock);
-	int ifBribed = 0;
+	int ifBribed;
+	ifBribed = 0;
 
 	while(true) {
 
@@ -92,8 +93,10 @@ int waitForLine(typedef struct Monitor* clerk,int myLineID, int firstTime){
 
 void pictureClerk(int id) {
 	
-	int myLineID = id; /*the index we pass in will be used as id's for the clerks*/
-	int firstTime = 1;
+	int myLineID;
+	myLineID = id; /*the index we pass in will be used as id's for the clerks*/
+	int firstTime;
+	firstTime = 1;
 	int ifBribed;
 
 	while(true) {	
@@ -132,8 +135,10 @@ void pictureClerk(int id) {
 
 void applicationClerk(int id) {
 	
-	int myLineID = id; /*the index we pass in will be used as id's for the clerks*/
-	int firstTime = 1;
+	int myLineID;
+	myLineID = id; /*the index we pass in will be used as id's for the clerks*/
+	int firstTime;
+	firstTime = 1;
 	int ifBribed;
 
 	while(true) {	
@@ -170,8 +175,10 @@ void applicationClerk(int id) {
 
 void passportClerk(int id) {
 
-	int myLineID = id;
-	int firstTime = 1;
+	int myLineID;
+	myLineID = id;
+	int firstTime;
+	firstTime = 1;
 	int ifBribed;
 
 	while(true) {
@@ -218,8 +225,10 @@ void passportClerk(int id) {
 
 void cashierDo(int id) {
 
-	int myLineID = id;
-	int firstTime = 1;
+	int myLineID;
+	myLineID = id;
+	int firstTime;
+	firstTime = 1;
 	int ifBribed;
 
 	while (true) {
@@ -266,7 +275,8 @@ void cashierDo(int id) {
 void checkForClerkOnBreak(typedef struct Monitor *clerk) {
 
 	Acquire(clerk->lineLock);
-	int clerksOnBreak = 0;
+	int clerksOnBreak;
+	clerksOnBreak = 0;
 
 	/*check if there are any clerks on break*/
 	int i;
@@ -313,7 +323,8 @@ void checkForClerkOnBreak(typedef struct Monitor *clerk) {
 
 void managerDo(int id) {
 
-	int myID = id;
+	int myID;
+	myID = id;
 
 	while (numCustomersLeft>0) {
 		checkForClerkOnBreak(&appClerk);

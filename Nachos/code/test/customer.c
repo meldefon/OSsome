@@ -1,7 +1,7 @@
 #include "globalVars.h"
 #define NULL = 0
 
-void Uprintf(char* string, int length, int num_1, int num_2, int num_3, int num_4) {
+void Uprintf(char *string, int length, int num_1, int num_2, int num_3, int num_4) {
     Printf(string, length, (num_1 * 100000) + num_2, (num_3 * 100000) + num_4);
 }
 
@@ -52,7 +52,7 @@ void payCashier(int SSN, int *cash){
 }
 
 
-int getInLine(typedef struct Monitor *clerk, int socialSecurityNum, int* cash) {
+int getInLine(typedef struct Monitor *clerk, int socialSecurityNum, int *cash) {
 
 	if(senatorWorking!=NULL && senatorWorking==socialSecurityNum) {
 		Acquire(clerk->lineLock);
@@ -63,11 +63,13 @@ int getInLine(typedef struct Monitor *clerk, int socialSecurityNum, int* cash) {
 		return 0;
 	}
 
-		int* lineCount;
-		int* lineCV;
-		int didBribe = 0;
+		int *lineCount;
+		int *lineCV;
+		int didBribe;
+		didBribe = 0;
 
-		int wantToBribe = Rand_syscall(10, 0); /* random choice about whether to bribe */
+		int wantToBribe;
+		wantToBribe = Rand(10, 0); /* random choice about whether to bribe */
 
 		if(strcmp(clerk->clerkType,"Cashier")){
 			wantToBribe = 1;
@@ -94,11 +96,13 @@ int getInLine(typedef struct Monitor *clerk, int socialSecurityNum, int* cash) {
 		Acquire(clerk->lineLock);
 
 		/*pick the shortest clerk line*/
-		int myLine = -1;
+		int myLine;
+		myLine = -1;
 
 		while(myLine == -1) { /*if we haven't found a line, we need to loop back again*/
 
-			int lineSize = 777;
+			int lineSize;
+			lineSize = 777;
 			int i; 
 			for(i = 0; i < clerk->numOfClerks; i++) {
 				if(clerk->clerkState[i] == 2) { /*or the clerk is available*/
@@ -163,9 +167,10 @@ int getInLine(typedef struct Monitor *clerk, int socialSecurityNum, int* cash) {
 		return myLine;
 }
 
-void doAppClerkStuff(int socialSecurityNum, int* cash) {
+void doAppClerkStuff(int socialSecurityNum, int *cash) {
 
-	int myLine = getInLine(&appClerk,socialSecurityNum, cash);
+	int myLine;
+	myLine = getInLine(&appClerk,socialSecurityNum, cash);
 
 	/*now we must obtain the lock from the AppClerk which went to wait state once he was avaiable and 
 	waiting for a customer to signal him*/
@@ -180,10 +185,12 @@ void doAppClerkStuff(int socialSecurityNum, int* cash) {
 	Release(appClerk.clerkLock[myLine]); /*let go of the lock*/
 }
 
-int doPicClerkStuff(int socialSecurityNum, int* cash) {
+int doPicClerkStuff(int socialSecurityNum, int *cash) {
 
-	int myLine = getInLine(&picClerk,socialSecurityNum,cash);
-	int choice = 0;
+	int myLine;
+	myLine = getInLine(&picClerk,socialSecurityNum,cash);
+	int choice;
+	choice = 0;
 
 	/*now we must obtain the lock from the PicClerk which went to wait state once he was avaiable and 
 	waiting for a customer to signal him*/
@@ -194,7 +201,8 @@ int doPicClerkStuff(int socialSecurityNum, int* cash) {
 	Signal(picClerk.clerkCV[myLine], picClerk.clerkLock[myLine]);
 	/*wait for the clerk to confirm then we decide if we like the photo or not*/
 	Wait(picClerk.clerkCV[myLine], picClerk.clerkLock[myLine]);	
-	int probablity = Rand_syscall(10, 0); /*generate a random # from 0 - 9, if less than or equal to 4, we retake photo*/
+	int probablity;
+	probablity = Rand(10, 0); /*generate a random # from 0 - 9, if less than or equal to 4, we retake photo*/
 
 	if(probablity <= 4) { /*if we disliked the photo*/
 			Uprintf("Customer #%d does not like their picture from PictureClerk #%d.\n", 64, socialSecurityNum, myLine, 0, 0);
@@ -214,13 +222,17 @@ int doPicClerkStuff(int socialSecurityNum, int* cash) {
 
 void doPassportClerkStuff(int socialSecurityNum,int*cash){
 
-	int mySSN = socialSecurityNum;
+	int mySSN;
+	mySSN = socialSecurityNum;
 
 	/*First get in line with a generic method*/
-	int myLine = getInLine(&passPClerk,socialSecurityNum,cash);
+	int myLine;
+	myLine = getInLine(&passPClerk,socialSecurityNum,cash);
 
-	int workLock = passPClerk.clerkLock[myLine];
-	int workCV = passPClerk.clerkCV[myLine];
+	int workLock;
+	workLock = passPClerk.clerkLock[myLine];
+	int workCV;
+	workCV = passPClerk.clerkCV[myLine];
 	
 	Acquire(workLock);
 
@@ -235,7 +247,8 @@ void doPassportClerkStuff(int socialSecurityNum,int*cash){
 	Release(workLock);
 
 	/*Decide whether to self-punish*/
-	int myPassportChecked = passportClerkChecked[mySSN];
+	int myPassportChecked;
+	myPassportChecked = passportClerkChecked[mySSN];
 	
 	if(myPassportChecked == 0) {
 		Uprintf("Customer #%d has gone to PassportClerk #%d too soon. They are going to the back of the line.\n", 93, socialSecurityNum, myLine,0, 0);
@@ -246,13 +259,17 @@ void doPassportClerkStuff(int socialSecurityNum,int*cash){
 
 void doCashierStuff(int mySSN, int* cash){
 
-	int socialSecurityNum = mySSN;
+	int socialSecurityNum;
+	socialSecurityNum = mySSN;
 	
 	/*First get in line with a generic method*/
-	int myLine = getInLine(&cashier,socialSecurityNum,cash);
+	int myLine;
+	myLine = getInLine(&cashier,socialSecurityNum,cash);
 
-	int workLock = cashier.clerkLock[myLine];
-	int workCV = cashier.clerkCV[myLine];
+	int workLock;
+	workLock = cashier.clerkLock[myLine];
+	int workCV;
+	workCV = cashier.clerkCV[myLine];
 	Acquire(workLock);
 
 	/*Tell Clerk CV, then wait*/
@@ -262,7 +279,8 @@ void doCashierStuff(int mySSN, int* cash){
 	Wait(workCV, workLock);
 
 	/*Decide weather to self-punish*/
-	int readyToPay = cashierChecked[mySSN];	
+	int readyToPay;
+	readyToPay = cashierChecked[mySSN];	
 	if(readyToPay == 0) {
 		/*Release, punish, and leave*/
 		Uprintf("Customer #%d has gone to Cashier #%d too soon. They are going to the back of the line.\n", 87, socialSecurityNum, myLine,0, 0);
@@ -304,21 +322,26 @@ void senatorClearLines(){
 void customer(int social) {
 
 	/*Customer variables*/
-	int cash = 1100;
-	int appClerkSeen = 0;
-	int picClerkSeen = 0;
+	int cash;
+	cash = 1100;
+	int appClerkSeen;
+	appClerkSeen = 0;
+	int picClerkSeen;
+	picClerkSeen = 0;
 	int myLine;
 	int socialSecurityNum;
 	int picOrAppClerk;
 
-	int canStartWorking = 1;
+	int canStartWorking;
+	canStartWorking = 1;
 	if (isSenator[social] == 1) {
 		canStartWorking = 0;
 	}
 
 	while(canStartWorking  == 0) {
 		if (isSenator[social] == 1) {
-			int senatorWaitTime = 3;
+			int senatorWaitTime;
+			senatorWaitTime = 3;
 
 			Acquire(senatorLock);
 			if (senatorWorking == NULL) {
@@ -335,7 +358,8 @@ void customer(int social) {
 	socialSecurityNum = social;
 	picOrAppClerk = 0; /*0 for appClerk, 1 for picClerk, 2 for both completed*/
 	
-	int notCompleted = 1;
+	int notCompleted;
+	notCompleted = 1;
 
 	while(notCompleted == 1) {
 
@@ -348,11 +372,13 @@ void customer(int social) {
 		Release(senatorLock);
 
 		/*ERROR CASE: pick the wrong behavior, go ahead and get punished*/
-		int mistake = Rand_syscall(100,0);
+		int mistake;
+		mistake = Rand(100,0);
 
 		if(mistake==0){
 			/*Which behavior will the customer pick*/
-			int choice = Rand_syscall(2,0);
+			int choice;
+			choice = Rand(2,0);
 
 			if(choice==0){
 				doPassportClerkStuff(socialSecurityNum,&cash);
@@ -406,7 +432,8 @@ void customer(int social) {
 	}
 	numCustomersLeft-=1;
 	if(numCustomersLeft==0 && bribesEnabled == 0){
-		int totalSales = appClerk.cashReceived + picClerk.cashReceived +
+		int totalSales;
+		totalSales = appClerk.cashReceived + picClerk.cashReceived +
 						 passPClerk.cashReceived + cashier.cashReceived;
 		Uprintf("TOTAL SALES: %d\n", 16, totalSales, 0,0,0);
 	}
