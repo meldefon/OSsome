@@ -30,7 +30,7 @@ vector<KernelCondition*> conditions;
 
 // New globals for sys calls
 Lock sysLock;
-Condition sysCondition;
+Lock sysCondition;
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;

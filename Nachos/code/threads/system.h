@@ -46,7 +46,7 @@ extern vector<KernelCondition*> conditions;
 
 // Some new global locks for syscalls
 extern Lock sysLock;
-extern Condition sysCondition;
+extern Lock sysCondition;
 
 #ifdef USER_PROGRAM
 #include "machine.h"
