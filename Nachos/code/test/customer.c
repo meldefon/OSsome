@@ -6,7 +6,7 @@ void Uprintf(char* string, int length, int num_1, int num_2, int num_3, int num_
 
 int punishTime = 100;
 
-struct Monitor appClerk, picClerk, passPClerk, cashier;
+typedef struct Monitor appClerk, picClerk, passPClerk, cashier;
 
 /*global shared data between the clerks that are used for filing purposes */
 int customersWithCompletedApps[50];
