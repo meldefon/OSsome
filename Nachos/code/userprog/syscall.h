@@ -43,6 +43,9 @@
 #define SC_DestroyLock		17
 #define SC_CreateCondition	18
 #define SC_DestroyCondition	19
+#define SC_Rand             20
+#define SC_Printf           21
+#define SC_Scanf			22
 
 #define MAXFILENAME 256
 
@@ -176,6 +179,19 @@ int CreateCondition();
 
  /* Broadcasts to threads for the user program */	
  int Broadcast(int c, int l);
+
+ /* User-level miscellaneous operations: Rand, Printf, Scanf.
+ * Allows user to use practical functions
+ */
+
+ /* Allows user to generate random number */
+ int Rand(int range, int offset);
+
+ /* Allows user to take in integer input */
+ int Scanf(); 
+ 
+ /* Allows user to print with integers */
+ void Printf(char* string, int length, int Num_1, int Num_2);
 
 #endif /* IN_ASM */
 

@@ -395,6 +395,47 @@ int DestroyCondition_Syscall(int id) {
   }
 }
 
+int Rand_syscall(int range, int offset) {
+  int value = (rand() % range) + offset;
+  return value;
+}
+
+int Scanf_syscall() {
+  int num;
+  scanf("%d", &num);
+  return num;
+}
+
+void Printf_syscall(char* string, int length, int Num_1, int Num_2) {
+    int lastIndex;
+    int check = 0;
+
+    int num_1 = Num_1 / 100000;
+    int num_2 = Num_1 % 100000;
+    int num_3 = Num_2 / 100000;
+    int num_4 = Num_2 % 100000;
+
+    for(int i = 0; i < length; i++) {
+        if(string[i] == '%') {
+            lastIndex = i;
+        } else if(string[i] == 'd' && lastIndex == i - 1) {
+            check++;
+        }
+    }
+
+    if(check == 0) {
+        printf(string);
+    } else if(check == 1) {
+        printf(string, num_1);
+    } else if(check == 2) {
+        printf(string, num_1, num_2);
+    } else if(check == 3) {
+        printf(string, num_1, num_2, num_3);
+    } else if(check == 4) {
+        printf(string, num_1, num_2, num_3, num_4);
+    }
+}
+
 void Exit_Syscall(int status) {
     currentThread->Finish(); //Stop running the current thread
 
@@ -563,6 +604,18 @@ void ExceptionHandler(ExceptionType which) {
       case SC_DestroyCondition:
     DEBUG('a', "DestroyCondition syscall.\n");
     rv = DestroyCondition_Syscall(machine->ReadRegister(4));
+    break;
+      case SC_Rand:
+    DEBUG('a', "Rand syscall.\n");
+    rv = Rand_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+    break;
+      case SC_Printf:
+    DEBUG('a', "Printf syscall.\n");
+    Printf_syscall(machine->ReadRegister(4), machine->ReadRegister(5), machine->ReadRegister(6), machine->ReadRegister(7));
+    break;
+      case SC_Scanf:
+    DEBUG('a', "Scanf syscall.\n");
+    rv = Scanf_syscall();
     break;
 	}
 
