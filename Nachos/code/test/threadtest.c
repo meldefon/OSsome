@@ -4,7 +4,9 @@
 #include "globalVars.h"
 #define NULL 0
 
-void initialize(Monitor* m, char* lockName,char* clerkType_, int size) {
+void initialize(typedef struct Monitor *m, char* lockName,char* clerkType_, int size) {
+        int i;
+
         m->lineLock = CreateLock();
         /*lineCV = (int*) malloc(size * sizeof(int));
         clerkLock = (int*) malloc(size * sizeof(int));
@@ -23,7 +25,6 @@ void initialize(Monitor* m, char* lockName,char* clerkType_, int size) {
         m->numCustomersInLimbo = 0;
         m->cashReceived = 0;
 
-        int i;
         for(i = 0; i < size; i++) {
             m->lineCV[i] = CreateCondition();
             m->clerkLock[i] = CreateLock(); 
@@ -44,6 +45,7 @@ void ThreadTest() {
 
   	int size; /*will be used to take in user input for the sizes of specific variables*/
   	int senatorSize;
+	int i;
 
 	Uprintf("Number of ApplicationClerks = ", 30, 0, 0, 0, 0);
 	size = Scanf();
@@ -91,7 +93,6 @@ void ThreadTest() {
 	bribesEnabled = 1;
 
 	/*Initialize everything*/
-	int i;
 	for(i = 0;i<size;i++) {
 		customersWithCompletedApps[i] = 0;
 		customersWithCompletedPics[i] = 0;
