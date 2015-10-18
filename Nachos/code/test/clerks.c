@@ -2,11 +2,12 @@
 #define NULL 0
 
 int waitForLine(typedef struct Monitor *clerk,int myLineID, int firstTime){
-	Acquire(clerk->lineLock);
 	int ifBribed;
+	int start;
+	Acquire(clerk->lineLock);
 	ifBribed = 0;
-
-	while(true) {
+	start = 1;
+	while(start == 1) {
 
 		if(senatorWorking!=NULL){
 
@@ -100,10 +101,12 @@ void pictureClerk(int id) {
 	int picClerkLock;
 	int yieldCalls;
 	int i;
+	int start;
 
+	start = 1;
 	myLineID = id; /*the index we pass in will be used as id's for the clerks*/
 	firstTime = 1;
-	while(true) {	
+	while(start == 1) {	
 		ifBribed = waitForLine(&picClerk, id, firstTime);
 
 		Uprintf("PictureClerk #%d has received SSN %d from Customer #%d.\n", 56, id, picClerk.currentCustomer[id], picClerk.currentCustomer[id],0);
@@ -145,11 +148,13 @@ void applicationClerk(int id) {
 	int appClerkLock;
 	int yieldCalls;
 	int i;	
+	int start;
 
 	myLineID = id; /*the index we pass in will be used as id's for the clerks*/
 	firstTime = 1;
+	start = 1;
 
-	while(true) {	
+	while(start == 1) {	
 		waitForLine(&appClerk, id, firstTime);
 
 		Uprintf("ApplicationClerk #%d has received SSN %d from Customer #%d.\n", 60, id, appClerk.currentCustomer[id],appClerk.currentCustomer[id],0);
@@ -188,10 +193,13 @@ void passportClerk(int id) {
 	int workLock;
 	int workCV;
 	int customerSSN;
+	int start;
+
 	myLineID = id;
 	firstTime = 1;
+	start = 1;
 
-	while(true) {
+	while(start == 1) {
 		ifBribed = waitForLine(&passPClerk, id, firstTime);
 
 		workLock = passPClerk.clerkLock[myLineID];
@@ -241,11 +249,13 @@ void cashierDo(int id) {
 	int workLock;
 	int workCV;
 	int customerSSN;
+	int start; 
 
 	myLineID = id;
 	firstTime = 1;
+	start = 1;
 
-	while (true) {
+	while (start == 1) {
 		waitForLine(&cashier, id, firstTime);
 
 		workLock = cashier.clerkLock[myLineID];
@@ -288,13 +298,14 @@ void cashierDo(int id) {
 
 void checkForClerkOnBreak(typedef struct Monitor *clerk) {
 
-	Acquire(clerk->lineLock);
 	int clerksOnBreak;
 	int i;
 	int j;	
 	int k;
 	int lineThreshold;
 	int senLineThreshold;
+	Acquire(clerk->lineLock);
+
 	clerksOnBreak = 0;
 
 	/*check if there are any clerks on break*/
