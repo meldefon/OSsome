@@ -1,4 +1,5 @@
 #include "globalVars.h"
+#define NULL = 0
 
 int waitForLine(typedef struct Monitor* clerk,int myLineID, int firstTime){
 	Acquire(clerk->lineLock);
