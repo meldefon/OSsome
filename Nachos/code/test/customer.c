@@ -33,7 +33,7 @@ int numCustomersLeft;
 void punish(int time){
 	int i; 
 	for (i = 0; i < time; i++) {
-		currentThread->Yield();
+		Yield();
 	}
 }
 

@@ -110,9 +110,9 @@ void pictureClerk(int id) {
 		if(customersWithCompletedPics[picClerk.currentCustomer[id]] == 1) {
 			Uprintf("PictureClerk #%d has been told that Customer #%d does like their picture.\n", 74, id, picClerk.currentCustomer[id],0,0);
 			int yieldCalls = Rand_syscall(80,21);
-
-			for(int i = 0; i < yieldCalls; i++) { /*delay in filing the picture*/
-				currentThread->Yield();
+			int i;
+			for(i = 0; i < yieldCalls; i++) { /*delay in filing the picture*/
+				Yield();
 			}
 
 		} else {
@@ -147,9 +147,9 @@ void applicationClerk(int id) {
 		customersWithCompletedApps[appClerk.currentCustomer[id]] = 1;
 
 		int yieldCalls = Rand_syscall(80, 21);
-
-		for(int i = 0; i < yieldCalls; i++) { /*delay in filing the application*/
-			currentThread->Yield();
+		int i;
+		for(i = 0; i < yieldCalls; i++) { /*delay in filing the application*/
+			Yield();
 		}
 
 		Signal(appClerkCV, appClerkLock);
@@ -268,7 +268,9 @@ void checkForClerkOnBreak(Monitor *clerk) {
 	int clerksOnBreak = 0;
 
 	/*check if there are any clerks on break*/
-	for(int i = 0; i <clerk->numOfClerks; i++) {
+	int i;
+	int j;
+	for(i = 0; i <clerk->numOfClerks; i++) {
 		if(clerk->clerkState[i] == 1) {
 			clerksOnBreak = 1;
 			break;
@@ -279,11 +281,12 @@ void checkForClerkOnBreak(Monitor *clerk) {
 	int senLineThreshold = 0;
 	if(clerksOnBreak == 1) {
 		/*check if there is a particular line with more than 3 customers waiting*/
-		for(int i = 0; i < clerk->numOfClerks; i++) {
-			if(clerk->senLineCount[0] > senLineThreshold || (senatorWorking==NULL && (clerk->lineCount[i] > lineThreshold ||
-					clerk->bribeLineCount[i] > lineThreshold))) {
+		int k;
+		for(k = 0; k < clerk->numOfClerks; k++) {
+			if(clerk->senLineCount[0] > senLineThreshold || (senatorWorking==NULL && (clerk->lineCount[k] > lineThreshold ||
+					clerk->bribeLineCount[k] > lineThreshold))) {
 			
-			for(int j = 0; j < clerk->numOfClerks; j++) {
+			for(j = 0; j < clerk->numOfClerks; j++) {
 					if(clerk->clerkState[j] == 1) { /*if a clerk is on break, wake them up*/
 						Signal(clerk->breakCV, clerk->lineLock);
 
@@ -324,8 +327,9 @@ void managerDo(int id) {
 		Uprintf("Manager has counted a total of $%d for the passport office.\n", 60, appClerk.cashReceived + picClerk.cashReceived + passPClerk.cashReceived + cashier.cashReceived, 0,0,0);
 		
 		/*go on "break" per say by only checking periodically*/
-		for(int i = 0; i < 20; i++) {
-			currentThread->Yield();
+		int i;
+		for(i = 0; i < 20; i++) {
+			Yield();
 		}
 	}	
 }
