@@ -406,7 +406,11 @@ int Scanf_syscall() {
   return num;
 }
 
-void Printf_syscall(char* string, int length, int Num_1, int Num_2) {
+void Printf_syscall(unsigned int vaddr, int length, int Num_1, int Num_2) {
+    
+    char* string;
+    copyin(vaddr,length,string)
+
     int lastIndex;
     int check = 0;
 
@@ -607,7 +611,7 @@ void ExceptionHandler(ExceptionType which) {
     break;
       case SC_Rand:
     DEBUG('a', "Rand syscall.\n");
-    rv = Rand_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+    rv = Rand_syscall(machine->ReadRegister(4), machine->ReadRegister(5));
     break;
       case SC_Printf:
     DEBUG('a', "Printf syscall.\n");
