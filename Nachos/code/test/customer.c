@@ -51,7 +51,7 @@ void payCashier(int SSN, int *cash){
 }
 
 
-int getInLine(Monitor *clerk, int socialSecurityNum, int* cash) {
+int getInLine(typedef struct Monitor *clerk, int socialSecurityNum, int* cash) {
 
 	if(senatorWorking!=NULL && senatorWorking==socialSecurityNum) {
 		Acquire(clerk->lineLock);
@@ -285,7 +285,7 @@ void doCashierStuff(int mySSN, int* cash){
 
 void senatorClearLines(){
 	clerksCanWork = 0;
-	Monitor allMonitors[4];
+	typedef struct Monitor allMonitors[4];
 	allMonitors[0] = appClerk;
 	allMonitors[1] = picClerk;
 	allMonitors[2] = passPClerk;

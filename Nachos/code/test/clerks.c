@@ -1,6 +1,6 @@
 #include "globalVars.h"
 
-int waitForLine(Monitor* clerk,int myLineID, int firstTime){
+int waitForLine(typedef struct Monitor* clerk,int myLineID, int firstTime){
 	Acquire(clerk->lineLock);
 	int ifBribed = 0;
 
@@ -262,7 +262,7 @@ void cashierDo(int id) {
 	}
 }
 
-void checkForClerkOnBreak(Monitor *clerk) {
+void checkForClerkOnBreak(typedef struct Monitor *clerk) {
 
 	Acquire(clerk->lineLock);
 	int clerksOnBreak = 0;
