@@ -22,7 +22,8 @@ void initialize(Monitor* m, char* lockName,char* clerkType_, int size) {
         m->numCustomersInLimbo = 0;
         m->cashReceived = 0;
 
-        for(int i = 0; i < size; i++) {
+        int i;
+        for(i = 0; i < size; i++) {
             m->lineCV[i] = CreateCondition();
             m->clerkLock[i] = CreateLock(); 
             m->clerkCV[i] = CreateCondition();    
@@ -89,7 +90,8 @@ void ThreadTest() {
 	bribesEnabled = 1;
 
 	/*Initialize everything*/
-	for(int i = 0;i<size;i++) {
+	int i;
+	for(i = 0;i<size;i++) {
 		customersWithCompletedApps[i] = 0;
 		customersWithCompletedPics[i] = 0;
 		passportClerkChecked[i] = 0;

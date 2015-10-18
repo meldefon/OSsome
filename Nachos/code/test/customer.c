@@ -31,7 +31,8 @@ int clerksCanWork;
 int numCustomersLeft;
 
 void punish(int time){
-	for (int i = 0; i < time; i++) {
+	int i; 
+	for (i = 0; i < time; i++) {
 		currentThread->Yield();
 	}
 }
@@ -97,8 +98,8 @@ int getInLine(Monitor *clerk, int socialSecurityNum, int* cash) {
 		while(myLine == -1) { /*if we haven't found a line, we need to loop back again*/
 
 			int lineSize = 777;
-
-			for(int i = 0; i < clerk->numOfClerks; i++) {
+			int i; 
+			for(i = 0; i < clerk->numOfClerks; i++) {
 				if(clerk->clerkState[i] == 2) { /*or the clerk is available*/
 					myLine = i;
 					lineSize = lineCount[i];
@@ -291,7 +292,8 @@ void senatorClearLines(){
 	allMonitors[3] = cashier;
 
 	/*Broadcast to all clerk lines so that custs wake up*/
-	for(int i = 0;i<4;i++) {
+	int i; 
+	for(i = 0;i<4;i++) {
 		Acquire(allMonitors[i].lineLock);
 		Broadcast(allMonitors[i].lineCV[0], allMonitors[i].lineLock);
 		Release(allMonitors[i].lineLock);
