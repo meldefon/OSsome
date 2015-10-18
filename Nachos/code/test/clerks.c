@@ -1,5 +1,5 @@
 #include "globalVars.h"
-#define NULL = 0
+#define NULL 0
 
 int waitForLine(typedef struct Monitor *clerk,int myLineID, int firstTime){
 	Acquire(clerk->lineLock);
@@ -94,27 +94,30 @@ int waitForLine(typedef struct Monitor *clerk,int myLineID, int firstTime){
 void pictureClerk(int id) {
 	
 	int myLineID;
-	myLineID = id; /*the index we pass in will be used as id's for the clerks*/
 	int firstTime;
-	firstTime = 1;
 	int ifBribed;
+	int picClerkCV;
+	int picClerkLock;
+	int yieldCalls;
+	int i;
 
+	myLineID = id; /*the index we pass in will be used as id's for the clerks*/
+	firstTime = 1;
 	while(true) {	
 		ifBribed = waitForLine(&picClerk, id, firstTime);
 
 		Uprintf("PictureClerk #%d has received SSN %d from Customer #%d.\n", 56, id, picClerk.currentCustomer[id], picClerk.currentCustomer[id],0);
 		Uprintf("PictureClerk #%d has taken a picture of Customer #%d.\n", 54, id, picClerk.currentCustomer[id],0,0);
 
-		int picClerkCV = picClerk.clerkCV[myLineID];
-		int picClerkLock = picClerk.clerkLock[myLineID];
+		picClerkCV = picClerk.clerkCV[myLineID];
+		picClerkLock = picClerk.clerkLock[myLineID];
 		
 		Signal(picClerkCV, picClerkLock);
 		Wait(picClerkCV, picClerkLock);
 
 		if(customersWithCompletedPics[picClerk.currentCustomer[id]] == 1) {
 			Uprintf("PictureClerk #%d has been told that Customer #%d does like their picture.\n", 74, id, picClerk.currentCustomer[id],0,0);
-			int yieldCalls = Rand_syscall(80,21);
-			int i;
+			yieldCalls = Rand(80,21);
 			for(i = 0; i < yieldCalls; i++) { /*delay in filing the picture*/
 				Yield();
 			}
@@ -136,24 +139,28 @@ void pictureClerk(int id) {
 void applicationClerk(int id) {
 	
 	int myLineID;
-	myLineID = id; /*the index we pass in will be used as id's for the clerks*/
 	int firstTime;
-	firstTime = 1;
 	int ifBribed;
+	int appClerkCV;
+	int appClerkLock;
+	int yieldCalls;
+	int i;	
+
+	myLineID = id; /*the index we pass in will be used as id's for the clerks*/
+	firstTime = 1;
 
 	while(true) {	
 		waitForLine(&appClerk, id, firstTime);
 
 		Uprintf("ApplicationClerk #%d has received SSN %d from Customer #%d.\n", 60, id, appClerk.currentCustomer[id],appClerk.currentCustomer[id],0);
 		
-		int appClerkCV = appClerk.clerkCV[myLineID];
-		int appClerkLock = appClerk.clerkLock[myLineID];
+		appClerkCV = appClerk.clerkCV[myLineID];
+		appClerkLock = appClerk.clerkLock[myLineID];
 
 		/*input the socialSecurityNum into the completed applications*/
 		customersWithCompletedApps[appClerk.currentCustomer[id]] = 1;
 
-		int yieldCalls = Rand_syscall(80, 21);
-		int i;
+		yieldCalls = Rand(80, 21);
 		for(i = 0; i < yieldCalls; i++) { /*delay in filing the application*/
 			Yield();
 		}
@@ -176,20 +183,23 @@ void applicationClerk(int id) {
 void passportClerk(int id) {
 
 	int myLineID;
-	myLineID = id;
 	int firstTime;
-	firstTime = 1;
 	int ifBribed;
+	int workLock;
+	int workCV;
+	int customerSSN;
+	myLineID = id;
+	firstTime = 1;
 
 	while(true) {
 		ifBribed = waitForLine(&passPClerk, id, firstTime);
 
-		int workLock = passPClerk.clerkLock[myLineID];
-		int workCV = passPClerk.clerkCV[myLineID];
+		workLock = passPClerk.clerkLock[myLineID];
+		workCV = passPClerk.clerkCV[myLineID];
 
 		/*Now the clerk has been woken up and has been told the customer ID
 		  Check*/
-		int customerSSN = passportClerkCurrentCustomer[myLineID];
+		customerSSN = passportClerkCurrentCustomer[myLineID];
 
 		Uprintf("PassportClerk #%d has received SSN %d from Customer #%d.\n", 57, id, customerSSN,customerSSN,0);
 		
@@ -226,20 +236,24 @@ void passportClerk(int id) {
 void cashierDo(int id) {
 
 	int myLineID;
-	myLineID = id;
 	int firstTime;
-	firstTime = 1;
 	int ifBribed;
+	int workLock;
+	int workCV;
+	int customerSSN;
+
+	myLineID = id;
+	firstTime = 1;
 
 	while (true) {
 		waitForLine(&cashier, id, firstTime);
 
-		int workLock = cashier.clerkLock[myLineID];
-		int workCV = cashier.clerkCV[myLineID];
+		workLock = cashier.clerkLock[myLineID];
+		workCV = cashier.clerkCV[myLineID];
 
 		/*Now the clerk has been woken up and has been told the customer ID
 		  Check*/
-		int customerSSN = cashierCurrentCustomer[myLineID];
+		customerSSN = cashierCurrentCustomer[myLineID];
 		
 		Uprintf("Cashier #%d has received SSN %d from Customer #%d.\n", 51, id, customerSSN,customerSSN,0);
 
@@ -276,11 +290,15 @@ void checkForClerkOnBreak(typedef struct Monitor *clerk) {
 
 	Acquire(clerk->lineLock);
 	int clerksOnBreak;
+	int i;
+	int j;	
+	int k;
+	int lineThreshold;
+	int senLineThreshold;
 	clerksOnBreak = 0;
 
 	/*check if there are any clerks on break*/
-	int i;
-	int j;
+
 	for(i = 0; i <clerk->numOfClerks; i++) {
 		if(clerk->clerkState[i] == 1) {
 			clerksOnBreak = 1;
@@ -288,11 +306,10 @@ void checkForClerkOnBreak(typedef struct Monitor *clerk) {
 		}
 	}
 
-	int lineThreshold = 0;
-	int senLineThreshold = 0;
+	lineThreshold = 0;
+	senLineThreshold = 0;
 	if(clerksOnBreak == 1) {
 		/*check if there is a particular line with more than 3 customers waiting*/
-		int k;
 		for(k = 0; k < clerk->numOfClerks; k++) {
 			if(clerk->senLineCount[0] > senLineThreshold || (senatorWorking==NULL && (clerk->lineCount[k] > lineThreshold ||
 					clerk->bribeLineCount[k] > lineThreshold))) {
@@ -324,6 +341,7 @@ void checkForClerkOnBreak(typedef struct Monitor *clerk) {
 void managerDo(int id) {
 
 	int myID;
+	int i;
 	myID = id;
 
 	while (numCustomersLeft>0) {
@@ -339,7 +357,6 @@ void managerDo(int id) {
 		Uprintf("Manager has counted a total of $%d for the passport office.\n", 60, appClerk.cashReceived + picClerk.cashReceived + passPClerk.cashReceived + cashier.cashReceived, 0,0,0);
 		
 		/*go on "break" per say by only checking periodically*/
-		int i;
 		for(i = 0; i < 20; i++) {
 			Yield();
 		}

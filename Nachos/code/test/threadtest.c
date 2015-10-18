@@ -2,7 +2,7 @@
 #include "customer.c"
 #include "clerks.c"
 #include "globalVars.h"
-#define NULL = 0
+#define NULL 0
 
 void initialize(Monitor* m, char* lockName,char* clerkType_, int size) {
         m->lineLock = CreateLock();
