@@ -46,22 +46,22 @@ void ThreadTest() {
 	Uprintf("Number of ApplicationClerks = ", 30, 0, 0, 0, 0);
 	size = Scanf();
 
-	appClerk.initialize(&appClerk, "Application Clerk Line Lock","ApplicationClerk", size);
+	initialize(&appClerk, "Application Clerk Line Lock","ApplicationClerk", size);
 
 	Uprintf("Number of PictureClerks = ", 26, 0, 0, 0, 0);
 	size = Scanf();
 	
-	picClerk.initialize(&picClerk, "Picture Clerk Line Lock","PictureClerk", size);
+	initialize(&picClerk, "Picture Clerk Line Lock","PictureClerk", size);
 
 	Uprintf("Number of PassportClerks = ", 27, 0, 0, 0, 0);
 	size = Scanf();
 
-	passPClerk.initialize(&passPClerk, "Passport Clerk Line Lock","PassportClerk", size);
+	initialize(&passPClerk, "Passport Clerk Line Lock","PassportClerk", size);
 	
 	Uprintf("Number of Cashiers = ", 21, 0, 0, 0, 0);
 	size = Scanf();
 	
-	cashier.initialize(&cashier, "Cashier Line Lock","Cashier", size);
+	initialize(&cashier, "Cashier Line Lock","Cashier", size);
 	
 	Uprintf("Number of Customers = ", 22, 0, 0, 0, 0);
 	size = Scanf();
