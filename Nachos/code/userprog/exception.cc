@@ -409,7 +409,7 @@ int Scanf_syscall() {
 void Printf_syscall(unsigned int vaddr, int length, int Num_1, int Num_2) {
     
     char* string;
-    copyin(vaddr,length,string)
+    copyin(vaddr,length,string);
 
     int lastIndex;
     int check = 0;
