@@ -232,7 +232,9 @@ void Close_Syscall(int fd) {
 }
 
 int Acquire_Syscall(int id) { 
+  sysLock.Acquire();
   if(id > (locks.size() - 1) || id < 0) { 
+    sysLock.Release();
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
@@ -247,7 +249,9 @@ int Acquire_Syscall(int id) {
 }
 
 int Release_Syscall(int id) { 
+  sysLock.Acquire();
   if(id > (locks.size() - 1) || id < 0) { 
+    sysLock.Release();
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
@@ -262,7 +266,11 @@ int Release_Syscall(int id) {
 }
 
 int Wait_Syscall(int c, int l) { 
+  sysLock.Acquire();
+  sysCondition.Acquire();
   if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
+    sysLock.Release();
+    sysCondition.Release();
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
@@ -278,7 +286,11 @@ int Wait_Syscall(int c, int l) {
 }
 
 int Signal_Syscall(int c, int l) { 
+  sysLock.Acquire();
+  sysCondition.Acquire();  
   if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
+    sysLock.Release();
+    sysCondition.Release();    
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
@@ -294,7 +306,11 @@ int Signal_Syscall(int c, int l) {
 }
 
 int Broadcast_Syscall(int c, int l) {
+  sysLock.Acquire();
+  sysCondition.Acquire();
   if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
+    sysLock.Release();
+    sysCondition.Release();
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
@@ -316,31 +332,30 @@ int CreateLock_Syscall() {
   kl->lock = l; //assign lock pointer 
   kl->addrSpace = currentThread->space; //assign address space
 
+  sysLock.Acquire();
   locks.push_back(kl); //add new struct to our locks vector
-  cout<<"Exception: "<<"New Lock index: "<<locks.size() - 1<<"\n";
-  return (locks.size() - 1); //return new index of lock
+  int index = locks.size() - 1;
+  sysLock.Release();
+  return index;; //return new index of lock
 }
 
 int DestroyLock_Syscall(int id) { 
-  cout<<"Exception: "<<"Input id: "<<id<<"\n";
+  sysLock.Acquire();
   if(id > (locks.size() - 1) || id < 0) { 
-    cout<<"Exception: "<<id<<" is an invalid id\n";
+    sysLock.Release();
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
 
     if(kl->addrSpace != currentThread->space) {
-      cout<<"Exception: "<<id<<" is not in the same address space\n";
       return -1; //if not the same address space, return -1
     }
 
     if(kl->isToBeDeleted == true){
-      cout<<"Exception: "<<"Lock "<<id<<" is already deleted\n";
       return -1;
     }
 
     kl->isToBeDeleted = true; //set it to be deleted
-     cout<<"Exception: "<<"Deleted Lock "<<id<<"\n";
 
     return 0; //return 0
   } 
@@ -353,12 +368,17 @@ int CreateCondition_Syscall() {
   kc->condition = c; //assign condition pointer 
   kc->addrSpace = currentThread->space; //assign address space
 
+  sysCondition.Acquire();
   conditions.push_back(kc); //add new struct to our conditions vector
-  return (conditions.size() - 1); //return new index of condition 
+  int index = conditions.size() - 1;
+  sysCondition.Release();
+  return index; //return new index of condition 
 }
 
 int DestroyCondition_Syscall(int id) { 
+  sysCondition.Acquire();
   if(id > (conditions.size() - 1) || id < 0) { 
+    sysCondition.Release();
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelCondition *kc = conditions[id]; //grab the struct

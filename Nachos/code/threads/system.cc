@@ -28,9 +28,9 @@ BitMap* freePageBitMap;
 vector<KernelLock*> locks;
 vector<KernelCondition*> conditions;
 
-// Locks and Conditions containers 
-//vector<KernelLock> locks;
-//vector<KernelCondition> conditions;
+// New globals for sys calls
+Lock sysLock;
+Condition sysCondition;
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;

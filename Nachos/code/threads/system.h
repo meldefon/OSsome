@@ -18,6 +18,7 @@
 #include <vector>
 #include "structs.h"
 #include "bitmap.h"
+#include "synch.h"
 
 //#include "table.h"
 //#include "addrspace.h"
@@ -42,6 +43,10 @@ extern BitMap* freePageBitMap;
 // New globals implemented for assignment 2, holds user locks and condtions
 extern vector<KernelLock*> locks;
 extern vector<KernelCondition*> conditions;
+
+// Some new global locks for syscalls
+extern Lock sysLock;
+extern Condition sysCondition;
 
 #ifdef USER_PROGRAM
 #include "machine.h"
