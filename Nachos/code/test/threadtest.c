@@ -2,6 +2,40 @@
 #include "customer.c"
 #include "clerks.c"
 #include "globalVars.h"
+    
+void initialize(Monitor* m, char* lockName,char* clerkType_, int size) {
+        m->lineLock = CreateLock();
+        /*lineCV = (int*) malloc(size * sizeof(int));
+        clerkLock = (int*) malloc(size * sizeof(int));
+        clerkCV = (int*) malloc(size * sizeof(int));
+        lineCount = (int*) malloc(size * sizeof(int));
+        limboLineCV = CreateCondition();
+        bribeLineCount = (int*) malloc(size * sizeof(int));
+        bribeLineCV = (int*) malloc(size * sizeof(int));
+        senLineCV = (int*) malloc(size * sizeof(int));
+        senLineCount = (int*) malloc(size * sizeof(int));
+        clerkState = (int*) malloc(size * sizeof(int)); 
+        currentCustomer = (int*) malloc(size * sizeof(int));*/
+        m->numOfClerks = size;
+        m->clerkType = clerkType_;
+        m->breakCV = CreateCondition();
+        m->numCustomersInLimbo = 0;
+        m->cashReceived = 0;
+
+        for(int i = 0; i < size; i++) {
+            m->lineCV[i] = CreateCondition();
+            m->clerkLock[i] = CreateLock(); 
+            m->clerkCV[i] = CreateCondition();    
+            m->bribeLineCV[i] = CreateCondition();    
+            m->senLineCV[i] = CreateCondition();    
+
+            m->lineCount[i] = 0;
+            m->bribeLineCount[i] = 0;
+            m->senLineCount[i] = 0;
+            m->clerkState[i] = 0;
+            m->currentCustomer[i] = -1;
+        }
+}
 
 void ThreadTest() {
 	/*STestSuite();*/
@@ -12,22 +46,22 @@ void ThreadTest() {
 	Uprintf("Number of ApplicationClerks = ", 30, 0, 0, 0, 0);
 	size = Scanf();
 
-	appClerk.initialize("Application Clerk Line Lock","ApplicationClerk", size);
+	appClerk.initialize(&appClerk, "Application Clerk Line Lock","ApplicationClerk", size);
 
 	Uprintf("Number of PictureClerks = ", 26, 0, 0, 0, 0);
 	size = Scanf();
 	
-	picClerk.initialize("Picture Clerk Line Lock","PictureClerk", size);
+	picClerk.initialize(&picClerk, "Picture Clerk Line Lock","PictureClerk", size);
 
 	Uprintf("Number of PassportClerks = ", 27, 0, 0, 0, 0);
 	size = Scanf();
 
-	passPClerk.initialize("Passport Clerk Line Lock","PassportClerk", size);
+	passPClerk.initialize(&passPClerk, "Passport Clerk Line Lock","PassportClerk", size);
 	
 	Uprintf("Number of Cashiers = ", 21, 0, 0, 0, 0);
 	size = Scanf();
 	
-	cashier.initialize("Cashier Line Lock","Cashier", size);
+	cashier.initialize(&cashier, "Cashier Line Lock","Cashier", size);
 	
 	Uprintf("Number of Customers = ", 22, 0, 0, 0, 0);
 	size = Scanf();

@@ -22,43 +22,6 @@ struct Monitor {
     int cashReceived;
     int currentCustomer[50];
     int numCustomersInLimbo;
-
-    Monitor(){
-        numOfClerks=0;
-    }
-    void initialize(char* lockName,char* clerkType_, int size) {
-        lineLock = CreateLock();
-        /*lineCV = (int*) malloc(size * sizeof(int));
-        clerkLock = (int*) malloc(size * sizeof(int));
-        clerkCV = (int*) malloc(size * sizeof(int));
-        lineCount = (int*) malloc(size * sizeof(int));
-        limboLineCV = CreateCondition();
-        bribeLineCount = (int*) malloc(size * sizeof(int));
-        bribeLineCV = (int*) malloc(size * sizeof(int));
-        senLineCV = (int*) malloc(size * sizeof(int));
-        senLineCount = (int*) malloc(size * sizeof(int));
-        clerkState = (int*) malloc(size * sizeof(int)); 
-        currentCustomer = (int*) malloc(size * sizeof(int));*/
-        numOfClerks = size;
-        clerkType = clerkType_;
-        breakCV = CreateCondition();
-        numCustomersInLimbo = 0;
-        cashReceived = 0;
-
-        for(int i = 0; i < size; i++) {
-            lineCV[i] = CreateCondition();
-            clerkLock[i] = CreateLock(); 
-            clerkCV[i] = CreateCondition();    
-            bribeLineCV[i] = CreateCondition();    
-            senLineCV[i] = CreateCondition();    
-
-            lineCount[i] = 0;
-            bribeLineCount[i] = 0;
-            senLineCount[i] = 0;
-            clerkState[i] = 0;
-            currentCustomer[i] = -1;
-        }
-    }
 };
 
 #endif 
