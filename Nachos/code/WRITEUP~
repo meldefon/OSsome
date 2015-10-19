@@ -113,11 +113,28 @@ IV. Implementation:
             test/matmult.c
             test/sort
 		+ Files added
-
+            No files added, only modified
 		+ Data Structures added, and the file they were added to.
+            Only created one new structure - the processEntry structure for the process table
+            //In structs.h
+            ProcessEntry{
+                int pID
+                int numThreads
+                bool running
+            }
+                
 		+ Data Structures modified, and the file they were added to.
 			class Thread{
-                //Added in a base stack address tracker to help with deleting upon exit
+                //Added in a base stack address int for delete upon exit
+            }
+            class AddrSpace{
+                //Added in a stack bit map to help with stack allocation
+                //Added numNonStackPages to help with stack address computation
+                //Added a stack bit map lock to protect clears and finds
+                //Added in a process ID int to keep track of a process index
+
+                //Added in a new method with, in a threadsafe way, finds a new 
+                //stack space for a forked thread. Uses the lock
             }
 
 		+ Functions added and in which file.
