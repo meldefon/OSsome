@@ -65,8 +65,8 @@ void TestSuite() {
 		if(userChoice == 1) { /*shortest line*/
 			
 			/*initialize data for clerks, but not the clerk threads*/
-			appClerk.initialize("Application Clerk Line Lock",0, 3);
-			picClerk.initialize("Picture Clerk Line Lock",1, 3);
+			initialize(&appClerk, "Application Clerk Line Lock",0, 3);
+			initialize(&picClerk, "Picture Clerk Line Lock",1, 3);
 			
 			/*initialze globals
 			customersWithCompletedApps = new bool[10];
@@ -97,10 +97,10 @@ void TestSuite() {
 		} else if(userChoice == 2) {
 			/*This test sends 5 customers in plus 1 of each type of clerk. Demonstrates that each type of
 			clerk's money is tracked correctly by the manager*/
-			cashier.initialize("Cashier Line Lock",3, 1);
-			picClerk.initialize("Picture Clerk Line Lock",1, 1);
-			passPClerk.initialize("Passport Clerk Line Lock",2, 1);
-			appClerk.initialize("Application Clerk Line Lock",0, 1);
+			initialize(&cashier,"Cashier Line Lock",3, 1);
+			initialize(&picClerk,"Picture Clerk Line Lock",1, 1);
+			initialize(&passPClerk,"Passport Clerk Line Lock",2, 1);
+			initialize(&appClerk,"Application Clerk Line Lock",0, 1);
 
 			/*initialze globals
 			customersWithCompletedApps = new bool[5];
@@ -147,7 +147,7 @@ void TestSuite() {
 			userChoice = 8;
 		} else if(userChoice == 3) { /*cashier and customer passport test*/
 
-			cashier.initialize("Cashier Line Lock",3, 1);
+			initialize(&cashier,"Cashier Line Lock",3, 1);
 
 			/*initialze globals
 			customersWithCompletedApps = new bool[5];
@@ -189,10 +189,10 @@ void TestSuite() {
 			userChoice = 8;	
 		} else if(userChoice == 4) { /*clerks go on break when no one is in line*/
 
-			appClerk.initialize("Application Clerk Line Lock",0, 1);
-			picClerk.initialize("Picture Clerk Line Lock",1, 1);
-			passPClerk.initialize("Passport Clerk Line Lock",2, 1);
-			cashier.initialize("Cashier Line Lock",3, 1);
+			initialize(&appClerk,"Application Clerk Line Lock",0, 1);
+			initialize(&picClerk,"Picture Clerk Line Lock",1, 1);
+			initialize(&passPClerk,"Passport Clerk Line Lock",2, 1);
+			initialize(&cashier,"Cashier Line Lock",3, 1);
 
 			/*isSenator = new bool[1];*/
 			isSenator[0] = 0;
@@ -221,10 +221,10 @@ void TestSuite() {
 			userChoice = 8;
 		} else if(userChoice == 5) { /*manager gets clerk off break*/
 			
-			cashier.initialize("Cashier Line Lock",3, 1);
-			picClerk.initialize("Picture Clerk Line Lock",1, 1);
-			passPClerk.initialize("Passport Clerk Line Lock",2, 1);
-			appClerk.initialize("Application Clerk Line Lock",0, 1);
+			initialize(&cashier,"Cashier Line Lock",3, 1);
+			initialize(&picClerk,"Picture Clerk Line Lock",1, 1);
+			initialize(&passPClerk,"Passport Clerk Line Lock",2, 1);
+			initialize(&appClerk,"Application Clerk Line Lock",0, 1);
 
 			/*initialze globals
 			customersWithCompletedApps = new bool[5];
@@ -270,10 +270,10 @@ void TestSuite() {
 		} else if(userChoice == 6) {
 			/*This test sends 4 customers in plus 1 senator*/
 			int numCustsForTest; 
-			cashier.initialize("Cashier Line Lock",3, 1);
-			picClerk.initialize("Picture Clerk Line Lock",1, 1);
-			passPClerk.initialize("Passport Clerk Line Lock",2, 1);
-			appClerk.initialize("Application Clerk Line Lock",0, 1);
+			initialize(&cashier,"Cashier Line Lock",3, 1);
+			initialize(&picClerk,"Picture Clerk Line Lock",1, 1);
+			initialize(&passPClerk,"Passport Clerk Line Lock",2, 1);
+			initialize(&appClerk,"Application Clerk Line Lock",0, 1);
 
 			numCustsForTest = 10;
 			bribesEnabled = 0;
@@ -324,10 +324,10 @@ void TestSuite() {
 
 		} else if(userChoice == 7) {
 			/*This test sends 4 customers in plus 1 senator*/
-			cashier.initialize("Cashier Line Lock",3, 1);
-			picClerk.initialize("Picture Clerk Line Lock",1, 1);
-			passPClerk.initialize("Passport Clerk Line Lock",2, 1);
-			appClerk.initialize("Application Clerk Line Lock",0, 1);
+			initialize(&cashier,"Cashier Line Lock",3, 1);
+			initialize(&picClerk,"Picture Clerk Line Lock",1, 1);
+			initialize(&passPClerk,"Passport Clerk Line Lock",2, 1);
+			initialize(&appClerk,"Application Clerk Line Lock",0, 1);
 
 			/*initialze globals
 			customersWithCompletedApps = new bool[5];
