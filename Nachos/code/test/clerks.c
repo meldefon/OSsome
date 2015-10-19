@@ -105,6 +105,8 @@ void pictureClerk() {
 	int start;
 
 	start = 1;
+	Write("in\n", 3, ConsoleOutput);	
+
 	Acquire(picClerk.newClerkIdLock);
 	myLineID = picClerk.newClerkId;
 	id = picClerk.newClerkId;
@@ -112,7 +114,8 @@ void pictureClerk() {
 	Release(picClerk.newClerkIdLock);	
 
 	firstTime = 1;
-	while(start == 1) {	
+	while(start == 1) {
+		Write("pic\n", 4, ConsoleOutput);	
 		ifBribed = waitForLine(&picClerk, id, firstTime);
 
 		Uprintf("PictureClerk #%d has received SSN %d from Customer #%d.\n", 56, id, picClerk.currentCustomer[id], picClerk.currentCustomer[id],0);
@@ -156,6 +159,7 @@ void applicationClerk() {
 	int id;
 	int i;	
 	int start;
+	Write("in\n", 3, ConsoleOutput);	
 
 	Acquire(appClerk.newClerkIdLock);
 	myLineID = appClerk.newClerkId;
@@ -167,6 +171,7 @@ void applicationClerk() {
 	start = 1;
 
 	while(start == 1) {	
+		Write("app\n", 4, ConsoleOutput);	
 		waitForLine(&appClerk, id, firstTime);
 
 		Uprintf("ApplicationClerk #%d has received SSN %d from Customer #%d.\n", 60, id, appClerk.currentCustomer[id],appClerk.currentCustomer[id],0);
@@ -207,6 +212,7 @@ void passportClerk() {
 	int customerSSN;
 	int id;
 	int start;
+	Write("in\n", 3, ConsoleOutput);	
 
 	Acquire(passPClerk.newClerkIdLock);
 	myLineID = passPClerk.newClerkId;
@@ -218,6 +224,7 @@ void passportClerk() {
 	start = 1;
 
 	while(start == 1) {
+		Write("pass\n", 5, ConsoleOutput);	
 		ifBribed = waitForLine(&passPClerk, id, firstTime);
 
 		workLock = passPClerk.clerkLock[myLineID];
@@ -269,6 +276,7 @@ void cashierDo() {
 	int customerSSN;
 	int id;
 	int start; 
+	Write("in\n", 3, ConsoleOutput);	
 
 	Acquire(cashier.newClerkIdLock);
 	myLineID = cashier.newClerkId;
@@ -280,6 +288,7 @@ void cashierDo() {
 	start = 1;
 
 	while (start == 1) {
+		Write("cash\n", 5, ConsoleOutput);			
 		waitForLine(&cashier, id, firstTime);
 
 		workLock = cashier.clerkLock[myLineID];
@@ -378,8 +387,10 @@ void managerDo() {
 	int myID;
 	int i;
 	myID = 0;
+	Write("in\n", 3, ConsoleOutput);	
 
 	while (numCustomersLeft>0) {
+		Write("man\n", 4, ConsoleOutput);			
 		checkForClerkOnBreak(&appClerk);
 		checkForClerkOnBreak(&picClerk);
 		checkForClerkOnBreak(&passPClerk);
