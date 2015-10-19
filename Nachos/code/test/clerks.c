@@ -92,7 +92,7 @@ int waitForLine(struct Monitor *clerk,int myLineID, int firstTime){
 	return ifBribed;
 }
 
-void pictureClerk(int id) {
+void pictureClerk() {
 	
 	int myLineID;
 	int firstTime;
@@ -104,7 +104,11 @@ void pictureClerk(int id) {
 	int start;
 
 	start = 1;
-	myLineID = id; /*the index we pass in will be used as id's for the clerks*/
+	Acquire(picClerk.newClerkIdLock);
+	myLineID = picClerk.newClerkId;
+	picClerk.newClerkId++;
+	Release(picClerk.newClerkIdLock);	
+
 	firstTime = 1;
 	while(start == 1) {	
 		ifBribed = waitForLine(&picClerk, id, firstTime);
@@ -139,7 +143,7 @@ void pictureClerk(int id) {
 	}
 }
 
-void applicationClerk(int id) {
+void applicationClerk() {
 	
 	int myLineID;
 	int firstTime;
@@ -150,7 +154,11 @@ void applicationClerk(int id) {
 	int i;	
 	int start;
 
-	myLineID = id; /*the index we pass in will be used as id's for the clerks*/
+	Acquire(appClerk.newClerkIdLock);
+	myLineID = appClerk.newClerkId;
+	appClerk.newClerkId++;
+	Release(appClerk.newClerkIdLock);
+
 	firstTime = 1;
 	start = 1;
 
@@ -185,7 +193,7 @@ void applicationClerk(int id) {
 	}
 }
 
-void passportClerk(int id) {
+void passportClerk() {
 
 	int myLineID;
 	int firstTime;
@@ -195,7 +203,11 @@ void passportClerk(int id) {
 	int customerSSN;
 	int start;
 
-	myLineID = id;
+	Acquire(passPClerk.newClerkIdLock);
+	myLineID = passPClerk.newClerkId;
+	passPClerk.newClerkId++;
+	Release(passPClerk.newClerkIdLock);
+	
 	firstTime = 1;
 	start = 1;
 
@@ -241,7 +253,7 @@ void passportClerk(int id) {
 	}
 }
 
-void cashierDo(int id) {
+void cashierDo() {
 
 	int myLineID;
 	int firstTime;
@@ -251,7 +263,11 @@ void cashierDo(int id) {
 	int customerSSN;
 	int start; 
 
-	myLineID = id;
+	Acquire(cashier.newClerkIdLock);
+	myLineID = cashier.newClerkId;
+	cashier.newClerkId++;
+	Release(cashier.newClerkIdLock);
+
 	firstTime = 1;
 	start = 1;
 
@@ -349,11 +365,11 @@ void checkForClerkOnBreak(struct Monitor *clerk) {
 	Release(clerk->lineLock);
 }
 
-void managerDo(int id) {
+void managerDo() {
 
 	int myID;
 	int i;
-	myID = id;
+	myID = 0;
 
 	while (numCustomersLeft>0) {
 		checkForClerkOnBreak(&appClerk);

@@ -22,6 +22,8 @@ struct Monitor {
     int cashReceived;
     int currentCustomer[50];
     int numCustomersInLimbo;
+    int newClerkId;
+    int newClerkIdLock;
 };
 
 #endif 

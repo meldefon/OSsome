@@ -8,6 +8,8 @@ void initialize(struct Monitor *m, char* lockName,int clerkType_, int size) {
         int i;
 
         m->lineLock = CreateLock();
+   		m->newClerkId = 0;
+    	m->newClerkIdLock = CreateLock();        
         /*lineCV = (int*) malloc(size * sizeof(int));
         clerkLock = (int*) malloc(size * sizeof(int));
         clerkCV = (int*) malloc(size * sizeof(int));
@@ -46,6 +48,11 @@ int main() {
   	int size; /*will be used to take in user input for the sizes of specific variables*/
   	int senatorSize;
 	int i;
+    int j;
+    int k;
+    int l;
+    int m;
+    int n;
 	int numberOfSenators;	
 
 	Uprintf("Number of ApplicationClerks = ", 30, 0, 0, 0, 0);
@@ -125,36 +132,27 @@ int main() {
 	/*initialize all the threads here*/ 
 	/*Thread *c;*/
 
-	/*
-	for(int i = 0; i < size; i++) {
-		c = new Thread("Customer Thread");
-		c->Fork((VoidFunctionPtr)customer,i);
+	for(j = 0; j < size; j++) {
+		Fork(customer);
 	}
 
-	for(int i = 0; i < appClerk.numOfClerks; i++) {
-		c = new Thread("AppClerk Thread");
-		c->Fork((VoidFunctionPtr)applicationClerk,i);
+	for(k = 0; k < appClerk.numOfClerks; k++) {
+		Fork(applicationClerk);
 	}
 
-	for(int i = 0; i < picClerk.numOfClerks; i++) {
-		c = new Thread("PicClerk Thread");
-		c->Fork((VoidFunctionPtr)pictureClerk,i);
+	for(l = 0; l < picClerk.numOfClerks; l++) {
+		Fork(pictureClerk);
 	}
 
-
-	for(int i = 0; i < passPClerk.numOfClerks; i++) {
-		c = new Thread("passPClerk Thread");
-		c->Fork((VoidFunctionPtr)passportClerk,i);
+	for(m = 0; m < passPClerk.numOfClerks; m++) {
+		Fork(passportClerk);
 	}
 
-	for(int i = 0; i < cashier.numOfClerks; i++) {
-		c = new Thread("Cashier Thread");
-		c->Fork((VoidFunctionPtr)cashierDo,i);
+	for(n = 0; n < cashier.numOfClerks; n++) {
+		Fork(cashierDo);
 	}
 
-	c = new Thread("Manager Thread");
-	c->Fork((VoidFunctionPtr)managerDo, 0);
-	*/
+	Fork(managerDo);
 	
 	return;
 }
