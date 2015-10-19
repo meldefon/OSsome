@@ -101,11 +101,13 @@ void pictureClerk() {
 	int picClerkLock;
 	int yieldCalls;
 	int i;
+	int id;
 	int start;
 
 	start = 1;
 	Acquire(picClerk.newClerkIdLock);
 	myLineID = picClerk.newClerkId;
+	id = picClerk.newClerkId;
 	picClerk.newClerkId++;
 	Release(picClerk.newClerkIdLock);	
 
@@ -151,11 +153,13 @@ void applicationClerk() {
 	int appClerkCV;
 	int appClerkLock;
 	int yieldCalls;
+	int id;
 	int i;	
 	int start;
 
 	Acquire(appClerk.newClerkIdLock);
 	myLineID = appClerk.newClerkId;
+	id = appClerk.newClerkId;
 	appClerk.newClerkId++;
 	Release(appClerk.newClerkIdLock);
 
@@ -201,13 +205,15 @@ void passportClerk() {
 	int workLock;
 	int workCV;
 	int customerSSN;
+	int id;
 	int start;
 
 	Acquire(passPClerk.newClerkIdLock);
 	myLineID = passPClerk.newClerkId;
+	id = passPClerk.newClerkId;
 	passPClerk.newClerkId++;
 	Release(passPClerk.newClerkIdLock);
-	
+
 	firstTime = 1;
 	start = 1;
 
@@ -261,10 +267,12 @@ void cashierDo() {
 	int workLock;
 	int workCV;
 	int customerSSN;
+	int id;
 	int start; 
 
 	Acquire(cashier.newClerkIdLock);
 	myLineID = cashier.newClerkId;
+	id = cashier.newClerkId;
 	cashier.newClerkId++;
 	Release(cashier.newClerkIdLock);
 
