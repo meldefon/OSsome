@@ -409,6 +409,7 @@ int Scanf_syscall() {
 void Printf_syscall(unsigned int vaddr, int length, int Num_1, int Num_2) {
     
     char* string;
+    string = new char[length];
     copyin(vaddr,length,string);
 
     int lastIndex;
@@ -425,7 +426,6 @@ void Printf_syscall(unsigned int vaddr, int length, int Num_1, int Num_2) {
         } else if(string[i] == 'd' && lastIndex == i - 1) {
             check++;
         }
-        printf("SHIT\n");
     }
 
     if(check == 0) {
