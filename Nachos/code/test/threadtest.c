@@ -60,7 +60,7 @@ void TestSuite() {
  		Uprintf("7. The behavior of Customers is proper when Senators arrive. This is before, during, and after.\n",96,0,0,0,0);
 		Uprintf("8. Quit.\n",9,0,0,0,0);
 		Uprintf("Pick a test by entering in the test number: ",44,0,0,0,0);
-		userChoice = Scanf_syscall();
+		userChoice = Scanf();
 
 		if(userChoice == 1) { /*shortest line*/
 			
