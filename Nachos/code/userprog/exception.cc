@@ -363,10 +363,10 @@ int CreateLock_Syscall() {
   kl->lock = l; //assign lock pointer 
   kl->addrSpace = currentThread->space; //assign address space
 
-  //sysLock.Acquire();
+  sysLock.Acquire();
   locks.push_back(kl); //add new struct to our locks vector
   int index = locks.size() - 1;
-  //sysLock.Release();
+  sysLock.Release();
   return index;; //return new index of lock
 }
 
@@ -402,10 +402,10 @@ int CreateCondition_Syscall() {
   kc->condition = c; //assign condition pointer 
   kc->addrSpace = currentThread->space; //assign address space
 
-  //sysCondition.Acquire();
+  sysCondition.Acquire();
   conditions.push_back(kc); //add new struct to our conditions vector
   int index = conditions.size() - 1;
-  //sysCondition.Release();
+  sysCondition.Release();
   return index; //return new index of condition 
 }
 
