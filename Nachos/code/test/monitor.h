@@ -18,7 +18,7 @@ struct Monitor {
     int senLineCount[50];
     int clerkState[50];
     int numOfClerks;
-    char* clerkType;
+    int clerkType;
     int cashReceived;
     int currentCustomer[50];
     int numCustomersInLimbo;

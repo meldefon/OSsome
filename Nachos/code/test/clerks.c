@@ -26,26 +26,26 @@ int waitForLine(struct Monitor *clerk,int myLineID, int firstTime){
 			Signal(clerk->bribeLineCV[myLineID], clerk->lineLock);
 			ifBribed = 1;
 			clerk->clerkState[myLineID] = 0; /*set state to busy*/
-			if(strcmp(clerk->clerkType, "ApplicationClerk") == 0) {
+			if(clerk->clerkType == 0) {
 				Uprintf("ApplicationClerk #%d has signalled a Customer to come to their counter.\n", 72, myLineID, 0, 0, 0);
-			} else if(strcmp(clerk->clerkType, "PictureClerk") == 0) {
+			} else if(clerk->clerkType == 1) {
 				Uprintf("PictureClerk #%d has signalled a Customer to come to their counter.\n", 68, myLineID, 0, 0, 0);
-			} else if(strcmp(clerk->clerkType, "Cashier") == 0) {
+			} else if(clerk->clerkType == 3) {
 				Uprintf("Cashier #%d has signalled a Customer to come to their counter.\n", 63, myLineID, 0, 0, 0);
-			} else if(strcmp(clerk->clerkType, "PassportClerk") == 0) {
+			} else if(clerk->clerkType == 2) {
 				Uprintf("PassportClerk #%d has signalled a Customer to come to their counter.\n", 69, myLineID, 0, 0, 0);
 			}
 			break;
 		} else if (clerk->lineCount[myLineID] > 0) { /*signal someone in normal line*/
 			Signal(clerk->lineCV[myLineID], clerk->lineLock);
 			clerk->clerkState[myLineID] = 0; /*set state to busy*/
-			if(strcmp(clerk->clerkType, "ApplicationClerk") == 0) {
+			if(clerk->clerkType == 0) {
 				Uprintf("ApplicationClerk #%d has signalled a Customer to come to their counter.\n", 72, myLineID, 0, 0, 0);
-			} else if(strcmp(clerk->clerkType, "PictureClerk") == 0) {
+			} else if(clerk->clerkType == 1) {
 				Uprintf("PictureClerk #%d has signalled a Customer to come to their counter.\n", 68, myLineID, 0, 0, 0);
-			} else if(strcmp(clerk->clerkType, "Cashier") == 0) {
+			} else if(clerk->clerkType == 3) {
 				Uprintf("Cashier #%d has signalled a Customer to come to their counter.\n", 63, myLineID, 0, 0, 0);
-			} else if(strcmp(clerk->clerkType, "PassportClerk") == 0) {
+			} else if(clerk->clerkType == 2) {
 				Uprintf("PassportClerk #%d has signalled a Customer to come to their counter.\n", 69, myLineID, 0, 0, 0);
 			}
 			break;
@@ -54,25 +54,25 @@ int waitForLine(struct Monitor *clerk,int myLineID, int firstTime){
 			firstTime = 0;
 			if (firstTime == 0) {
 			
-				if(strcmp(clerk->clerkType, "ApplicationClerk") == 0) {
+				if(clerk->clerkType == 0) {
 					Uprintf("ApplicationClerk #%d is going on break.\n", 40, myLineID, 0, 0, 0);
-				} else if(strcmp(clerk->clerkType, "PictureClerk") == 0) {
+				} else if(clerk->clerkType == 1) {
 					Uprintf("PictureClerk #%d is going on break.\n", 36, myLineID, 0, 0, 0);
-				} else if(strcmp(clerk->clerkType, "Cashier") == 0) {
+				} else if(clerk->clerkType == 3) {
 					Uprintf("Cashier #%d is going on break.\n", 31, myLineID, 0, 0, 0);
-				} else if(strcmp(clerk->clerkType, "PassportClerk") == 0) {
+				} else if(clerk->clerkType == 2) {
 					Uprintf("PassportClerk #%d is going on break.\n", 37, myLineID, 0, 0, 0);
 				}				
 				clerk->clerkState[myLineID] = 1; /*set state to break*/
 				Wait(clerk->breakCV, clerk->lineLock);
 				
-				if(strcmp(clerk->clerkType, "ApplicationClerk") == 0) {
+				if(clerk->clerkType == 0) {
 					Uprintf("ApplicationClerk #%d is coming on break.\n", 41, myLineID, 0, 0, 0);
-				} else if(strcmp(clerk->clerkType, "PictureClerk") == 0) {
+				} else if(clerk->clerkType == 1) {
 					Uprintf("PictureClerk #%d is going on break.\n", 37, myLineID, 0, 0, 0);
-				} else if(strcmp(clerk->clerkType, "Cashier") == 0) {
+				} else if(clerk->clerkType == 3) {
 					Uprintf("Cashier #%d is going on break.\n", 32, myLineID, 0, 0, 0);
-				} else if(strcmp(clerk->clerkType, "PassportClerk") == 0) {
+				} else if(clerk->clerkType == 2) {
 					Uprintf("PassportClerk #%d is going on break.\n", 38, myLineID, 0, 0, 0);
 				}			
 			}
@@ -329,14 +329,14 @@ void checkForClerkOnBreak(struct Monitor *clerk) {
 					if(clerk->clerkState[j] == 1) { /*if a clerk is on break, wake them up*/
 						Signal(clerk->breakCV, clerk->lineLock);
 
-						if(strcmp(clerk->clerkType, "ApplicationClerk") == 0)
+						if(clerk->clerkType == 0)
 							Uprintf("Manager has woken up an ApplicationClerk.\n", 42, 0, 0, 0, 0);
 						else {
-							if(strcmp(clerk->clerkType, "PictureClerk") == 0) {
+							if(clerk->clerkType == 1) {
 								Uprintf("Manager has woken up a PictureClerk.\n", 38, 0, 0, 0, 0);
-							} else if(strcmp(clerk->clerkType, "Cashier") == 0) {
+							} else if(clerk->clerkType == 3) {
 								Uprintf("Manager has woken up a Cashier.\n", 33, 0, 0, 0, 0);								
-							} else if(strcmp(clerk->clerkType, "PassportClerk") == 0) {
+							} else if(clerk->clerkType == 2) {
 								Uprintf("Manager has woken up a PassportClerk.\n", 39, 0, 0, 0, 0);
 							}								
 						}

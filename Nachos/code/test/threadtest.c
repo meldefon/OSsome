@@ -4,7 +4,7 @@
 #include "globalVars.h"
 #define NULL 0
 
-void initialize(struct Monitor *m, char* lockName,char* clerkType_, int size) {
+void initialize(struct Monitor *m, char* lockName,int clerkType_, int size) {
         int i;
 
         m->lineLock = CreateLock();
@@ -51,22 +51,22 @@ void ThreadTest() {
 	Uprintf("Number of ApplicationClerks = ", 30, 0, 0, 0, 0);
 	size = Scanf();
 
-	initialize(&appClerk, "Application Clerk Line Lock","ApplicationClerk", size);
+	initialize(&appClerk, "Application Clerk Line Lock",0, size);
 
 	Uprintf("Number of PictureClerks = ", 26, 0, 0, 0, 0);
 	size = Scanf();
 	
-	initialize(&picClerk, "Picture Clerk Line Lock","PictureClerk", size);
+	initialize(&picClerk, "Picture Clerk Line Lock",1, size);
 
 	Uprintf("Number of PassportClerks = ", 27, 0, 0, 0, 0);
 	size = Scanf();
 
-	initialize(&passPClerk, "Passport Clerk Line Lock","PassportClerk", size);
+	initialize(&passPClerk, "Passport Clerk Line Lock",2, size);
 	
 	Uprintf("Number of Cashiers = ", 21, 0, 0, 0, 0);
 	size = Scanf();
 	
-	initialize(&cashier, "Cashier Line Lock","Cashier", size);
+	initialize(&cashier, "Cashier Line Lock",3, size);
 	
 	Uprintf("Number of Customers = ", 22, 0, 0, 0, 0);
 	size = Scanf();

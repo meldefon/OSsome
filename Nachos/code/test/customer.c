@@ -74,7 +74,7 @@ int getInLine(struct Monitor *clerk, int socialSecurityNum, int *cash) {
 
 		wantToBribe = Rand(10, 0); /* random choice about whether to bribe */
 
-		if(strcmp(clerk->clerkType,"Cashier")){
+		if(clerk->clerkType == 3){
 			wantToBribe = 1;
 		}
 
@@ -119,13 +119,13 @@ int getInLine(struct Monitor *clerk, int socialSecurityNum, int *cash) {
 			
 			/*if all the clerks on are on break*/
 			if(myLine == -1) {
-				if(strcmp(clerk->clerkType, "ApplicationClerk") == 0) {
+				if(clerk->clerkType == 0) {
 					Uprintf("Customer #%d has entered ApplicationClerk Limbo Line.\n", 54, socialSecurityNum, 0, 0, 0);
-				} else if(strcmp(clerk->clerkType, "PictureClerk") == 0) {
+				} else if(clerk->clerkType == 1) {
 					Uprintf("Customer #%d has entered PictureClerk Limbo Line.\n", 50, socialSecurityNum, 0, 0, 0);
-				} else if(strcmp(clerk->clerkType, "Cashier") == 0) {
+				} else if(clerk->clerkType == 3) {
 					Uprintf("Customer #%d has entered Cashier Limbo Line.\n", 45, socialSecurityNum, 0, 0, 0);
-				} else if(strcmp(clerk->clerkType, "PassportClerk") == 0) {
+				} else if(clerk->clerkType == 2) {
 					Uprintf("Customer #%d has entered PassportClerk Limbo Line.\n", 51, socialSecurityNum, 0, 0, 0);
 				}	
 				clerk->numCustomersInLimbo++;
@@ -135,23 +135,23 @@ int getInLine(struct Monitor *clerk, int socialSecurityNum, int *cash) {
 		
 		if(clerk->clerkState[myLine] == 0 || clerk->clerkState[myLine]==1) { /*if the clerk is busy with another customer, we must wait, else just bypass this and go straight to transaction*/
 			if(didBribe == 0) {
-				if(strcmp(clerk->clerkType, "ApplicationClerk") == 0) {
+				if(clerk->clerkType == 0) {
 					Uprintf("Customer #%d has gotten in regular line for ApplicationClerk #%d.\n", 66, socialSecurityNum, myLine, 0, 0);
-				} else if(strcmp(clerk->clerkType, "PictureClerk") == 0) {
+				} else if(clerk->clerkType == 1) {
 					Uprintf("Customer #%d has gotten in regular line for PictureClerk #%d.\n", 62, socialSecurityNum, myLine, 0, 0);
-				} else if(strcmp(clerk->clerkType, "Cashier") == 0) {
+				} else if(clerk->clerkType == 3) {
 					Uprintf("Customer #%d has gotten in regular line for Cashier #%d.\n", 57, socialSecurityNum, myLine, 0, 0);
-				} else if(strcmp(clerk->clerkType, "PassportClerk") == 0) {
+				} else if(clerk->clerkType == 2) {
 					Uprintf("Customer #%d has gotten in regular line for PassportClerk #%d.\n", 63, socialSecurityNum, myLine, 0, 0);
 				}							
 			} else {
-				if(strcmp(clerk->clerkType, "ApplicationClerk") == 0) {
+				if(clerk->clerkType == 0) {
 					Uprintf("Customer #%d has gotten in bribe line for ApplicationClerk #%d.\n", 64, socialSecurityNum, myLine, 0, 0);
-				} else if(strcmp(clerk->clerkType, "PictureClerk") == 0) {
+				} else if(clerk->clerkType == 1) {
 					Uprintf("Customer #%d has gotten in bribe line for PictureClerk #%d.\n", 60, socialSecurityNum, myLine, 0, 0);
-				} else if(strcmp(clerk->clerkType, "Cashier") == 0) {
+				} else if(clerk->clerkType == 3) {
 					Uprintf("Customer #%d has gotten in bribe line for Cashier #%d.\n", 55, socialSecurityNum, myLine, 0, 0);
-				} else if(strcmp(clerk->clerkType, "PassportClerk") == 0) {
+				} else if(clerk->clerkType == 2) {
 					Uprintf("Customer #%d has gotten in bribe line for PassportClerk #%d.\n", 61, socialSecurityNum, myLine, 0, 0);
 				}					
 			}

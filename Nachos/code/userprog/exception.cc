@@ -620,7 +620,7 @@ void ExceptionHandler(ExceptionType which) {
       case SC_Scanf:
     DEBUG('a', "Scanf syscall.\n");
     rv = Scanf_syscall();
-    break;
+    break;  
 	}
 
 	// Put in the return value and increment the PC
