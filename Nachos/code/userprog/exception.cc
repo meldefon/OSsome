@@ -239,12 +239,16 @@ int Acquire_Syscall(int id) {
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
 
-    if(kl->addrSpace != currentThread->space) {
-      val = -1; //if not the same address space, return -1
+    if(kl != NULL) {
+      if(kl->addrSpace != currentThread->space) {
+        val = -1; //if not the same address space, return -1
+      } else {
+        kl->lock->Acquire(); //acquire the lock
+        val = 0; //return 0 once acquired
+      }
     } else {
-      kl->lock->Acquire(); //acquire the lock
-      val = 0; //return 0 once acquired
-    }
+      val = -1;
+    } 
   }
   sysLock.Release();
   return val;
@@ -258,11 +262,15 @@ int Release_Syscall(int id) {
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
 
-    if(kl->addrSpace != currentThread->space) {
-      val = -1; //if not the same address space, return -1
+    if(kl != NULL) {
+      if(kl->addrSpace != currentThread->space) {
+        val = -1; //if not the same address space, return -1
+      } else {
+        kl->lock->Release(); //release the lock
+        val = 0; //return 0 once released
+      }
     } else {
-      kl->lock->Release(); //release the lock
-      val = 0; //return 0 once released
+      val = -1;
     }
   }
   sysLock.Release();
@@ -279,12 +287,16 @@ int Wait_Syscall(int c, int l) {
     KernelLock *kl = locks[l]; //grab the struct
     KernelCondition *kc = conditions[c]; //grab the struct
 
-    if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-      val = -1; //if not the same address space, return -1
-    } else {
+    if(kl != NULL && kc != NULL) {
+      if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
+        val = -1; //if not the same address space, return -1
+      } else {
 
-      kc->condition->Wait(kl->lock); //wait
-      val = 0; //we were able to wait
+        kc->condition->Wait(kl->lock); //wait
+        val = 0; //we were able to wait
+      }
+    } else {
+      val = -1;
     }
   }
   sysLock.Release();
@@ -302,11 +314,15 @@ int Signal_Syscall(int c, int l) {
     KernelLock *kl = locks[l]; //grab the struct
     KernelCondition *kc = conditions[c]; //grab the struct
 
-    if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-      val = -1; //if not the same address space, return -1
+    if(kl != NULL && kc != NULL) {
+      if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
+        val = -1; //if not the same address space, return -1
+      } else {
+        kc->condition->Signal(kl->lock); //signal
+        val = 0; //we were able to signal
+      }
     } else {
-      kc->condition->Signal(kl->lock); //signal
-      val = 0; //we were able to signal
+      val = -1;
     }
   }
   sysLock.Release();
@@ -324,12 +340,16 @@ int Broadcast_Syscall(int c, int l) {
     KernelLock *kl = locks[l]; //grab the struct
     KernelCondition *kc = conditions[c]; //grab the struct
 
-    if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-      val = -1; //if not the same address space, return -1
+    if(kl != NULL && kc != NULL) {
+      if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
+        val = -1; //if not the same address space, return -1
+      } else {
+        kc->condition->Broadcast(kl->lock); //broadcast
+        val = 0; //we were able to broadcast
+      }
     } else {
-      kc->condition->Broadcast(kl->lock); //broadcast
-      val = 0; //we were able to broadcast
-    } 
+      val = -1;
+    }
   }
   sysLock.Release();
   sysCondition.Release();
@@ -358,13 +378,17 @@ int DestroyLock_Syscall(int id) {
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
 
-    if(kl->addrSpace != currentThread->space) {
-      val = -1; //if not the same address space, return -1
-    } else if(kl->isToBeDeleted == true){
-      val = -1;
+    if(kl != NULL) {
+      if(kl->addrSpace != currentThread->space) {
+        val = -1; //if not the same address space, return -1
+      } else if(kl->isToBeDeleted == true){
+        val = -1;
+      } else {
+        kl->isToBeDeleted = true; //set it to be deleted
+        val = 0; //return 0
+      }
     } else {
-      kl->isToBeDeleted = true; //set it to be deleted
-      val = 0; //return 0
+      val = -1;
     }
   }
   sysLock.Release();
@@ -393,13 +417,17 @@ int DestroyCondition_Syscall(int id) {
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelCondition *kc = conditions[id]; //grab the struct
 
-    if(kc->addrSpace != currentThread->space) {
-      val = -1; //if not the same address space, return -1
-    } else if(kc->isToBeDeleted == true) {
-      val = -1;
+    if(kc != NULL) {
+      if(kc->addrSpace != currentThread->space) {
+        val = -1; //if not the same address space, return -1
+      } else if(kc->isToBeDeleted == true) {
+        val = -1;
+      } else {
+        kc->isToBeDeleted = true; //set it to be deleted
+        val = 0; //return 0
+      }
     } else {
-      kc->isToBeDeleted = true; //set it to be deleted
-      val = 0; //return 0
+      val = -1;
     }
   }
   sysCondition.Release();
@@ -490,19 +518,23 @@ void Exit_Syscall(int status) {
         for(int i = 0; i < locks.size(); i++) { 
           KernelLock *kl = locks[i]; //grab the struct
 
-          if(kl->addrSpace == currentThread->space && kl->isToBeDeleted == true) {
-            locks[i] = NULL;
-            delete kl;  
-          }     
+          if(kl != NULL) {
+            if(kl->addrSpace == currentThread->space && kl->isToBeDeleted == true) {
+              locks[i] = NULL;
+              delete kl;  
+            }   
+          }  
         } 
 
         //Clear your conditions
         for(int i = 0; i < conditions.size(); i++) { 
           KernelCondition *kc = conditions[i]; //grab the struct
 
-          if(kc->addrSpace == currentThread->space && kc->isToBeDeleted == true) {
-            conditions[i] = NULL;
-            delete kc;  
+          if(kc != NULL) {
+            if(kc->addrSpace == currentThread->space && kc->isToBeDeleted == true) {
+              conditions[i] = NULL;
+              delete kc;  
+            }
           }     
         } 
 
