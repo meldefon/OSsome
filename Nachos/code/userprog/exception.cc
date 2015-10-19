@@ -232,7 +232,9 @@ void Close_Syscall(int fd) {
 }
 
 int Acquire_Syscall(int id) { 
+  //sysLock.Acquire();
   if(id > (locks.size() - 1) || id < 0) { 
+    //sysLock.Release();
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
@@ -247,7 +249,9 @@ int Acquire_Syscall(int id) {
 }
 
 int Release_Syscall(int id) { 
+  //sysLock.Acquire();
   if(id > (locks.size() - 1) || id < 0) { 
+    //sysLock.Release();
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
@@ -262,7 +266,11 @@ int Release_Syscall(int id) {
 }
 
 int Wait_Syscall(int c, int l) { 
+  //sysLock.Acquire();
+  //sysCondition.Acquire();
   if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
+    //sysLock.Release();
+    //sysCondition.Release();
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
@@ -278,7 +286,11 @@ int Wait_Syscall(int c, int l) {
 }
 
 int Signal_Syscall(int c, int l) { 
+  //sysLock.Acquire();
+  //sysCondition.Acquire();  
   if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
+    //sysLock.Release();
+    //sysCondition.Release();    
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
@@ -294,7 +306,11 @@ int Signal_Syscall(int c, int l) {
 }
 
 int Broadcast_Syscall(int c, int l) {
+  //sysLock.Acquire();
+  //sysCondition.Acquire();
   if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
+    //sysLock.Release();
+    //sysCondition.Release();
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
@@ -316,31 +332,30 @@ int CreateLock_Syscall() {
   kl->lock = l; //assign lock pointer 
   kl->addrSpace = currentThread->space; //assign address space
 
+  //sysLock.Acquire();
   locks.push_back(kl); //add new struct to our locks vector
-  cout<<"Exception: "<<"New Lock index: "<<locks.size() - 1<<"\n";
-  return (locks.size() - 1); //return new index of lock
+  int index = locks.size() - 1;
+  //sysLock.Release();
+  return index;; //return new index of lock
 }
 
 int DestroyLock_Syscall(int id) { 
-  cout<<"Exception: "<<"Input id: "<<id<<"\n";
+  //sysLock.Acquire();
   if(id > (locks.size() - 1) || id < 0) { 
-    cout<<"Exception: "<<id<<" is an invalid id\n";
+    //sysLock.Release();
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
 
     if(kl->addrSpace != currentThread->space) {
-      cout<<"Exception: "<<id<<" is not in the same address space\n";
       return -1; //if not the same address space, return -1
     }
 
     if(kl->isToBeDeleted == true){
-      cout<<"Exception: "<<"Lock "<<id<<" is already deleted\n";
       return -1;
     }
 
     kl->isToBeDeleted = true; //set it to be deleted
-     cout<<"Exception: "<<"Deleted Lock "<<id<<"\n";
 
     return 0; //return 0
   } 
@@ -353,12 +368,17 @@ int CreateCondition_Syscall() {
   kc->condition = c; //assign condition pointer 
   kc->addrSpace = currentThread->space; //assign address space
 
+  //sysCondition.Acquire();
   conditions.push_back(kc); //add new struct to our conditions vector
-  return (conditions.size() - 1); //return new index of condition 
+  int index = conditions.size() - 1;
+  //sysCondition.Release();
+  return index; //return new index of condition 
 }
 
 int DestroyCondition_Syscall(int id) { 
+  //sysCondition.Acquire();
   if(id > (conditions.size() - 1) || id < 0) { 
+    //sysCondition.Release();
     return -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelCondition *kc = conditions[id]; //grab the struct
@@ -373,6 +393,53 @@ int DestroyCondition_Syscall(int id) {
     kc->isToBeDeleted = true; //set it to be deleted
     return 0; //return 0
   }
+}
+
+int Rand_syscall(int range, int offset) {
+  int value = (rand() % range) + offset;
+  return value;
+}
+
+int Scanf_syscall() {
+  int num;
+  scanf("%d", &num);
+  return num;
+}
+
+void Printf_syscall(unsigned int vaddr, int length, int Num_1, int Num_2) {
+    
+    char* string;
+    string = new char[length+1];
+    copyin(vaddr,length,string);
+    string[length] = '\0';
+
+    int lastIndex;
+    int check = 0;
+
+    int num_1 = Num_1 / 100000;
+    int num_2 = Num_1 % 100000;
+    int num_3 = Num_2 / 100000;
+    int num_4 = Num_2 % 100000;
+
+    for(int i = 0; i < length; i++) {
+        if(string[i] == '%') {
+            lastIndex = i;
+        } else if(string[i] == 'd' && lastIndex == i - 1) {
+            check++;
+        }
+    }
+
+    if(check == 0) {
+        printf(string);
+    } else if(check == 1) {
+        printf(string, num_1);
+    } else if(check == 2) {
+        printf(string, num_1, num_2);
+    } else if(check == 3) {
+        printf(string, num_1, num_2, num_3);
+    } else if(check == 4) {
+        printf(string, num_1, num_2, num_3, num_4);
+    }
 }
 
 void Exit_Syscall(int status) {
@@ -420,17 +487,21 @@ void Exit_Syscall(int status) {
     //If you're the nonlast thread in your process, just clear your stack pages
     else {
         DEBUG('X',"Nonlast thread, freeing up stack memory\n");
+        //Just clear this threads stack num in the stack bitmap! No need to deal with pages
         //compute stack page numbers
-        int endingPage = divRoundUp(currentThread->baseStackAddr + 16, PageSize);
+        //int endingPage = divRoundUp(currentThread->baseStackAddr + 16, PageSize);
         int numStackPages = divRoundUp(UserStackSize, PageSize);
         int numCodeDataPages = currentThread->space->numNonStackPages;
-        DEBUG('X',"Freeing stack pages %d through %d\n",endingPage-numStackPages,endingPage);
+        int myStackNum = divRoundUp(divRoundUp(currentThread->baseStackAddr + 16,PageSize) - numCodeDataPages,numStackPages);
+        currentThread->space->stackBitMap.Clear(myStackNum);
+        DEBUG('X',"Freeing stack #%d\n",myStackNum);
+        /*DEBUG('X',"Freeing stack pages %d through %d\n",endingPage-numStackPages,endingPage);
         for (int i = endingPage - numStackPages + 1; i <= endingPage; i++) {
 
             //Don't want to actually clear physical memory
             //freePageBitMap->Clear(currentThread->space->pageTable[i].physicalPage);
             currentThread->space->stackBitMap.Clear(i - numCodeDataPages);
-        }
+        }*/
         //Decrement the number of threads
         processTable->at(currentThread->space->processID)->numThreads -= 1;
     }
@@ -638,6 +709,18 @@ void ExceptionHandler(ExceptionType which) {
     DEBUG('a', "DestroyCondition syscall.\n");
     rv = DestroyCondition_Syscall(machine->ReadRegister(4));
     break;
+      case SC_Rand:
+    DEBUG('a', "Rand syscall.\n");
+    rv = Rand_syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+    break;
+      case SC_Printf:
+    DEBUG('a', "Printf syscall.\n");
+    Printf_syscall(machine->ReadRegister(4), machine->ReadRegister(5), machine->ReadRegister(6), machine->ReadRegister(7));
+    break;
+      case SC_Scanf:
+    DEBUG('a', "Scanf syscall.\n");
+    rv = Scanf_syscall();
+    break;  
 	}
 
 	// Put in the return value and increment the PC

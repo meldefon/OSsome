@@ -510,4 +510,6 @@ void customer(int social) {
 						 passPClerk.cashReceived + cashier.cashReceived;
 		cout<<"TOTAL SALES: "<<totalSales<<"\n";
 	}
+
+	//Exit(0);
 }

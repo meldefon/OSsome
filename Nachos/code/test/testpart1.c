@@ -103,7 +103,7 @@ void ConditionTest(){
 	Write("Result: Success\n\n", 18, ConsoleOutput);
 
 	/*Destroy CV that was already destroyed*/
-	Write("Test: Destroy CV again\n", 25, ConsoleOutput);
+	Write("Test: Destroy CV again\n", 23, ConsoleOutput);
 	result = DestroyCondition(cv1);
 	Write("Result: ", 8, ConsoleOutput);
 	if (result == -1){

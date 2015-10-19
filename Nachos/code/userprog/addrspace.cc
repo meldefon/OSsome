@@ -120,7 +120,7 @@ SwapHeader (NoffHeader *noffH)
 AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMap(0) {
     NoffHeader noffH;
     unsigned int i, size;
-    int maximumThreads = 10;
+    int maximumThreads = 50;
 
 
     //stackLock = Lock("Stack Lock");

@@ -202,6 +202,30 @@ DestroyCondition:
 	j	$31
 	.end DestroyCondition
 
+	.globl Rand
+	.ent	Rand
+Rand:
+	addiu $2,$0,SC_Rand
+	syscall
+	j	$31
+	.end Rand	
+
+	.globl Printf
+	.ent	Printf
+Printf:
+	addiu $2,$0,SC_Printf
+	syscall
+	j	$31
+	.end Printf
+
+	.globl Scanf
+	.ent	Scanf
+Scanf:
+	addiu $2,$0,SC_Scanf
+	syscall
+	j	$31
+	.end Scanf	
+
 /* dummy function to keep gcc happy */
         .globl  __main
         .ent    __main

@@ -18,6 +18,7 @@
 #include <vector>
 #include "structs.h"
 #include "bitmap.h"
+#include "synch.h"
 
 //#include "table.h"
 //#include "addrspace.h"
@@ -43,9 +44,15 @@ extern BitMap* freePageBitMap;
 extern vector<KernelLock*> locks;
 extern vector<KernelCondition*> conditions;
 
+
 //Global process table
 extern vector<ProcessStruct*>* processTable;
 extern Lock* progLock;
+
+// Some new global locks for syscalls
+extern Lock sysLock;
+extern Lock sysCondition;
+
 
 #ifdef USER_PROGRAM
 #include "machine.h"

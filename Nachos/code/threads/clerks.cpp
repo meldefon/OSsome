@@ -315,6 +315,8 @@ void cashierDo(int id) {
 		//Release(workLock);
 	}
 
+	//Exit(0);
+
 }
 
 void checkForClerkOnBreak(Monitor *clerk) {

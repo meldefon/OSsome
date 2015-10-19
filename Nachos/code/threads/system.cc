@@ -29,6 +29,7 @@ BitMap* freePageBitMap;
 vector<KernelLock*> locks;
 vector<KernelCondition*> conditions;
 
+
 //Process table
 vector<ProcessStruct*>* processTable;
 Lock* progLock;
@@ -36,6 +37,11 @@ Lock* progLock;
 // Locks and Conditions containers 
 //vector<KernelLock> locks;
 //vector<KernelCondition> conditions;
+
+// New globals for sys calls
+Lock sysLock;
+Lock sysCondition;
+
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
