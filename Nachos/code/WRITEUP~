@@ -50,6 +50,7 @@ IV. Implementation:
 			//In file structs.h:
 				struct KernelLock {}
 				struct KernelCondition {}
+                struct ProcessEntry {}
 
 		+ Data Structures modified, and the file they were added to.
 			-For example,
@@ -57,6 +58,11 @@ IV. Implementation:
 				{
 					//. Modified fields.
 				}
+                class AddressSpace{
+                    //Added in a stacak bitMap to allocate free stacks for newly forked threads
+                    //Added in a process ID to keep track of the process that owns an address space
+                }
+                
 
 		+ Functions added and in which file.
 			//In file exception.cc:
@@ -96,15 +102,23 @@ IV. Implementation:
 		+ Files Modified
 			userprog/syscall.h
 			userprog/exception.cc
+            userprog/addrspace.h
+            userprog/addrspace.cc
+            userprog/progtest.cc
+            threads/thread
+            threads/system.h
+            threads/system.cc
+            machine/machine.h
+            test/testfiles.c
+            test/matmult.c
+            test/sort
 		+ Files added
 
 		+ Data Structures added, and the file they were added to.
 		+ Data Structures modified, and the file they were added to.
-			-For example,
-				class Lock		-- in file threads.cc/threads.h
-				{
-					//. Modified fields.
-				}
+			class Thread{
+                //Added in a base stack address tracker to help with deleting upon exit
+            }
 
 		+ Functions added and in which file.
 		+ Functions modified and in which file.

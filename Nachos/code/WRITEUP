@@ -102,14 +102,23 @@ IV. Implementation:
 		+ Files Modified
 			userprog/syscall.h
 			userprog/exception.cc
+            userprog/addrspace.h
+            userprog/addrspace.cc
+            userprog/progtest.cc
+            threads/thread
+            threads/system.h
+            threads/system.cc
+            machine/machine.h
+            test/testfiles.c
+            test/matmult.c
+            test/sort
 		+ Files added
-
+            No files added, only modified
 		+ Data Structures added, and the file they were added to.
 		+ Data Structures modified, and the file they were added to.
-			-For example,
-				class Thread{
-                    //Added in a base stack address tracker to help with deleting upon exit
-                }
+			class Thread{
+                //Added in a base stack address tracker to help with deleting upon exit
+            }
 
 		+ Functions added and in which file.
 		+ Functions modified and in which file.
