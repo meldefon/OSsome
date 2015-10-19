@@ -45,15 +45,25 @@ class AddrSpace {
     int numThreads;
     Lock* numThreadsLock;
 
- private:
+    int processID;
+
+    unsigned int numPages;		// Number of pages in the virtual
+    // address space
+
     TranslationEntry *pageTable;	// Assume linear page table translation
-					// for now!
-    unsigned int numPages;		// Number of pages in the virtual 
-					// address space
+    // for now!
+
     unsigned int numNonStackPages;
 
     BitMap stackBitMap; //keep track of free stack pages
     Lock* stackLock; // Will protect the stackBitMap
+
+
+ private:
+
+
+
+
 };
 
 #endif // ADDRSPACE_H

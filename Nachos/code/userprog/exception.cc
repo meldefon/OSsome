@@ -144,7 +144,7 @@ void Write_Syscall(unsigned int vaddr, int len, int id) {
     // console exists, create one. For disk files, the file is looked
     // up in the current address space's open file table and used as
     // the target of the write.
-    
+
     char *buf;		// Kernel buffer for output
     OpenFile *f;	// Open file for output
 
@@ -376,6 +376,68 @@ int DestroyCondition_Syscall(int id) {
 }
 
 void Exit_Syscall(int status) {
+
+    progLock->Acquire();
+    int myPID = currentThread->space->processID;
+    int numActiveThreads = processTable->at(myPID)->numThreads;
+
+    int numActiveProcesses = 0;
+    for(int i = 0;i<processTable->size();i++){
+        if(processTable->at(i)->running){
+            numActiveProcesses+=1;
+        }
+    }
+    DEBUG('X',"Exit called on process %d with %d processes and %d threads\n",myPID,numActiveProcesses,numActiveThreads);
+
+
+    //If you're the last thread of the last process, kill the machine
+    if(numActiveThreads==1 && numActiveProcesses==1){
+        DEBUG('X',"Last thread. Killing execution\n");
+        interrupt->Halt();
+        ASSERT(FALSE);
+        return;
+    }
+
+
+    //If you're the last thread in your nonlast process, clear your memory, set your process to not
+    //running, and delete your address space
+    else if(numActiveThreads==1){
+        DEBUG('X',"Process's last thread, deallocating address space\n");
+        //Clear all your pages
+        for(int i = 0;i<currentThread->space->numPages;i++){
+            freePageBitMap->Clear(currentThread->space->pageTable[i].physicalPage);
+        }
+
+        //Set your process to not running
+        processTable->at(currentThread->space->processID)->running = false;
+
+        //Delete your addressspace
+        delete currentThread->space;
+
+        //return;
+    }
+
+    //If you're the nonlast thread in your process, just clear your stack pages
+    else {
+        DEBUG('X',"Nonlast thread, freeing up stack memory\n");
+        //compute stack page numbers
+        int endingPage = divRoundUp(currentThread->baseStackAddr + 16, PageSize);
+        int numStackPages = divRoundUp(UserStackSize, PageSize);
+        int numCodeDataPages = currentThread->space->numNonStackPages;
+        DEBUG('X',"Freeing stack pages %d through %d\n",endingPage-numStackPages,endingPage);
+        for (int i = endingPage - numStackPages + 1; i <= endingPage; i++) {
+
+            //Don't want to actually clear physical memory
+            //freePageBitMap->Clear(currentThread->space->pageTable[i].physicalPage);
+            currentThread->space->stackBitMap.Clear(i - numCodeDataPages);
+        }
+        //Decrement the number of threads
+        processTable->at(currentThread->space->processID)->numThreads -= 1;
+    }
+
+
+
+    progLock->Release();
     currentThread->Finish(); //Stop running the current thread
 
     //Simplest case - if nothing is left, just halt the whole run
@@ -389,8 +451,9 @@ void kernel_exec(int unused){
     currentThread->space->RestoreState();		// load page table
 
     int nextStackAddr = currentThread->space->getNextStackAddr(); //Get next stack address
+    currentThread->baseStackAddr = nextStackAddr;
     machine->WriteRegister(StackReg, nextStackAddr); //Set next stack address
-    DEBUG('e',"Setting first thread's stack address to %d\n",nextStackAddr);
+    DEBUG('f',"Setting first thread's stack address to %d\n",nextStackAddr);
 
 
     machine->Run();			// jump to the user progam
@@ -399,24 +462,48 @@ void kernel_exec(int unused){
     // by doing the syscall "exit"
 }
 
-SpaceId Exec_Syscall(int fileID) {
+SpaceId Exec_Syscall(unsigned int vaddr,int len) {
 
+    char *buf = new char[len+1];	// Kernel buffer to put the name in
+
+    if (!buf) return 0;
+
+    if( copyin(vaddr,len,buf) == -1 ) {
+        printf("%s","Bad pointer passed to Create\n");
+        delete buf;
+        return 0;
+    }
+
+    buf[len]='\0';
+
+    progLock->Acquire();
     //Get executable from open list, initialize address space
     //TODO This will break if the user is stupid, so we need to check if the ID is valid
-    OpenFile *executable = (OpenFile *) currentThread->space->fileTable.Get(fileID);
+    //OpenFile *executable = (OpenFile *) currentThread->space->fileTable.Get(fileID);
+    OpenFile *executable = fileSystem->Open(buf);
     AddrSpace *space;
 
     if (executable == NULL) {
-        printf("Unable to open file %d\n", fileID);
+        printf("Unable to open file %s\n", buf);
         return 0; //TODO fix
     }
 
     space = new AddrSpace(executable);
-    delete executable;			// close file
+    //delete executable;			// close file
+
+    //Make new process table entry, add to processTable
+    ProcessStruct* processEntry  = new ProcessStruct();
+    processEntry->pID = processTable->size()+1;
+    processEntry->numThreads = 1;
+    processEntry->running = true;
+    processTable->push_back(processEntry);
+    DEBUG('X',"Process table now has %d entries (not necessarily all active)\n",processTable->size());
 
     //Make new thread, set its new address space
-    Thread* t = new Thread("");
+    Thread* t = new Thread("Execed");
     t->space = space;
+
+    progLock->Release();
 
     //After this point, we have no more control of the new process from here
     t->Fork(kernel_exec,0);
@@ -429,21 +516,28 @@ void kernel_thread(int vaddr){
     //DEBUG('a', "In kernel_thread about to run new thread\n");
     //Need to set the registers
     currentThread->space->InitRegisters();
+    currentThread->space->RestoreState();		// load page table
     machine->WriteRegister(PCReg, vaddr);
     machine->WriteRegister(NextPCReg, vaddr + 4);
     int nextStackAddr = currentThread->space->getNextStackAddr();
+    //Store the base stack address for deallocation on exti
+    currentThread->baseStackAddr = nextStackAddr;
     machine->WriteRegister(StackReg, nextStackAddr);
     DEBUG('f',"Assigning new thread's stack address to %d \n",nextStackAddr);
     //machine->WriteRegister(StackReg, numPages * PageSize - 16);
     machine->Run();
 }
 
+
 void Fork_Syscall(int forkArg) {
-    //DEBUG('a',"Fork syscall being executed\n");
-    Thread* t = new Thread("");
+    DEBUG('s',"Fork syscall being executed\n");
+    Thread* t = new Thread("Forked");
     t->space = currentThread->space;
-    t->space->numThreads = t->space->numThreads+1;
+
+    //t->space->numThreads = t->space->numThreads+1;
     //int forkArg = machine->ReadRegister(4);
+    processTable->at(t->space->processID)->numThreads = processTable->at(t->space->processID)->numThreads+1;
+    DEBUG('X',"Process %d now has %d running threads\n",currentThread->space->processID,processTable->size());
     t->Fork(kernel_thread,forkArg);
 }
 
@@ -471,7 +565,7 @@ void ExceptionHandler(ExceptionType which) {
     break;
       case SC_Exec:
     DEBUG('a', "Exec syscall.\n");
-    Exec_Syscall(machine->ReadRegister(4));
+    Exec_Syscall(machine->ReadRegister(4),machine->ReadRegister(5));
     break;
 
     case SC_Fork:

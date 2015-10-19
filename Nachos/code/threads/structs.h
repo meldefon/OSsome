@@ -40,5 +40,24 @@ struct KernelCondition {
 	bool isToBeDeleted;
 };
 
+struct ProcessStruct{
+
+	/*ProcessStruct(pID_,numThreads_){
+		pID = pID_;
+		numThreads = numThreads_;
+	}*/
+
+	ProcessStruct(){
+		pID = 0;
+		numThreads = 0;
+		running = false;
+	}
+
+	int pID;
+	int numThreads;
+	bool running;
+
+};
+
 #endif
 

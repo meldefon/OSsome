@@ -24,7 +24,7 @@ main()
 
     int i, j, k;
 
-	Write("Exec called mat_mult!\n",23,ConsoleOutput);
+	Write("Exec called mat_mult!\n",22,ConsoleOutput);
 
     for (i = 0; i < Dim; i++)		/* first initialize the matrices */
 	for (j = 0; j < Dim; j++) {
@@ -37,6 +37,8 @@ main()
 	for (j = 0; j < Dim; j++)
             for (k = 0; k < Dim; k++)
 		 C[i][j] += A[i][k] * B[k][j];
+
+	Write("Mat_mult done!\n",15,ConsoleOutput);
 
     Exit(C[Dim-1][Dim-1]);		/* and then we're done */
 }

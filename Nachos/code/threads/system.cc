@@ -8,6 +8,7 @@
 #include "copyright.h"
 #include "system.h"
 #include "machine.h"
+#include "structs.h"
 //#include "bitmap.h"
 
 // This defines *all* of the global data structures used by Nachos.
@@ -27,6 +28,10 @@ BitMap* freePageBitMap;
 // New globals implemented for assignment 2, holds user locks and condtions
 vector<KernelLock*> locks;
 vector<KernelCondition*> conditions;
+
+//Process table
+vector<ProcessStruct*>* processTable;
+Lock* progLock;
 
 // Locks and Conditions containers 
 //vector<KernelLock> locks;
@@ -157,6 +162,9 @@ Initialize(int argc, char **argv)
     freePageBitMap = new BitMap(NumPhysPages);
     currentThread = new Thread("main");		
     currentThread->setStatus(RUNNING);
+
+    processTable = new vector<ProcessStruct*>;
+    progLock = new Lock("Exit Lock");
 
     interrupt->Enable();
     CallOnUserAbort(Cleanup);			// if user hits ctl-C

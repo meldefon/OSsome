@@ -15,6 +15,7 @@ int
 main()
 {
     int i, j, tmp;
+    Write("Sort called\n",12,ConsoleOutput);
 
     /* first initialize the array, in reverse sorted order */
     for (i = 0; i < 1024; i++)		

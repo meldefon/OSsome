@@ -43,8 +43,17 @@ StartProcess(char *filename)
     space->RestoreState();		// load page table register
 
     int nextStackAddr = space->getNextStackAddr(); //Get next stack address
+    currentThread->baseStackAddr = nextStackAddr;
     machine->WriteRegister(StackReg, nextStackAddr); //Set next stack address
-    DEBUG('a',"Setting first thread's stack address to %d\n",nextStackAddr);
+    DEBUG('f',"Setting first thread's stack address to %d\n",nextStackAddr);
+
+    //Make new process table entry, add to processTable
+    ProcessStruct* processEntry  = new ProcessStruct();
+    processEntry->pID = processTable->size()+1;
+    processEntry->numThreads = 1;
+    processEntry->running = true;
+    processTable->push_back(processEntry);
+    DEBUG('X',"Process table now has %d entries\n",processTable->size());
 
 
     machine->Run();			// jump to the user progam

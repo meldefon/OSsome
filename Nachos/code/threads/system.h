@@ -43,6 +43,10 @@ extern BitMap* freePageBitMap;
 extern vector<KernelLock*> locks;
 extern vector<KernelCondition*> conditions;
 
+//Global process table
+extern vector<ProcessStruct*>* processTable;
+extern Lock* progLock;
+
 #ifdef USER_PROGRAM
 #include "machine.h"
 extern Machine* machine;	// user program memory and registers
