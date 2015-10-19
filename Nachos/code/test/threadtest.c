@@ -76,6 +76,8 @@ void TestSuite() {
 			numCustomersLeft = 10;
 			senatorWorking = NULL;
 			clerksCanWork = 1;
+			newCustomerId = 0;
+			newCustomerIdLock = CreateLock();
 			senatorLock = CreateLock();
 			senatorCV = CreateCondition();
 
@@ -118,7 +120,9 @@ void TestSuite() {
 			clerksCanWork = 1;
 			senatorLock = CreateLock();
 			senatorCV = CreateCondition();
-			
+			newCustomerId = 0;
+			newCustomerIdLock = CreateLock();	
+
 			Fork(applicationClerk);
 			Fork(pictureClerk);
 			Fork(passportClerk);
@@ -164,6 +168,8 @@ void TestSuite() {
 			clerksCanWork = 1;
 			senatorLock = CreateLock();
 			senatorCV = CreateCondition();
+			newCustomerId = 0;
+			newCustomerIdLock = CreateLock();
 
 			/*make five customers*/
 			for(i = 0; i < 5; i++) {
@@ -201,6 +207,8 @@ void TestSuite() {
 			clerksCanWork = 1;
 			senatorLock = CreateLock();
 			senatorCV = CreateCondition();
+			newCustomerId = 0;
+			newCustomerIdLock = CreateLock();	
 
 			for(i = 0; i < appClerk.numOfClerks; i++) {
 				Fork(applicationClerk);
@@ -242,7 +250,9 @@ void TestSuite() {
 			clerksCanWork = 1;
 			senatorLock = CreateLock();
 			senatorCV = CreateCondition();
-
+			newCustomerId = 0;
+			newCustomerIdLock = CreateLock();
+			
 			/*make one cashier*/
 			Fork(cashierDo);
 			
@@ -293,7 +303,9 @@ void TestSuite() {
 			clerksCanWork = 1;
 			senatorLock = CreateLock();
 			senatorCV = CreateCondition();
-
+			newCustomerId = 0;
+			newCustomerIdLock = CreateLock();
+			
 			Fork(applicationClerk);
 			Fork(pictureClerk);
 			Fork(passportClerk);
@@ -344,7 +356,9 @@ void TestSuite() {
 			clerksCanWork = 1;
 			senatorLock = CreateLock();
 			senatorCV = CreateCondition();
-
+			newCustomerId = 0;
+			newCustomerIdLock = CreateLock();
+			
 			Fork(applicationClerk);
 			Fork(pictureClerk);
 			Fork(passportClerk);
