@@ -19,7 +19,9 @@ int main() {
 
     /*fd = Open("../test/matmult",15);*/
     /*fd2 = Open("../test/sort",12);*/
-    Exec("../test/sort",12);
+    /*Exec("../test/sort",12);*/
+    Exec("../test/threadtest",18);
+    Exec("../test/threadtest",18);
     /*Exec(fd);
     Exec(fd);
     Exec(fd2);*/
