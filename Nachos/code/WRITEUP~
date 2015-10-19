@@ -134,11 +134,52 @@ IV. Implementation:
                 //Added in a process ID int to keep track of a process index
 
                 //Added in a new method with, in a threadsafe way, finds a new 
-                //stack space for a forked thread. Uses the lock
+                //stack space for a forked thread. Uses the bit map lock
             }
 
 		+ Functions added and in which file.
+            //In addrspace.cc:
+                Added a method for finding new stack spaces for forked threads
+            //In exception.cc:
+                - Added in a kernel_fork method which
+                    - is forked after the fork syscall. u
+                    - used to set registers, page table, and call Machine->run()
+
+                - Added in a kernel_exec method which
+                    - is thread forked to after an exec_syscall.
+                    - sets registers, page table and calls Machine->run()
+                
 		+ Functions modified and in which file.
+            //In addrspace.cc:
+                Modified the addresspace constructor
+                    - to have a process ID
+                    - To have a set of stack pages allocated on fork
+                    - to use a global physical memory bitmap for loading
+            //In progtest.cc:
+                Modified start process to do the same things as in the address
+                space constructor
+            //In exception.cc:
+                Modified Exec_syscall
+                    - To open the executable file
+                    - To add a new entry to the process table, which has 1 
+                    thread, is set to running, and has an incremented pID
+                    - Creates a new address space, which keeps track of its
+                    pID, reads the executable into bitmap find spots in physical
+                    memory, and instantiates a stack bitmap
+                Modified Fork_syscall
+                    - To create a new thread,
+                    - set the threads addresspsace to the current address 
+                    space
+                    - sets its stack, and increments the process table's entry 
+                    for that process to have one more running thread
+                Modified Exit_syscall
+                    - To halt the machine is there is only one last thread
+                    - To delete the address space and kernel data, and free the
+                    phyiscal memory pages when a process's last thread exits
+                    - To free a thread's stack pages when it is not the last
+                    thread in an exit
+                    
+                
 
 	+ Part 3
 		+ Files Modified
