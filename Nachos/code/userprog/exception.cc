@@ -232,97 +232,108 @@ void Close_Syscall(int fd) {
 }
 
 int Acquire_Syscall(int id) { 
-  //sysLock.Acquire();
+  int val;
+  sysLock.Acquire();
   if(id > (locks.size() - 1) || id < 0) { 
-    //sysLock.Release();
-    return -1; //if the id they gave us is bad, return -1
+    val = -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
 
     if(kl->addrSpace != currentThread->space) {
-      return -1; //if not the same address space, return -1
+      val = -1; //if not the same address space, return -1
+    } else {
+      kl->lock->Acquire(); //acquire the lock
+      val = 0; //return 0 once acquired
     }
-
-    kl->lock->Acquire(); //acquire the lock
-    return 0; //return 0 once acquired
   }
+  sysLock.Release();
+  return val;
 }
 
 int Release_Syscall(int id) { 
-  //sysLock.Acquire();
+  int val;
+  sysLock.Acquire();
   if(id > (locks.size() - 1) || id < 0) { 
-    //sysLock.Release();
-    return -1; //if the id they gave us is bad, return -1
+    val = -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
 
     if(kl->addrSpace != currentThread->space) {
-      return -1; //if not the same address space, return -1
+      val = -1; //if not the same address space, return -1
+    } else {
+      kl->lock->Release(); //release the lock
+      val = 0; //return 0 once released
     }
-
-    kl->lock->Release(); //release the lock
-    return 0; //return 0 once released
   }
+  sysLock.Release();
+  return val;
 }
 
 int Wait_Syscall(int c, int l) { 
-  //sysLock.Acquire();
-  //sysCondition.Acquire();
+  int val;
+  sysLock.Acquire();
+  sysCondition.Acquire();
   if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
-    //sysLock.Release();
-    //sysCondition.Release();
-    return -1; //if the id they gave us is bad, return -1
+    val = -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
     KernelCondition *kc = conditions[c]; //grab the struct
 
     if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-      return -1; //if not the same address space, return -1
-    }
+      val = -1; //if not the same address space, return -1
+    } else {
 
-    kc->condition->Wait(kl->lock); //wait
-    return 0; //we were able to wait
-  } 
+      kc->condition->Wait(kl->lock); //wait
+      val = 0; //we were able to wait
+    }
+  }
+  sysLock.Release();
+  sysCondition.Release(); 
+  return val;
 }
 
 int Signal_Syscall(int c, int l) { 
-  //sysLock.Acquire();
-  //sysCondition.Acquire();  
-  if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
-    //sysLock.Release();
-    //sysCondition.Release();    
-    return -1; //if the id they gave us is bad, return -1
+  int val;
+  sysLock.Acquire();
+  sysCondition.Acquire();  
+  if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) {    
+    val = -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
     KernelCondition *kc = conditions[c]; //grab the struct
 
     if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-      return -1; //if not the same address space, return -1
+      val = -1; //if not the same address space, return -1
+    } else {
+      kc->condition->Signal(kl->lock); //signal
+      val = 0; //we were able to signal
     }
-
-    kc->condition->Signal(kl->lock); //signal
-    return 0; //we were able to signal
-  } 
+  }
+  sysLock.Release();
+  sysCondition.Release();
+  return val; 
 }
 
 int Broadcast_Syscall(int c, int l) {
-  //sysLock.Acquire();
-  //sysCondition.Acquire();
+  int val;
+  sysLock.Acquire();
+  sysCondition.Acquire();
   if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
-    //sysLock.Release();
-    //sysCondition.Release();
-    return -1; //if the id they gave us is bad, return -1
+    val = -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[l]; //grab the struct
     KernelCondition *kc = conditions[c]; //grab the struct
 
     if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-      return -1; //if not the same address space, return -1
-    }
-
-    kc->condition->Broadcast(kl->lock); //broadcast
-    return 0; //we were able to broadcast
+      val = -1; //if not the same address space, return -1
+    } else {
+      kc->condition->Broadcast(kl->lock); //broadcast
+      val = 0; //we were able to broadcast
+    } 
   }
+  sysLock.Release();
+  sysCondition.Release();
+  return val; 
 }
 
 int CreateLock_Syscall() {
@@ -332,33 +343,32 @@ int CreateLock_Syscall() {
   kl->lock = l; //assign lock pointer 
   kl->addrSpace = currentThread->space; //assign address space
 
-  //sysLock.Acquire();
+  sysLock.Acquire();
   locks.push_back(kl); //add new struct to our locks vector
   int index = locks.size() - 1;
-  //sysLock.Release();
+  sysLock.Release();
   return index;; //return new index of lock
 }
 
-int DestroyLock_Syscall(int id) { 
-  //sysLock.Acquire();
+int DestroyLock_Syscall(int id) {
+  int val; 
+  sysLock.Acquire();
   if(id > (locks.size() - 1) || id < 0) { 
-    //sysLock.Release();
-    return -1; //if the id they gave us is bad, return -1
+    val = -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelLock *kl = locks[id]; //grab the struct
 
     if(kl->addrSpace != currentThread->space) {
-      return -1; //if not the same address space, return -1
+      val = -1; //if not the same address space, return -1
+    } else if(kl->isToBeDeleted == true){
+      val = -1;
+    } else {
+      kl->isToBeDeleted = true; //set it to be deleted
+      val = 0; //return 0
     }
-
-    if(kl->isToBeDeleted == true){
-      return -1;
-    }
-
-    kl->isToBeDeleted = true; //set it to be deleted
-
-    return 0; //return 0
-  } 
+  }
+  sysLock.Release();
+  return val; 
 }
 
 int CreateCondition_Syscall() {
@@ -368,31 +378,32 @@ int CreateCondition_Syscall() {
   kc->condition = c; //assign condition pointer 
   kc->addrSpace = currentThread->space; //assign address space
 
-  //sysCondition.Acquire();
+  sysCondition.Acquire();
   conditions.push_back(kc); //add new struct to our conditions vector
   int index = conditions.size() - 1;
-  //sysCondition.Release();
+  sysCondition.Release();
   return index; //return new index of condition 
 }
 
-int DestroyCondition_Syscall(int id) { 
-  //sysCondition.Acquire();
+int DestroyCondition_Syscall(int id) {
+  int val; 
+  sysCondition.Acquire();
   if(id > (conditions.size() - 1) || id < 0) { 
-    //sysCondition.Release();
-    return -1; //if the id they gave us is bad, return -1
+    val = -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
     KernelCondition *kc = conditions[id]; //grab the struct
 
     if(kc->addrSpace != currentThread->space) {
-      return -1; //if not the same address space, return -1
+      val = -1; //if not the same address space, return -1
+    } else if(kc->isToBeDeleted == true) {
+      val = -1;
+    } else {
+      kc->isToBeDeleted = true; //set it to be deleted
+      val = 0; //return 0
     }
-
-    if(kc->isToBeDeleted == true)
-      return -1;
-
-    kc->isToBeDeleted = true; //set it to be deleted
-    return 0; //return 0
   }
+  sysCondition.Release();
+  return val;
 }
 
 int Rand_syscall(int range, int offset) {
@@ -474,6 +485,26 @@ void Exit_Syscall(int status) {
         for(int i = 0;i<currentThread->space->numPages;i++){
             freePageBitMap->Clear(currentThread->space->pageTable[i].physicalPage);
         }
+
+        //Clear your locks
+        for(int i = 0; i < locks.size(); i++) { 
+          KernelLock *kl = locks[i]; //grab the struct
+
+          if(kl->addrSpace == currentThread->space && kl->isToBeDeleted == true) {
+            locks[i] = NULL;
+            delete kl;  
+          }     
+        } 
+
+        //Clear your conditions
+        for(int i = 0; i < conditions.size(); i++) { 
+          KernelCondition *kc = conditions[i]; //grab the struct
+
+          if(kc->addrSpace == currentThread->space && kc->isToBeDeleted == true) {
+            conditions[i] = NULL;
+            delete kc;  
+          }     
+        } 
 
         //Set your process to not running
         processTable->at(currentThread->space->processID)->running = false;
