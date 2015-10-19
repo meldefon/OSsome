@@ -113,6 +113,7 @@ void pictureClerk() {
 	id = picClerk.newClerkId;
 	picClerk.newClerkId++;
 	Release(picClerk.newClerkIdLock);	
+	Write("IN\n", 3, ConsoleOutput);	
 
 	firstTime = 1;
 	while(start == 1) {
@@ -167,6 +168,7 @@ void applicationClerk() {
 	id = appClerk.newClerkId;
 	appClerk.newClerkId++;
 	Release(appClerk.newClerkIdLock);
+	Write("IN\n", 3, ConsoleOutput);	
 
 	firstTime = 1;
 	start = 1;
@@ -220,6 +222,7 @@ void passportClerk() {
 	id = passPClerk.newClerkId;
 	passPClerk.newClerkId++;
 	Release(passPClerk.newClerkIdLock);
+	Write("IN\n", 3, ConsoleOutput);	
 
 	firstTime = 1;
 	start = 1;
@@ -284,6 +287,7 @@ void cashierDo() {
 	id = cashier.newClerkId;
 	cashier.newClerkId++;
 	Release(cashier.newClerkIdLock);
+	Write("IN\n", 3, ConsoleOutput);	
 
 	firstTime = 1;
 	start = 1;

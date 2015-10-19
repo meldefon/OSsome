@@ -30,6 +30,8 @@ int senatorWorking;
 int clerksCanWork;
 
 int numCustomersLeft;
+int newCustomerId;
+int newCustomerIdLock;
 
 void punish(int time){
 	int i; 
@@ -323,7 +325,7 @@ void senatorClearLines(){
 	Release(cashier.lineLock);			
 }
 
-void customer(int social) {
+void customer() {
 
 	/*Customer variables*/
 	int cash;
@@ -337,11 +339,17 @@ void customer(int social) {
 	int notCompleted;
 	int mistake;
 	int totalSales;
-	
+	int social;
+
 	appClerkSeen = 0;
 	picClerkSeen = 0;
 	cash = 1100;
 	canStartWorking = 1;
+
+	Acquire(newCustomerIdLock);
+	social = newCustomerId;
+	newCustomerId++;
+	Release(newCustomerIdLock);
 
 	if (isSenator[social] == 1) {
 		canStartWorking = 0;

@@ -26,5 +26,8 @@ extern int isSenator[5];
 extern int senatorWorking;
 extern int clerksCanWork;
 
+extern int newCustomerId;
+extern int newCustomerIdLock;
+
 #endif
 

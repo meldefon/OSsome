@@ -98,6 +98,8 @@ int main() {
 	isSenator = (int*) malloc(size * sizeOfInt);
 	*/
 	bribesEnabled = 1;
+	newCustomerId = 0;
+	newClerkIdLock = CreateLock();
 
 	/*Initialize everything*/
 	for(i = 0;i<size;i++) {
