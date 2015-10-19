@@ -304,20 +304,23 @@ void doCashierStuff(int mySSN, int* cash){
 }
 
 void senatorClearLines(){
-	int i; 	
-	struct Monitor allMonitors[4];
 	clerksCanWork = 0;
-	allMonitors[0] = appClerk;
-	allMonitors[1] = picClerk;
-	allMonitors[2] = passPClerk;
-	allMonitors[3] = cashier;
-
 	/*Broadcast to all clerk lines so that custs wake up*/
-	for(i = 0;i<4;i++) {
-		Acquire(allMonitors[i].lineLock);
-		Broadcast(allMonitors[i].lineCV[0], allMonitors[i].lineLock);
-		Release(allMonitors[i].lineLock);
-	}
+	Acquire(appClerk.lineLock);
+	Broadcast(appClerk.lineCV[0], appClerk.lineLock);
+	Release(appClerk.lineLock);
+
+	Acquire(picClerk.lineLock);
+	Broadcast(picClerk.lineCV[0], picClerk.lineLock);
+	Release(picClerk.lineLock);
+
+	Acquire(picClerk.lineLock);
+	Broadcast(picClerk.lineCV[0], picClerk.lineLock);
+	Release(picClerk.lineLock);
+
+	Acquire(picClerk.lineLock);
+	Broadcast(picClerk.lineCV[0], picClerk.lineLock);
+	Release(picClerk.lineLock);			
 }
 
 void customer(int social) {
