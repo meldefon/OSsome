@@ -112,7 +112,8 @@ void pictureClerk() {
 	myLineID = picClerk.newClerkId;
 	id = picClerk.newClerkId;
 	picClerk.newClerkId++;
-	Release(picClerk.newClerkIdLock);	
+	Release(picClerk.newClerkIdLock);
+		
 	Write("IN\n", 3, ConsoleOutput);	
 
 	firstTime = 1;
