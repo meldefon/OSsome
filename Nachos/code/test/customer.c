@@ -10,22 +10,22 @@ int punishTime = 100;
 struct Monitor appClerk, picClerk, passPClerk, cashier;
 
 /*global shared data between the clerks that are used for filing purposes */
-int customersWithCompletedApps[50];
-int customersWithCompletedPics[50];
-int passportClerkChecked[50];
-int cashierChecked[50];
-int gottenPassport[50];
-int cashReceived[50];
+int customersWithCompletedApps[5];
+int customersWithCompletedPics[5];
+int passportClerkChecked[5];
+int cashierChecked[5];
+int gottenPassport[5];
+int cashReceived[5];
 int bribesEnabled;
 
-int appClerkCurrentCustomer[50];
-int pictureClerkCurrentCustomer[50];
-int passportClerkCurrentCustomer[50];
-int cashierCurrentCustomer[50];
+int appClerkCurrentCustomer[5];
+int pictureClerkCurrentCustomer[5];
+int passportClerkCurrentCustomer[5];
+int cashierCurrentCustomer[5];
 
 int senatorLock;
 int senatorCV;
-int isSenator[50];
+int isSenator[5];
 int senatorWorking;
 int clerksCanWork;
 

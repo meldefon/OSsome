@@ -8,21 +8,21 @@ extern int numCustomersLeft;
 extern int bribesEnabled;
 
 /*global shared data between the clerks that are used for filing purposes */
-extern int customersWithCompletedApps[50];
-extern int customersWithCompletedPics[50];
-extern int passportClerkChecked[50];
-extern int cashierChecked[50];
-extern int gottenPassport[50];
-extern int cashReceived[50];
+extern int customersWithCompletedApps[5];
+extern int customersWithCompletedPics[5];
+extern int passportClerkChecked[5];
+extern int cashierChecked[5];
+extern int gottenPassport[5];
+extern int cashReceived[5];
 
-extern int appClerkCurrentCustomer[50];
-extern int pictureClerkCurrentCustomer[50];
-extern int passportClerkCurrentCustomer[50];
-extern int cashierCurrentCustomer[50];
+extern int appClerkCurrentCustomer[5];
+extern int pictureClerkCurrentCustomer[5];
+extern int passportClerkCurrentCustomer[5];
+extern int cashierCurrentCustomer[5];
 
 extern int senatorLock;
 extern int senatorCV;
-extern int isSenator[50];
+extern int isSenator[5];
 extern int senatorWorking;
 extern int clerksCanWork;
 
