@@ -314,13 +314,13 @@ void senatorClearLines(){
 	Broadcast(picClerk.lineCV[0], picClerk.lineLock);
 	Release(picClerk.lineLock);
 
-	Acquire(picClerk.lineLock);
-	Broadcast(picClerk.lineCV[0], picClerk.lineLock);
-	Release(picClerk.lineLock);
+	Acquire(passPClerk.lineLock);
+	Broadcast(passPClerk.lineCV[0], passPClerk.lineLock);
+	Release(passPClerk.lineLock);
 
-	Acquire(picClerk.lineLock);
-	Broadcast(picClerk.lineCV[0], picClerk.lineLock);
-	Release(picClerk.lineLock);			
+	Acquire(cashier.lineLock);
+	Broadcast(cashier.lineCV[0], cashier.lineLock);
+	Release(cashier.lineLock);			
 }
 
 void customer(int social) {
