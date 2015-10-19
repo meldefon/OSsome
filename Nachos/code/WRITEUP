@@ -12,7 +12,7 @@ I. Requirements:
 		This part requires us to implement the system calls Acquire and Release for the Lock class as well as Wait, Signal, and Broadcast for the Condition class. In addition we have to implement the constructor and destructor system calls CreateLock, DestroyLock, CreateCondition and DestroyCondition. The system calls have to be protected from user program errors so user programs cannot crash the OS. For example, CreateLock and CreateCondition has to return an interger value so the user does not handle the kernel space pointer directly. Finally, we have to create a test suite to prove that these system calls work and do not crash Nachos when used correctly and incorrectly. 
 
 	+ Part 2
-		This part requires us to implement the Exec and Fork system calls to allow for multiprogramming in Nachos. We are also required to create a test suite to prove that these system calls work and do not crash Nachos when used correctly and incorrectly.
+		This part requires us to implement the Exec and Fork system calls to allow for multiprogramming in Nachos. We have to come up with a way to allocate physical memory frames so multiple programs can be loaded into memory at once as well as create a way to copy data between the kernel and the user’s virtual address space. We are also required to create a test suite to prove that these system calls work and do not crash Nachos when used correctly and incorrectly.
 
 	+ Part 3
 		This part requires us to recreate the Passport Office from project 1, part 2 as a set of multithreaded Nachos user programs, using the system calls created during this project. We are also required to create a test suite to prove that the implementation works correctly. 
@@ -199,25 +199,31 @@ IV. Implementation:
 V. Testing:  (For each test case, you must show)
 	+ Part 1
 		+ How to test
-			To run tests for part 1, compile in the /test/ directory, then go to the /userprog/ directory and type the command "nachos -x ../test/testpart1"
+			To run tests for part 1, compile in the /test directory, then go to the /userprog directory and type the command "nachos -x ../test/testpart1"
 
 		+ Test Output
 			The structure of the output for each section of the test begins with a title, specifying which system calls are being tested. Each test case output begins with "Test: " followed by a short description of what is being tested. There may be some intermediate print statements from the kernel and the last line for one case should end with "Result: " followed by "Success". If any of the test cases failed, the result will say "Fail".
 	
 	+ Part 2
 		+ How to test
-			To run tests for part 2, compile in the /test/ directory, then go to the /userprog/ directory and type the command "nachos -x ../test/testpart2"
+			To run tests for part 2, compile in the /test directory, then go to the /userprog directory and type the command "nachos -x ../test/testpart2"
 	
 		+ Test Output
 	
 	
 	+ Part 3
 		+ How to test
-			To run tests for part 3, compile in the /test/ directory, then go to the /userprog/ directory and type the command "nachos -x ../test/testpart3"
+			To run tests for part 3, compile in the /test directory, then go to the /userprog directory and type the command "nachos -x ../test/threadtest". It will bring up a menu to choose to run the TestSuite or the Simulation. Enter ‘1’ for the TestSuite. Then  You will be provided with a menu that lists seven test options, each of which exactly say what each test is ready to show. To run a test, simply enter the number of the test as an integer argument. The test will run and show the behavior that is indicated in the criteria and then return the user to the beginning of the test menu again. 
 
-	- How to run the test cases, the commands, the arguments and so on.
 		+ Test Output
-	- Describe the testing output. You don't have to dump all the output info. Just make sure your description can exactly reflect your output. The grader of your submission will be wanting to compare the output they get with what you say the output is.
+			Here the outputs that will be shown by each test which are specified by the test number.
+		1: There will be 10 customer threads started with no other clerk threads present. There will be 3 inactive application clerks and 3 inactive picture clerks. It will be shown that customers get into line one at a time, and that they will always pick either the shortest bribe line or regular line. The correct flow of customers will be demonstrated by following the output as to who gets in line first and in which line. All lines start with zero count.
+		2: We instantiate 5 customers and 1 clerk each. The manager periodically prints totals, which show that office sales are correctly tracked. Note that depending on the random seed used,  the manager does not print the totals after every change, and also that he may not report the totals at the end. This is an unavoidable thread issue. But by checking the totals as they change, we see that the manager is behaving as expected.
+		3: There will be 5 customer threads and 1 cashier thread in this test. In this test, the customers will approach the Cashier one at a time and leave once they have paid; for the purpose of this test, the customer has been assumed to have completed all interactions with the other clerks. In addition, the Cashier will only serve another customer once the customer has left the passport office. The correct output will be demonstrated by observing that the customer leaves then the Cashier begins to conduct transactions again once he is gone.
+		4: There will be 1 thread of each type of clerk in this test. The clerk threads will all start and then go on break since there will be no customers in line for any of them. The output will show clerks going on break followed by the test terminating once they are all gone.
+		5: There will be 5 customer threads, 1 cashier thread, and 1 manager. The cashier will start on break and the customers will begin to line up behind the cashier. Once the cashier’s line count exceeds 3, the cashier will then be woken up by the manager and the customer’s will effectively be able to conduct their business and leave the passport office. The output should show the cashier going on break followed by the customer’s lining up; it should then show the manager waking up the cashier and the customers then conducting business then leaving.
+		6: We instantiate 10 customers and 1 clerk each. If there were race conditions affecting the total office sales, one would expect that with so many customers, the total sales might differ from run to run. By running this scenario multiple times and verifying that the total sales are always 1000, this test demonstrates that the total sales are not subject to a race condition.
+		7: We run a scenario with 4 customers, 1 clerk each, and 1 senator. You can verify that the normal customers (customers 0-3) are served and leave the passport office, but ONLY AFTER the senator (customer 4) is served and leaves. Running the scenario multiple times adds certainty that the customers and senators are behaving as expected.
 
 VI. Discussion:
 	+ Experiment expectation.  (What is supposed to happen.)
@@ -228,6 +234,8 @@ VI. Discussion:
 
 VIII. Miscellaneous:
 - Whatever else you want the grader know about your development.  You can create your own subsections headings here.
+
+
 
 
 
