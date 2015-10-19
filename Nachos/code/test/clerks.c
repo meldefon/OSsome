@@ -1,3 +1,4 @@
+#include "syscall.h"
 #include "globalVars.h"
 #define NULL 0
 
