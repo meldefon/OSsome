@@ -99,7 +99,7 @@ int main() {
 	*/
 	bribesEnabled = 1;
 	newCustomerId = 0;
-	newClerkIdLock = CreateLock();
+	newCustomerIdLock = CreateLock();
 
 	/*Initialize everything*/
 	for(i = 0;i<size;i++) {
