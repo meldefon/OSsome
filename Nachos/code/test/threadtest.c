@@ -40,7 +40,7 @@ void initialize(struct Monitor *m, char* lockName,int clerkType_, int size) {
         }
 }
 
-void ThreadTest() {
+int main() {
 	/*STestSuite();*/
 
   	int size; /*will be used to take in user input for the sizes of specific variables*/
