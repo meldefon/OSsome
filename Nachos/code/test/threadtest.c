@@ -4,7 +4,7 @@
 #include "globalVars.h"
 #define NULL 0
 
-void initialize(typedef struct Monitor *m, char* lockName,char* clerkType_, int size) {
+void initialize(struct Monitor *m, char* lockName,char* clerkType_, int size) {
         int i;
 
         m->lineLock = CreateLock();
@@ -46,6 +46,7 @@ void ThreadTest() {
   	int size; /*will be used to take in user input for the sizes of specific variables*/
   	int senatorSize;
 	int i;
+	int numberOfSenators;	
 
 	Uprintf("Number of ApplicationClerks = ", 30, 0, 0, 0, 0);
 	size = Scanf();
@@ -70,7 +71,6 @@ void ThreadTest() {
 	Uprintf("Number of Customers = ", 22, 0, 0, 0, 0);
 	size = Scanf();
 
-	int numberOfSenators;
 	Uprintf("Number of Senators = ", 21, 0, 0, 0, 0);
 	numberOfSenators = Scanf();
 	

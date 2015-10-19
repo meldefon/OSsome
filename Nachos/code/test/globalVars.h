@@ -3,7 +3,7 @@
 #ifndef GLOBALVARS_H
 #define GLOBALVARS_H
 
-extern typedef struct Monitor appClerk, picClerk, passPClerk, cashier;
+extern struct Monitor appClerk, picClerk, passPClerk, cashier;
 extern int numCustomersLeft;
 extern int bribesEnabled;
 

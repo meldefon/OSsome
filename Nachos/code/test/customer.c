@@ -7,7 +7,7 @@ void Uprintf(char *string, int length, int num_1, int num_2, int num_3, int num_
 
 int punishTime = 100;
 
-typedef struct Monitor appClerk, picClerk, passPClerk, cashier;
+struct Monitor appClerk, picClerk, passPClerk, cashier;
 
 /*global shared data between the clerks that are used for filing purposes */
 int customersWithCompletedApps[50];
@@ -52,7 +52,7 @@ void payCashier(int SSN, int *cash){
 }
 
 
-int getInLine(typedef struct Monitor *clerk, int socialSecurityNum, int *cash) {
+int getInLine(struct Monitor *clerk, int socialSecurityNum, int *cash) {
 		int *lineCount;
 		int *lineCV;
 		int didBribe;
@@ -305,7 +305,7 @@ void doCashierStuff(int mySSN, int* cash){
 
 void senatorClearLines(){
 	int i; 	
-	typedef struct Monitor allMonitors[4];
+	struct Monitor allMonitors[4];
 	clerksCanWork = 0;
 	allMonitors[0] = appClerk;
 	allMonitors[1] = picClerk;

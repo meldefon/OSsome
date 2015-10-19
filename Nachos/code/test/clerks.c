@@ -1,7 +1,7 @@
 #include "globalVars.h"
 #define NULL 0
 
-int waitForLine(typedef struct Monitor *clerk,int myLineID, int firstTime){
+int waitForLine(struct Monitor *clerk,int myLineID, int firstTime){
 	int ifBribed;
 	int start;
 	Acquire(clerk->lineLock);
@@ -296,7 +296,7 @@ void cashierDo(int id) {
 	}
 }
 
-void checkForClerkOnBreak(typedef struct Monitor *clerk) {
+void checkForClerkOnBreak(struct Monitor *clerk) {
 
 	int clerksOnBreak;
 	int i;
