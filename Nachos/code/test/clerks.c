@@ -105,20 +105,17 @@ void pictureClerk() {
 	int id;
 	int start;
 
-	start = 1;
-	Write("in\n", 3, ConsoleOutput);	
+	start = 1;	
 
 	Acquire(picClerk.newClerkIdLock);
 	myLineID = picClerk.newClerkId;
 	id = picClerk.newClerkId;
 	picClerk.newClerkId++;
 	Release(picClerk.newClerkIdLock);
-		
-	Write("IN\n", 3, ConsoleOutput);	
+			
 
 	firstTime = 1;
 	while(start == 1) {
-		Write("pic\n", 4, ConsoleOutput);	
 		ifBribed = waitForLine(&picClerk, id, firstTime);
 
 		Uprintf("PictureClerk #%d has received SSN %d from Customer #%d.\n", 56, id, picClerk.currentCustomer[id], picClerk.currentCustomer[id],0);
@@ -162,20 +159,18 @@ void applicationClerk() {
 	int id;
 	int i;	
 	int start;
-	Write("in\n", 3, ConsoleOutput);	
+		
 
 	Acquire(appClerk.newClerkIdLock);
 	myLineID = appClerk.newClerkId;
 	id = appClerk.newClerkId;
 	appClerk.newClerkId++;
-	Release(appClerk.newClerkIdLock);
-	Write("IN\n", 3, ConsoleOutput);	
+	Release(appClerk.newClerkIdLock);	
 
 	firstTime = 1;
 	start = 1;
 
-	while(start == 1) {	
-		Write("app\n", 4, ConsoleOutput);	
+	while(start == 1) {		
 		waitForLine(&appClerk, id, firstTime);
 
 		Uprintf("ApplicationClerk #%d has received SSN %d from Customer #%d.\n", 60, id, appClerk.currentCustomer[id],appClerk.currentCustomer[id],0);
@@ -216,20 +211,19 @@ void passportClerk() {
 	int customerSSN;
 	int id;
 	int start;
-	Write("in\n", 3, ConsoleOutput);	
+		
 
 	Acquire(passPClerk.newClerkIdLock);
 	myLineID = passPClerk.newClerkId;
 	id = passPClerk.newClerkId;
 	passPClerk.newClerkId++;
 	Release(passPClerk.newClerkIdLock);
-	Write("IN\n", 3, ConsoleOutput);	
+	
 
 	firstTime = 1;
 	start = 1;
 
 	while(start == 1) {
-		Write("pass\n", 5, ConsoleOutput);	
 		ifBribed = waitForLine(&passPClerk, id, firstTime);
 
 		workLock = passPClerk.clerkLock[myLineID];
@@ -280,21 +274,18 @@ void cashierDo() {
 	int workCV;
 	int customerSSN;
 	int id;
-	int start; 
-	Write("in\n", 3, ConsoleOutput);	
+	int start; 	
 
 	Acquire(cashier.newClerkIdLock);
 	myLineID = cashier.newClerkId;
 	id = cashier.newClerkId;
 	cashier.newClerkId++;
-	Release(cashier.newClerkIdLock);
-	Write("IN\n", 3, ConsoleOutput);	
+	Release(cashier.newClerkIdLock);	
 
 	firstTime = 1;
 	start = 1;
 
-	while (start == 1) {
-		Write("cash\n", 5, ConsoleOutput);			
+	while (start == 1) {		
 		waitForLine(&cashier, id, firstTime);
 
 		workLock = cashier.clerkLock[myLineID];
@@ -392,11 +383,9 @@ void managerDo() {
 
 	int myID;
 	int i;
-	myID = 0;
-	Write("in\n", 3, ConsoleOutput);	
+	myID = 0;	
 
-	while (numCustomersLeft>0) {
-		Write("man\n", 4, ConsoleOutput);			
+	while (numCustomersLeft>0) {		
 		checkForClerkOnBreak(&appClerk);
 		checkForClerkOnBreak(&picClerk);
 		checkForClerkOnBreak(&passPClerk);

@@ -212,7 +212,7 @@ V. Testing:  (For each test case, you must show)
 	
 	+ Part 2
 		+ How to test
-			To run tests for part 2, compile in the /test directory, then go to the /userprog directory and type the command "nachos -x ../test/testpart2". After the simple tests run for Exec and Fork, we call Exec on the Passport Office two times. You will be asked for input to the Passport Office menu twice. Follow the prompts for each instance. 
+			To run tests for part 2, compile in the /test directory, then go to the /userprog directory and type the command "nachos -x ../test/testpart2". After the simple tests run for Exec and Fork, we call Exec on the Passport Office two times. You will be asked for input to the Passport Office menu twice. Enter '2' for the simluation. Follow the prompts for each instance. 
 	
 		+ Test Output
 			The output for the tests for part 2 begins with a short description of the test that will be performed for each syscall. Each of the syscalls will be called multiple times and then called with an invalid input. The invalid inputs are handled immediatly. The output should then show that 4 threads were forked. Then exec is called on the user program called "testfiles" twice. Then the Passport office menu will appear 2 time asking for input. After supplying input to the Passport Office menus, the threads from user program "testfiles" will be called, and then the output for both instances of the Passport Office will print. 
