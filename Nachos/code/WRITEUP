@@ -114,7 +114,7 @@ IV. Implementation:
             test/matmult.c
             test/sort
 		+ Files added
-            No files added, only modified
+            test/testpart2.c
 		+ Data Structures added, and the file they were added to.
             Only created one new structure - the processEntry structure for the process table
             //In structs.h
@@ -148,7 +148,17 @@ IV. Implementation:
                 - Added in a kernel_exec method which
                     - is thread forked to after an exec_syscall.
                     - sets registers, page table and calls Machine->run()
-                
+            //In testpart2.c
+              	ForkTest_t1();  
+              	ForkTest_t2();  
+              	ForkTest_t3();  
+              	ForkTest_t4();
+              	ExecTest();
+              	ForkTest();
+              	main(); 
+            //In testfiles.c
+				Added function void testfiles_t1() and testfiles_t2()to test whether or not forking and exiting works 
+
 		+ Functions modified and in which file.
             //In addrspace.cc:
                 Modified the addresspace constructor
@@ -178,12 +188,13 @@ IV. Implementation:
                     phyiscal memory pages when a process's last thread exits
                     - To free a thread's stack pages when it is not the last
                     thread in an exit
-                    
+             //In testfiles.c
+             	Added exec and fork calls for testing in main       
                 
 
 	+ Part 3
 		+ Files Modified
-			test/testfiles.c		
+			No files were modified		
 		+ Files added
 			test/threadtest.c
 			test/clerks.c
@@ -191,15 +202,36 @@ IV. Implementation:
 			test/globalVars.h
 			test/monitor.h
 		+ Data Structures added, and the file they were added to.
-			No data structures were added
+			//Added to monitor.h
+				struct Monitor
 		+ Data Structures modified, and the file they were added to.
 			No data structures were modified
 		+ Functions added and in which file.
-			//In testfiles.c
-				Added function void doIt() to test whether or not forking and exiting works
+			//Added to customer.c
+				tellPassportClerkSSN(int SSN,int myLine)
+				tellCashierSSN(int SSN, int myLine)
+				payCashier(int SSN, int *cash)
+				getInLine(struct Monitor *clerk, int socialSecurityNum, int *cash)
+				doAppClerkStuff(int socialSecurityNum, int *cash)
+				doPicClerkStuff(int socialSecurityNum, int *cash)
+				doPassportClerkStuff(int socialSecurityNum, int *cash)
+				doCashierStuff(int mySSN, int* cash)
+				senatorClearLines()
+				customer()
+			//Added to clerks.c
+				waitForLine(struct Monitor *clerk,int myLineID, int firstTime)
+				pictureClerk()
+				applicationClerk()
+				passportClerk()
+				cashierDo()
+				checkForClerkOnBreak(struct Monitor *clerk)
+				managerDo()
+			//Added to threadtest.c
+				initialize(struct Monitor *m, char* lockName,int clerkType_, int size)
+				TestSuite()
+				main()
 		+ Functions modified and in which file.
-			//In testfiles.c
-				Modified int main() to run two passport office programs
+			No functions were modified
 	
 
 V. Testing:  (For each test case, you must show)
