@@ -17,20 +17,26 @@ I. Requirements:
 	+ Part 3
 		This part requires us to recreate the Passport Office from project 1, part 2 as a set of multithreaded Nachos user programs, using the system calls created during this project. We are also required to create a test suite to prove that the implementation works correctly. 
 
--Describe what's your understanding of the requirements from the assignment statement. With the requirement analysis, you would be clear about what you are supposed to do.
-
 II. Assumptions:
 	For our assumptions, we assumed that:
+		-We could use whatever data structures we liked for locks and conditions
+		-The user could possibly put in bad input for required syscalls
+		-The user would not put in bad input for the non-required syscalls
+		-We could specify as much physical memory as we need for our userprogram
+		-We could demonstrate multiprogramming with at least two exec calls
+		-We could use the same tests in project 1 for the passport simulation to prove that synchronization still holds in the C version of the passport simulation
+		-The user running the passport program could still input the number of clerks, customers, and senators, but they would all be capped at 50 of each 
 
 
 III. Design:
 	+ Part 1
-
+		The first way to approach our design was to determine what type of data structure would be used to hold all the locks and conditions that would be shared among different processes. Since our data structure would always be changing in size, more specifically growing in size, we felt the best approach would be to use a vector. By using a vector, we would not only be able to easily increase the size of the data structure, but we would also be able to directly access members of the vector using the [] operator and integer index values. Since we are going to give the user integer values to access locks and conditions, we felt that using the vector data structure was the most natural way to do this. Having found an appropiate data structure, we then felt it would also be necessary to populate the vector with pointers to a struct. This struct would contain the neccesary information about each lock and condition such as its address space, a pointer to lock/condition, and a boolean that states whether or not it is to be deleted. So in the end, we ended up creating two structs called KernelLock and KernelCondition, and two vectors called locks and conditions. The vector, named locks, contained pointers to the struct KernelLock and the vector, named conditions, contained pointers to the struct KernelCondition. The two vectors were defined as global variables in system.h to make it easier to access all over the code. Having discussed the data structures, we can now focus our attention on the syscalls themselves. Overall, implementing the syscalls were relatively easily and straightforward; the only additional logic that needed to be added to each syscall was error checking in regard to user input. These checks consisted of checking whether or not the integer key the user provided was within the bounds of each vector and if the lock or condition they were try to access belonged to their process; if any of these operations were unsuccessful, it would return -1, if it was successful, it would return 0. In addition to the syscalls that we were required to implement, we also implemented some extra syscalls that would make our userprogram more effecient and easy to use. These extra syscall functions were: Scanf, Printf, and Rand. Scanf allows a user to input an integer, Printf allows a user to print with integer inputs, and Rand returns a random number. 
+		
 	+ Part 2
+		See the comments in IV. Implementation , Part 2 for the design of part 2.
 
 	+ Part 3	
-
-- This section is to cover your logic and ideas as to how  you are going to solve the problem presented.  This should include a description of classes, algorithms, etc. This is not code. You must document ALL parts of a project.
+		The first way to approach our design for this part was to find a way to translate the code from C++ to C while still being able to debug the code at the same time. We found the easiest way to do this was to take our working C++ code in the threads directory and directly modify and translate the files to C while still compiling in the threads directory. With this method, we were able to step by step test our new C code with the UNIX compiler and ensure that the logic was still valid in the conversion process; we were also able to directly test our syscalls with this approach which was an overall success. So by first translating everything to C and ensuring it compiled and ran fine when compiling in the threads directory, we could be confident that any issues we ran into when moving the code into the test directory would be directly related to the Fork, Exec, and Exit calls that we would later implement; to clarify again, we made sure to test the syscalls while still in the threads directory in order to validate that our syscalls worked. Once we converted our code to C and it compiled and outputted as expected, we then moved the five new files, clerks.c, customer.c, globalVars.h, monitor.h, and threadtest.c, into the test directory from the threads directory. Within the test directory, there is also a file called testfiles.c which calls Exec twice on the threadtest.c file; this is to simulate multiprogramming. So in order to run Part 3, you must run nachos with testfiles.c. 
 
 IV. Implementation:
 	+ Part 1
@@ -52,12 +58,7 @@ IV. Implementation:
 				struct KernelCondition {}
                 struct ProcessEntry {}
 
-		+ Data Structures modified, and the file they were added to.
-			-For example,
-				class Lock		-- in file threads.cc/threads.h
-				{
-					//. Modified fields.
-				}
+		+ Data Structures modified, and the file they were added to.	
                 class AddressSpace{
                     //Added in a stacak bitMap to allocate free stacks for newly forked threads
                     //Added in a process ID to keep track of the process that owns an address space
@@ -182,34 +183,39 @@ IV. Implementation:
 
 	+ Part 3
 		+ Files Modified
+			test/testfiles.c		
 		+ Files added
-
+			test/threadtest.c
+			test/clerks.c
+			test/customer.c
+			test/globalVars.h
+			test/monitor.h
 		+ Data Structures added, and the file they were added to.
+			No data structures were added
 		+ Data Structures modified, and the file they were added to.
-			-For example,
-				class Lock		-- in file threads.cc/threads.h
-				{
-					//. Modified fields.
-				}
-
+			No data structures were modified
 		+ Functions added and in which file.
+			//In testfiles.c
+				Added function void doIt() to test whether or not forking and exiting works
 		+ Functions modified and in which file.
+			//In testfiles.c
+				Modified int main() to run two passport office programs
 	
 
 V. Testing:  (For each test case, you must show)
 	+ Part 1
 		+ How to test
-			To run tests for part 1, compile in the /test directory, then go to the /userprog directory and type the command "nachos -x ../test/testpart1"
+			To run tests for part 1, compile in the /test directory, then go to the /userprog directory and type the command "nachos -x ../test/testpart1".
 
 		+ Test Output
 			The structure of the output for each section of the test begins with a title, specifying which system calls are being tested. Each test case output begins with "Test: " followed by a short description of what is being tested. There may be some intermediate print statements from the kernel and the last line for one case should end with "Result: " followed by "Success". If any of the test cases failed, the result will say "Fail".
 	
 	+ Part 2
 		+ How to test
-			To run tests for part 2, compile in the /test directory, then go to the /userprog directory and type the command "nachos -x ../test/testpart2"
+			To run tests for part 2, compile in the /test directory, then go to the /userprog directory and type the command "nachos -x ../test/testpart2". After the simple tests run for Exec and Fork, we call Exec on the Passport Office two times. You will be asked for input to the Passport Office menu twice. Follow the prompts for each instance. 
 	
 		+ Test Output
-	
+			The output for the tests for part 2 begins with a short description of the test that will be performed for each syscall. Each of the syscalls will be called multiple times and then called with an invalid input. The invalid inputs are handled immediatly. The output should then show that 4 threads were forked. Then exec is called on the user program called "testfiles" twice. Then the Passport office menu will appear 2 time asking for input. After supplying input to the Passport Office menus, the threads from user program "testfiles" will be called, and then the output for both instances of the Passport Office will print. 
 	
 	+ Part 3
 		+ How to test
@@ -217,23 +223,24 @@ V. Testing:  (For each test case, you must show)
 
 		+ Test Output
 			Here the outputs that will be shown by each test which are specified by the test number.
-		1: There will be 10 customer threads started with no other clerk threads present. There will be 3 inactive application clerks and 3 inactive picture clerks. It will be shown that customers get into line one at a time, and that they will always pick either the shortest bribe line or regular line. The correct flow of customers will be demonstrated by following the output as to who gets in line first and in which line. All lines start with zero count.
-		2: We instantiate 5 customers and 1 clerk each. The manager periodically prints totals, which show that office sales are correctly tracked. Note that depending on the random seed used,  the manager does not print the totals after every change, and also that he may not report the totals at the end. This is an unavoidable thread issue. But by checking the totals as they change, we see that the manager is behaving as expected.
-		3: There will be 5 customer threads and 1 cashier thread in this test. In this test, the customers will approach the Cashier one at a time and leave once they have paid; for the purpose of this test, the customer has been assumed to have completed all interactions with the other clerks. In addition, the Cashier will only serve another customer once the customer has left the passport office. The correct output will be demonstrated by observing that the customer leaves then the Cashier begins to conduct transactions again once he is gone.
-		4: There will be 1 thread of each type of clerk in this test. The clerk threads will all start and then go on break since there will be no customers in line for any of them. The output will show clerks going on break followed by the test terminating once they are all gone.
-		5: There will be 5 customer threads, 1 cashier thread, and 1 manager. The cashier will start on break and the customers will begin to line up behind the cashier. Once the cashier’s line count exceeds 3, the cashier will then be woken up by the manager and the customer’s will effectively be able to conduct their business and leave the passport office. The output should show the cashier going on break followed by the customer’s lining up; it should then show the manager waking up the cashier and the customers then conducting business then leaving.
-		6: We instantiate 10 customers and 1 clerk each. If there were race conditions affecting the total office sales, one would expect that with so many customers, the total sales might differ from run to run. By running this scenario multiple times and verifying that the total sales are always 1000, this test demonstrates that the total sales are not subject to a race condition.
-		7: We run a scenario with 4 customers, 1 clerk each, and 1 senator. You can verify that the normal customers (customers 0-3) are served and leave the passport office, but ONLY AFTER the senator (customer 4) is served and leaves. Running the scenario multiple times adds certainty that the customers and senators are behaving as expected.
+			1: There will be 10 customer threads started with no other clerk threads present. There will be 3 inactive application clerks and 3 inactive picture clerks. It will be shown that customers get into line one at a time, and that they will always pick either the shortest bribe line or regular line. The correct flow of customers will be demonstrated by following the output as to who gets in line first and in which line. All lines start with zero count.
+			2: We instantiate 5 customers and 1 clerk each. The manager periodically prints totals, which show that office sales are correctly tracked. Note that depending on the random seed used,  the manager does not print the totals after every change, and also that he may not report the totals at the end. This is an unavoidable thread issue. But by checking the totals as they change, we see that the manager is behaving as expected.
+			3: There will be 5 customer threads and 1 cashier thread in this test. In this test, the customers will approach the Cashier one at a time and leave once they have paid; for the purpose of this test, the customer has been assumed to have completed all interactions with the other clerks. In addition, the Cashier will only serve another customer once the customer has left the passport office. The correct output will be demonstrated by observing that the customer leaves then the Cashier begins to conduct transactions again once he is gone.
+			4: There will be 1 thread of each type of clerk in this test. The clerk threads will all start and then go on break since there will be no customers in line for any of them. The output will show clerks going on break followed by the test terminating once they are all gone.
+			5: There will be 5 customer threads, 1 cashier thread, and 1 manager. The cashier will start on break and the customers will begin to line up behind the cashier. Once the cashier’s line count exceeds 3, the cashier will then be woken up by the manager and the customer’s will effectively be able to conduct their business and leave the passport office. The output should show the cashier going on break followed by the customer’s lining up; it should then show the manager waking up the cashier and the customers then conducting business then leaving.
+			6: We instantiate 10 customers and 1 clerk each. If there were race conditions affecting the total office sales, one would expect that with so many customers, the total sales might differ from run to run. By running this scenario multiple times and verifying that the total sales are always 1000, this test demonstrates that the total sales are not subject to a race condition.
+			7: We run a scenario with 4 customers, 1 clerk each, and 1 senator. You can verify that the normal customers (customers 0-3) are served and leave the passport office, but ONLY AFTER the senator (customer 4) is served and leaves. Running the scenario multiple times adds certainty that the customers and senators are behaving as expected.
 
 VI. Discussion:
 	+ Experiment expectation.  (What is supposed to happen.)
-	+ Experiment result.  (What actually happened.)
-	+ Explanation
-		- Explain your experiment result - how it proves what 
-		  you were supposed to prove.
+		For this project, overall, we expect that we will have nachos support multiprogramming by running more than one user program at a time. While the user programs run simultaneously, we expect that each individual program will be synchronized and run without any race conditions or deadlocks. We expect our tests to prove that the system calls we implement will work correctly and that nachos can support multiprogramming.
 
-VIII. Miscellaneous:
-- Whatever else you want the grader know about your development.  You can create your own subsections headings here.
+	+ Experiment result.  (What actually happened.)
+		We met our expectations by implementing system calls for the user programs to support synchronization and multiprogramming. We were able to run more than one instance of the Passport Office.  
+
+	+ Explanation
+		We attempted to see if we could match our expectations by creating user programs to test the multiprogramming capabilites.
+		The results from our tests matched up to our expectations by showing that the system calls we implemented worked correctly, even with improper inputs, and that we can execute more than one user program at a time. 
 
 
 
