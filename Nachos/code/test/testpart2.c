@@ -8,87 +8,74 @@ int result, lock, cv;
 
 /*Thread 1 for ForkTest*/
 void ForkTest_t1(){
-	Write("Forked thread 1\n\n", 17, ConsoleOutput);
+	Write("Forked thread 1\n", 16, ConsoleOutput);
 	Exit(0);
+	return;
 }
 /*Thread 2 for ForkTest*/
 void ForkTest_t2(){
-	Write("Forked thread 2\n\n", 17, ConsoleOutput);
+	Write("Forked thread 2\n", 16, ConsoleOutput);
 	Exit(0);
+	return;
 }
 
+/*Thread 3 for ForkTest*/
+void ForkTest_t3(){
+	Write("Forked thread 3\n", 16, ConsoleOutput);
+	Exit(0);
+	return;
+}
+
+/*Thread 4 for ForkTest*/
+void ForkTest_t4(){
+	Write("Forked thread 4\n\n", 17, ConsoleOutput);
+	Exit(0);
+	return;
+}
+
+/*Test for Exec syscall*/
 void ExecTest(){
-	Write("**Testing Exec**\n\n", 18, ConsoleOutput);
-	
+	Write("The following tests for Exec will run:\n", 39, ConsoleOutput);
+
 	/*Exec a process*/
+	Write("Test 1: Exec a process\n", 23, ConsoleOutput);
+	Exec("../test/testfiles",17);
 
 	/*Exec another process*/
+	Write("Test 2: Exec another process\n", 29, ConsoleOutput);
+    Exec("../test/testfiles",17);
 
-	/*Exec with invalid input - min case*/
-	Write("Test: Exec with invalid input - min case\n\n", 42, ConsoleOutput);
-	/*result = Exec(-1);*/
-	Write("Result: ", 8, ConsoleOutput);
-	/*if(result == -1){
-		Write("Success", 7, ConsoleOutput);
-	}else{
-		Write("Fail", 4, ConsoleOutput);
-	}*/
-	Write("\n\n", 2, ConsoleOutput);
 	
-	/*Exec with invalid input - min case*/
-	Write("Test: Exec with invalid input - min case\n\n", 42, ConsoleOutput);
-	/*result = Exec(9999);*/
-	Write("Result: ", 8, ConsoleOutput);
-	/*if(result == -1){
-		Write("Success", 7, ConsoleOutput);
-	}else{
-		Write("Fail", 4, ConsoleOutput);
-	}*/
-	Write("\n\n", 2, ConsoleOutput);
 
-	Write("**Exec Tests Finished**\n\n", 25, ConsoleOutput);
+	/*Exec with invalid input*/
+	Write("Test 3: Exec with invalid input\n", 32, ConsoleOutput);
+	Exec(1, 1);
+
+
+	Write("\n\n", 2, ConsoleOutput);
 }
 
+/*Test for Fork syscall*/
 void ForkTest(){
-	Write("**Testing Fork**\n\n", 18, ConsoleOutput);
+	Write("The following tests for Fork will run:\n", 39, ConsoleOutput);
 	
 	/*Fork one thread*/
-	Write("Test: Fork one thread\n\n", 23, ConsoleOutput);
+	Write("Test 1: Fork one thread\n", 24, ConsoleOutput);
 	Fork(ForkTest_t1);
-	Write("Result: ", 8, ConsoleOutput);
-
-	Write("\n\n", 2, ConsoleOutput);
+	
 
 	/*Fork more threads*/
-	Write("Test: Fork another thread\n\n", 27, ConsoleOutput);
+	Write("Test 2: Fork 3 more threads\n", 29, ConsoleOutput);
 	Fork(ForkTest_t2);
-	Write("Result: ", 8, ConsoleOutput);
-
-	Write("\n\n", 2, ConsoleOutput);
-
-	/*Fork thread with invalid input - min case*/
-	Write("Test: Fork thread, invalid input - min case\n\n", 45, ConsoleOutput);
-	/*result = Fork(-1);*/
-	Write("Result: ", 8, ConsoleOutput);
-	/*if(result == -1){
-		Write("Success", 7, ConsoleOutput);
-	}else{
-		Write("Fail", 4, ConsoleOutput);
-	}*/
-	Write("\n\n", 2, ConsoleOutput);
+	Fork(ForkTest_t3);
+	Fork(ForkTest_t4);
 	
-	/*Fork thread with invalid input - min case*/
-	Write("Test: Fork thread, invalid input - min case\n\n", 45, ConsoleOutput);
-	/*result = Fork(9999);*/
-	Write("Result: ", 8, ConsoleOutput);
-	/*if(result == -1){
-		Write("Success", 7, ConsoleOutput);
-	}else{
-		Write("Fail", 4, ConsoleOutput);
-	}*/
-	Write("\n\n", 2, ConsoleOutput);
 
-	Write("**Fork Tests Finished**\n\n", 25, ConsoleOutput);
+	/*Fork thread with invalid input*/
+	Write("Test 3: Fork thread with invalid input\n", 39, ConsoleOutput);
+	Fork(-1);
+	Write("\n", 1, ConsoleOutput);
+	
 }
 
 
@@ -102,7 +89,9 @@ int main(){
 	/*Test Exec*/
 	ExecTest();
 
-	Write("\nEnd of Project 2, Part 2 Tests\n\n", 33, ConsoleOutput);
+	/*Exec test on Passport Office*/
+	Exec("../test/threadtest",18);
+    Exec("../test/threadtest",18);
 
 	Exit(0);
 }

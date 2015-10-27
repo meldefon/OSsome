@@ -664,6 +664,12 @@ void kernel_thread(int vaddr){
 
 
 void Fork_Syscall(int forkArg) {
+
+    if (forkArg < 0){
+      cout<<"Invalid input to Fork syscall: "<<forkArg<<"\n";
+      return;
+    }
+
     DEBUG('s',"Fork syscall being executed\n");
     Thread* t = new Thread("Forked");
     t->space = currentThread->space;
