@@ -61,6 +61,8 @@ void TestSuite() {
 		Uprintf("8. Quit.\n",9,0,0,0,0);
 		Uprintf("Pick a test by entering in the test number: ",44,0,0,0,0);
 		userChoice = Scanf();
+		Uprintf("Two: %d\n",8,2,0,0,0);
+		Uprintf("Picked: %d\n",11,userChoice,0,0,0);
 
 		if(userChoice == 1) { /*shortest line*/
 			
@@ -99,6 +101,7 @@ void TestSuite() {
 		} else if(userChoice == 2) {
 			/*This test sends 5 customers in plus 1 of each type of clerk. Demonstrates that each type of
 			clerk's money is tracked correctly by the manager*/
+			Uprintf("Running test 2\n",15,0,0,0,0);
 			initialize(&cashier,"Cashier Line Lock",3, 1);
 			initialize(&picClerk,"Picture Clerk Line Lock",1, 1);
 			initialize(&passPClerk,"Passport Clerk Line Lock",2, 1);
@@ -401,6 +404,7 @@ int main() {
 
 	Uprintf("For TestSuite, enter 1\nFor Simulation, enter 2", 46, 0, 0, 0, 0);
 	testSuite = Scanf();
+	Uprintf("Chose: %d \n",11,testSuite,0,0,0);
 
 	if(testSuite == 1)
 		TestSuite();

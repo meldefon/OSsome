@@ -442,6 +442,7 @@ int Rand_syscall(int range, int offset) {
 int Scanf_syscall() {
   int num;
   scanf("%d", &num);
+    cout<<"Num scanned: "<<num<<"\n";
   return num;
 }
 
@@ -686,7 +687,7 @@ void Yield_Syscall() {
   currentThread->Yield();
 }
 
-void HandlePageFault(){
+int HandlePageFault(){
     //cout<<"Handling page fault\n";
     DEBUG('p',"Current PCReg: %i \n",machine->ReadRegister(PCReg));
     //Done: turn off interrupts
@@ -700,14 +701,14 @@ void HandlePageFault(){
     DEBUG('p',"Current TLB index is %i \n",currentTLB);
 
     //Get the bad address, convert to page number
-    int badVPage = machine->ReadRegister(BadVAddrReg)/PageSize;
+    unsigned int badVPage = machine->ReadRegister(BadVAddrReg)/PageSize;
 
     //Pull out the bad VPage's translation entry, the TLB entry we'll write to
     TranslationEntry* pageTableEntry = &(currentThread->space->pageTable[badVPage]);
     TranslationEntry* TLBEntry = &(machine->tlb[currentTLB]);
 
     //Copy entry's info
-    TLBEntry->virtualPage = pageTableEntry->virtualPage;
+    TLBEntry->virtualPage = (unsigned) pageTableEntry->virtualPage;
     TLBEntry->physicalPage = pageTableEntry->physicalPage;
     TLBEntry->valid = pageTableEntry->valid;
     TLBEntry->use = pageTableEntry->use;
@@ -720,7 +721,7 @@ void HandlePageFault(){
     (void) interrupt->SetLevel(oldLevel);   // re-enable interrupts
 
 
-    return;
+    return 0;
 }
 
 void ExceptionHandler(ExceptionType which) {
@@ -840,7 +841,7 @@ void ExceptionHandler(ExceptionType which) {
     else if (which == PageFaultException) {
         //Here's what you do on a TLB miss. No need to increment PCReg as in syscalls
         //cout << "Handling a page fault\n";
-        HandlePageFault();
+        rv = HandlePageFault();
         machine->WriteRegister(2, rv);
         return;
     }
