@@ -273,7 +273,22 @@ AddrSpace::InitRegisters()
 //----------------------------------------------------------------------
 
 void AddrSpace::SaveState() 
-{}
+{
+    //This is called on a context swtich. Here we'll invalidate TLB
+
+
+    //Turn off interrupts
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);   // disable interrupts
+
+    //Invalidate TLB
+    for(int i = 0;i<TLBSize;i++){
+        machine->tlb[i].valid = FALSE;
+    }
+
+    (void) interrupt->SetLevel(oldLevel);   // re-enable interrupts
+
+
+}
 
 //----------------------------------------------------------------------
 // AddrSpace::RestoreState
@@ -285,6 +300,6 @@ void AddrSpace::SaveState()
 
 void AddrSpace::RestoreState() 
 {
-    machine->pageTable = pageTable;
-    machine->pageTableSize = numPages;
+    //machine->pageTable = pageTable;
+    //machine->pageTableSize = numPages;
 }

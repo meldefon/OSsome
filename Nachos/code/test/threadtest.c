@@ -279,40 +279,36 @@ void TestSuite() {
 
 		} else if(userChoice == 6) {
 			/*This test sends 4 customers in plus 1 senator*/
-			int numCustsForTest; 
 			initialize(&cashier,"Cashier Line Lock",3, 1);
 			initialize(&picClerk,"Picture Clerk Line Lock",1, 1);
 			initialize(&passPClerk,"Passport Clerk Line Lock",2, 1);
 			initialize(&appClerk,"Application Clerk Line Lock",0, 1);
 
-			numCustsForTest = 10;
-			bribesEnabled = 0;
 			/*initialze globals
-			customersWithCompletedApps = new bool[numCustsForTest];
-			customersWithCompletedPics = new bool[numCustsForTest];
-			passportClerkChecked = new bool[numCustsForTest];
-			cashierChecked = new bool[numCustsForTest];
-			gottenPassport = new bool[numCustsForTest];
-			cashReceived = new int[numCustsForTest];
+			customersWithCompletedApps = new bool[5];
+			customersWithCompletedPics = new bool[5];
+			passportClerkChecked = new bool[5];
+			cashierChecked = new bool[5];
+			gottenPassport = new bool[5];
+			cashReceived = new int[5];
 			cashierCurrentCustomer = new int[1];
-			isSenator = new bool[numCustsForTest];
-			*/			
-			numCustomersLeft = numCustsForTest;
-			numCustomersLeft = numCustsForTest;
+			isSenator = new bool[5];
+			*/
+			numCustomersLeft = 5;
 			senatorWorking = NULL;
 			clerksCanWork = 1;
 			senatorLock = CreateLock();
 			senatorCV = CreateCondition();
 			newCustomerId = 0;
 			newCustomerIdLock = CreateLock();
-			
+
 			Fork(applicationClerk);
 			Fork(pictureClerk);
 			Fork(passportClerk);
 			Fork(cashierDo);
 
 			/*make five customers*/
-			for(i = 0; i < numCustsForTest; i++) {
+			for(i = 0; i < 5; i++) {
 				customersWithCompletedApps[i] = 1;
 				customersWithCompletedPics[i] = 1;
 				passportClerkChecked[i] = 1;
@@ -320,13 +316,13 @@ void TestSuite() {
 				gottenPassport[i] = 0;
 				cashReceived[i] = 0;
 
-				if(i<numCustsForTest){
+				if(i<4){
 					isSenator[i]=0;
 				}
 				else{
 					isSenator[i] = 1;
 				}
-				
+
 				Fork(customer);
 			}
 

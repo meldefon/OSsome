@@ -53,6 +53,9 @@ extern Lock* progLock;
 extern Lock sysLock;
 extern Lock sysCondition;
 
+//Index for writing into IPT
+extern int currentTLB;
+
 
 #ifdef USER_PROGRAM
 #include "machine.h"

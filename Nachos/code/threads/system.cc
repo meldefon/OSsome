@@ -42,6 +42,9 @@ Lock* progLock;
 Lock sysLock;
 Lock sysCondition;
 
+//Int for writing into TLB
+int currentTLB;
+
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -171,6 +174,10 @@ Initialize(int argc, char **argv)
 
     processTable = new vector<ProcessStruct*>;
     progLock = new Lock("Exit Lock");
+
+    //Set first TLB write spot
+    currentTLB = 0;
+
 
     interrupt->Enable();
     CallOnUserAbort(Cleanup);			// if user hits ctl-C
