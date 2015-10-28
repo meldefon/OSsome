@@ -688,11 +688,19 @@ void Yield_Syscall() {
 
 void HandlePageFault() {
 
+
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); //Disable interrupts
+
+    //TODO: Copy dirty bits to IPT and Page table if entry is valid
+
+    //Get the bad address from register
     int badVAddr = machine->ReadRegister(BadVAddrReg);
     int badPage = badVAddr/PageSize;
 
+    //Pull out the translation entry from page table
     TranslationEntry old = currentThread->space->pageTable[badPage];
 
+    //Add that translation entry to TLB
     machine->tlb[currentTLB].physicalPage = old.physicalPage;
     machine->tlb[currentTLB].virtualPage = old.virtualPage;
     machine->tlb[currentTLB].valid = old.valid;
@@ -700,7 +708,10 @@ void HandlePageFault() {
     machine->tlb[currentTLB].use = old.use;
     machine->tlb[currentTLB].readOnly = old.readOnly;
 
+    //Increment TLB index
     currentTLB = (currentTLB+1)%TLBSize;
+
+    (void) interrupt->SetLevel(oldLevel); //Reenable interrupts
 
 }
 
