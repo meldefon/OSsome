@@ -507,36 +507,45 @@ void Exit_Syscall(int status) {
 
     //If you're the last thread in your nonlast process, clear your memory, set your process to not
     //running, and delete your address space
-    else if(numActiveThreads==1){
-        DEBUG('X',"Process's last thread, deallocating address space\n");
+    else if(numActiveThreads==1) {
+        DEBUG('X', "Process's last thread, deallocating address space\n");
         //Clear all your pages
-        for(int i = 0;i<currentThread->space->numPages;i++){
+        for (int i = 0; i < currentThread->space->numPages; i++) {
             freePageBitMap->Clear(currentThread->space->pageTable[i].physicalPage);
+
         }
 
         //Clear your locks
-        for(int i = 0; i < locks.size(); i++) { 
-          KernelLock *kl = locks[i]; //grab the struct
+        for (int i = 0; i < locks.size(); i++) {
+            KernelLock *kl = locks[i]; //grab the struct
 
-          if(kl != NULL) {
-            if(kl->addrSpace == currentThread->space && kl->isToBeDeleted == true) {
-              locks[i] = NULL;
-              delete kl;  
-            }   
-          }  
-        } 
+            if (kl != NULL) {
+                if (kl->addrSpace == currentThread->space && kl->isToBeDeleted == true) {
+                    locks[i] = NULL;
+                    delete kl;
+                }
+            }
+        }
 
         //Clear your conditions
-        for(int i = 0; i < conditions.size(); i++) { 
-          KernelCondition *kc = conditions[i]; //grab the struct
+        for (int i = 0; i < conditions.size(); i++) {
+            KernelCondition *kc = conditions[i]; //grab the struct
 
-          if(kc != NULL) {
-            if(kc->addrSpace == currentThread->space && kc->isToBeDeleted == true) {
-              conditions[i] = NULL;
-              delete kc;  
+            if (kc != NULL) {
+                if (kc->addrSpace == currentThread->space && kc->isToBeDeleted == true) {
+                    conditions[i] = NULL;
+                    delete kc;
+                }
             }
-          }     
-        } 
+        }
+
+        for (int i = 0; i < NumPhysPages; i++) {
+            //Clear stuff in the IPT
+            if(IPT[i].owner==currentThread->space) {
+                IPT[i].valid = FALSE;
+            }
+        }
+
 
         //Set your process to not running
         processTable->at(currentThread->space->processID)->running = false;
@@ -710,7 +719,7 @@ void HandlePageFault() {
 
     for(int i = 0; i < NumPhysPages; i++) {
       //get the IPT entry based on virtual page # and address space
-      if(IPT[i].virtualPage == badPage && IPT[i].owner == currentThread->space) {
+      if(IPT[i].valid && IPT[i].virtualPage == badPage && IPT[i].owner == currentThread->space) {
         old = IPT[i]; 
         break;
       }

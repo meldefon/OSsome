@@ -174,7 +174,8 @@ Initialize(int argc, char **argv)
     currentThread->setStatus(RUNNING);
 
     // Intialize IPT table
-    IPT = new IPTEntry[NumPhysPages]; 
+    IPT = new IPTEntry[NumPhysPages];
+
 
     processTable = new vector<ProcessStruct*>;
     progLock = new Lock("Exit Lock");

@@ -166,6 +166,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMa
         // pages to be read-only
 
         // IPT population is here
+        //TODO Maybe the IPT should be initialized to invalid entries at first?
         IPT[ppn].physicalPage = ppn;
         IPT[ppn].owner = this; 
         IPT[ppn].virtualPage = i;
