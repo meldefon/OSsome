@@ -555,7 +555,7 @@ void Exit_Syscall(int status) {
         //int endingPage = divRoundUp(currentThread->baseStackAddr + 16, PageSize);
         int numStackPages = divRoundUp(UserStackSize, PageSize);
         int numCodeDataPages = currentThread->space->numNonStackPages;
-        int myStackNum = divRoundUp(divRoundUp(currentThread->baseStackAddr + 16,PageSize) - numCodeDataPages,numStackPages);
+        int myStackNum = divRoundUp(divRoundUp(currentThread->baseStackAddr + 16,PageSize) - numCodeDataPages,numStackPages) - 1;
         currentThread->space->stackBitMap.Clear(myStackNum);
         DEBUG('X',"Freeing stack #%d\n",myStackNum);
         /*DEBUG('X',"Freeing stack pages %d through %d\n",endingPage-numStackPages,endingPage);
