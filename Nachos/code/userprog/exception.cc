@@ -686,6 +686,24 @@ void Yield_Syscall() {
   currentThread->Yield();
 }
 
+void HandlePageFault() {
+
+    int badVAddr = machine->ReadRegister(BadVAddrReg);
+    int badPage = badVAddr/PageSize;
+
+    TranslationEntry old = currentThread->space->pageTable[badPage];
+
+    machine->tlb[currentTLB].physicalPage = old.physicalPage;
+    machine->tlb[currentTLB].virtualPage = old.virtualPage;
+    machine->tlb[currentTLB].valid = old.valid;
+    machine->tlb[currentTLB].dirty = old.dirty;
+    machine->tlb[currentTLB].use = old.use;
+    machine->tlb[currentTLB].readOnly = old.readOnly;
+
+    currentTLB = (currentTLB+1)%TLBSize;
+
+}
+
 void ExceptionHandler(ExceptionType which) {
     int type = machine->ReadRegister(2); // Which syscall?
     int rv=0; 	// the return value from a syscall
@@ -798,7 +816,11 @@ void ExceptionHandler(ExceptionType which) {
 	machine->WriteRegister(PCReg,machine->ReadRegister(NextPCReg));
 	machine->WriteRegister(NextPCReg,machine->ReadRegister(PCReg)+4);
 	return;
-    } else {
+    }
+    else if(which==PageFaultException) {
+        HandlePageFault();
+        return;
+    }else {
       cout<<"Unexpected user mode exception - which:"<<which<<"  type:"<< type<<endl;
       interrupt->Halt();
     }

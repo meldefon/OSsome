@@ -42,6 +42,8 @@ Lock* progLock;
 Lock sysLock;
 Lock sysCondition;
 
+int currentTLB;
+
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -174,6 +176,8 @@ Initialize(int argc, char **argv)
 
     interrupt->Enable();
     CallOnUserAbort(Cleanup);			// if user hits ctl-C
+
+    currentTLB = 0;
     
 #ifdef USER_PROGRAM
     machine = new Machine(debugUserProg);	// this must come first

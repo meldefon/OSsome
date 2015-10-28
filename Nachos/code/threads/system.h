@@ -53,6 +53,8 @@ extern Lock* progLock;
 extern Lock sysLock;
 extern Lock sysCondition;
 
+extern int currentTLB;
+
 
 #ifdef USER_PROGRAM
 #include "machine.h"
