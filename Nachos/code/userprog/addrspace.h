@@ -58,6 +58,8 @@ class AddrSpace {
     BitMap stackBitMap; //keep track of free stack pages
     Lock* stackLock; // Will protect the stackBitMap
 
+    int lastPCReg;
+
 
  private:
 

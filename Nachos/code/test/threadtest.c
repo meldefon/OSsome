@@ -63,6 +63,7 @@ void TestSuite() {
 		userChoice = Scanf();
 		Uprintf("Two: %d\n",8,2,0,0,0);
 		Uprintf("Picked: %d\n",11,userChoice,0,0,0);
+		userChoice = 2;
 
 		if(userChoice == 1) { /*shortest line*/
 			
@@ -405,6 +406,7 @@ int main() {
 	Uprintf("For TestSuite, enter 1\nFor Simulation, enter 2", 46, 0, 0, 0, 0);
 	testSuite = Scanf();
 	Uprintf("Chose: %d \n",11,testSuite,0,0,0);
+	testSuite = 1;
 
 	if(testSuite == 1)
 		TestSuite();

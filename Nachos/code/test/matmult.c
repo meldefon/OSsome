@@ -9,9 +9,10 @@
 
 #include "syscall.h"
 
-#define Dim 	20	/* sum total of the arrays doesn't fit in 
+#define Dim 	20	/* sum total of the arrays doesn't fit in
 			 * physical memory 
 			 */
+
 
 int A[Dim][Dim];
 int B[Dim][Dim];
@@ -21,8 +22,13 @@ int
 main()
 {
 
-
     int i, j, k;
+
+	A[0][0] = 5;
+	Exit(A[0][0]);
+
+	/*i = 2;
+	Exit(i);*/
 
 	Write("Exec called mat_mult!\n",22,ConsoleOutput);
 
@@ -31,7 +37,14 @@ main()
 	     A[i][j] = i;
 	     B[i][j] = j;
 	     C[i][j] = 0;
+		if(i==5){
+			Exit(A[i][j]);
+		}
 	}
+
+	i = A[5][0];
+	Exit(i);
+
 
     for (i = 0; i < Dim; i++)		/* then multiply them together */
 	for (j = 0; j < Dim; j++)
@@ -40,5 +53,7 @@ main()
 
 	Write("Mat_mult done!\n",15,ConsoleOutput);
 
-    Exit(C[Dim-1][Dim-1]);		/* and then we're done */
+
+    /*Exit(C[Dim-1][Dim-1]);*/		/* and then we're done */
+	Exit(2);		/* and then we're done */
 }

@@ -688,8 +688,9 @@ void Yield_Syscall() {
 }
 
 int HandlePageFault(){
+
     //cout<<"Handling page fault\n";
-    DEBUG('p',"Current PCReg: %i \n",machine->ReadRegister(PCReg));
+    DEBUG('a',"Current PCReg: %i \n",machine->ReadRegister(PCReg));
     //Done: turn off interrupts
     //Done: Load requested VP/PP pair into the TLB
     //TODO Save dirty bits to IPT, DONE: page table
@@ -698,10 +699,11 @@ int HandlePageFault(){
     IntStatus oldLevel = interrupt->SetLevel(IntOff);   // disable interrupts
 
 
-    DEBUG('p',"Current TLB index is %i \n",currentTLB);
+    DEBUG('a',"Current TLB index is %i \n",currentTLB);
 
     //Get the bad address, convert to page number
     unsigned int badVPage = machine->ReadRegister(BadVAddrReg)/PageSize;
+    DEBUG('a',"Required address: %i \n",machine->ReadRegister(BadVAddrReg));
 
     //Pull out the bad VPage's translation entry, the TLB entry we'll write to
     TranslationEntry* pageTableEntry = &(currentThread->space->pageTable[badVPage]);

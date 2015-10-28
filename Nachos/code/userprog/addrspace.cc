@@ -122,6 +122,8 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMa
     unsigned int i, size;
     int maximumThreads = 50;
 
+    lastPCReg = -1;
+
 
     //stackLock = Lock("Stack Lock");
 
