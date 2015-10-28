@@ -697,8 +697,24 @@ void HandlePageFault() {
     int badVAddr = machine->ReadRegister(BadVAddrReg);
     int badPage = badVAddr/PageSize;
 
+    /* This was using the page table of the process, but now we must use
+       the IPT to find the page instead since everythign is preloaded
+
     //Pull out the translation entry from page table
     TranslationEntry old = currentThread->space->pageTable[badPage];
+    
+    */
+
+    //Will hold the IPT entry that we need
+    IPTEntry old;
+
+    for(int i = 0; i < NumPhysPages; i++) {
+      //get the IPT entry based on virtual page # and address space
+      if(IPT[i].virtualPage == badPage && IPT[i].owner == currentThread->space) {
+        old = IPT[i]; 
+        break;
+      }
+    }
 
     //Add that translation entry to TLB
     machine->tlb[currentTLB].physicalPage = old.physicalPage;
