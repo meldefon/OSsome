@@ -44,6 +44,8 @@ extern BitMap* freePageBitMap;
 extern vector<KernelLock*> locks;
 extern vector<KernelCondition*> conditions;
 
+// IPT table for assignment 3
+extern IPTEntry *IPT;
 
 //Global process table
 extern vector<ProcessStruct*>* processTable;

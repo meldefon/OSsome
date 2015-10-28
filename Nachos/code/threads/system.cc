@@ -29,6 +29,8 @@ BitMap* freePageBitMap;
 vector<KernelLock*> locks;
 vector<KernelCondition*> conditions;
 
+// IPT table for assignment 3
+IPTEntry *IPT;
 
 //Process table
 vector<ProcessStruct*>* processTable;
@@ -170,6 +172,9 @@ Initialize(int argc, char **argv)
     freePageBitMap = new BitMap(NumPhysPages);
     currentThread = new Thread("main");		
     currentThread->setStatus(RUNNING);
+
+    // Intialize IPT table
+    IPT = new IPTEntry[NumPhysPages]; 
 
     processTable = new vector<ProcessStruct*>;
     progLock = new Lock("Exit Lock");

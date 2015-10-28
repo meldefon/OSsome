@@ -6,7 +6,14 @@
 #define STRUCTS_H
 
 #include "synch.h"
+#include "translate.h"
 class AddrSpace; 
+
+// Entry that will be used for IPT table
+class IPTEntry: public TranslationEntry {
+	public:
+		AddrSpace *owner;
+};
 
 // Struct for the assignment two system calls, we shall call it KernelLock
 // It will contain the neccessary variables to implement system call functions

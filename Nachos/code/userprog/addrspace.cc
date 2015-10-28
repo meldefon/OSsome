@@ -160,9 +160,19 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMa
         pageTable[i].valid = TRUE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
-        pageTable[i].readOnly = FALSE;  // if the code segment was entirely on
+        pageTable[i].readOnly = FALSE;   
+        // if the code segment was entirely on
         // a separate page, we could set its
         // pages to be read-only
+
+        // IPT population is here
+        IPT[ppn].physicalPage = ppn;
+        IPT[ppn].owner = this; 
+        IPT[ppn].virtualPage = i;
+        IPT[ppn].valid = TRUE;
+        IPT[ppn].use = FALSE;
+        IPT[ppn].dirty = FALSE;
+        IPT[ppn].readOnly = FALSE;
 
         executable->ReadAt(&(machine->mainMemory[ppn * PageSize]), PageSize, 40 + i * PageSize);
     }
