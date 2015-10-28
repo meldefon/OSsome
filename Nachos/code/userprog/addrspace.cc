@@ -285,6 +285,12 @@ void AddrSpace::SaveState()
 
 void AddrSpace::RestoreState() 
 {
+
+    //Invalidate TLB on a context switch
+    for(int i = 0;i<TLBSize;i++){
+        machine->tlb[i].valid = FALSE;
+    }
+
     //machine->pageTable = pageTable;
     //machine->pageTableSize = numPages;
 }
