@@ -166,7 +166,6 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMa
         // pages to be read-only
 
         // IPT population is here
-        //TODO Maybe the IPT should be initialized to invalid entries at first?
         IPT[ppn].physicalPage = ppn;
         IPT[ppn].owner = this; 
         IPT[ppn].virtualPage = i;
@@ -297,10 +296,15 @@ void AddrSpace::SaveState()
 void AddrSpace::RestoreState() 
 {
 
+
     //Invalidate TLB on a context switch
+    //TODO Add this back in for
+    cout<<"***ADD BACK IN THE CONTEXT SWITCH STUFF\n";
+    /*
     for(int i = 0;i<TLBSize;i++){
         machine->tlb[i].valid = FALSE;
     }
+     */
 
     //machine->pageTable = pageTable;
     //machine->pageTableSize = numPages;

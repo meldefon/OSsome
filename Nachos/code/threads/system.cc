@@ -175,6 +175,9 @@ Initialize(int argc, char **argv)
 
     // Intialize IPT table
     IPT = new IPTEntry[NumPhysPages];
+    for(int i = 0;i<NumPhysPages;i++){
+        IPT[i].valid = FALSE;
+    }
 
 
     processTable = new vector<ProcessStruct*>;

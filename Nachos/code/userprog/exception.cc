@@ -483,6 +483,8 @@ void Printf_syscall(unsigned int vaddr, int length, int Num_1, int Num_2) {
 
 void Exit_Syscall(int status) {
 
+    //currentThread->Finish();
+
     progLock->Acquire();
     int myPID = currentThread->space->processID;
     int numActiveThreads = processTable->at(myPID)->numThreads;
@@ -716,6 +718,7 @@ void HandlePageFault() {
 
     //Will hold the IPT entry that we need
     IPTEntry old;
+    old.physicalPage = -1;
 
     for(int i = 0; i < NumPhysPages; i++) {
       //get the IPT entry based on virtual page # and address space
@@ -723,6 +726,10 @@ void HandlePageFault() {
         old = IPT[i]; 
         break;
       }
+    }
+
+    if(old.physicalPage==-1){
+        int q = 0;
     }
 
     //Add that translation entry to TLB
