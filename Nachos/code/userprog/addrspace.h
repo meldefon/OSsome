@@ -59,6 +59,7 @@ class AddrSpace {
     Lock* stackLock; // Will protect the stackBitMap
 
     OpenFile* processExecutable;
+    int executableNumBytes;
 
 
  private:

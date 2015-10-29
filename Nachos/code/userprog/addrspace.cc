@@ -123,6 +123,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMa
     int maximumThreads = 50;
 
     processExecutable = executable;
+    executableNumBytes = 40 + noffH.code.size + noffH.initData.size;
 
 
     //stackLock = Lock("Stack Lock");
@@ -136,6 +137,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMa
 		(WordToHost(noffH.noffMagic) == NOFFMAGIC))
     	SwapHeader(&noffH);
     ASSERT(noffH.noffMagic == NOFFMAGIC);
+
 
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size ;
     numNonStackPages = divRoundUp(size,PageSize); //Store this for later use

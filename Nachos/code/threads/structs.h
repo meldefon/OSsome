@@ -13,6 +13,7 @@ class AddrSpace;
 class IPTEntry: public TranslationEntry {
 	public:
 		AddrSpace *owner;
+		int byteOffset;
 };
 
 // Struct for the assignment two system calls, we shall call it KernelLock
