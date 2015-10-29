@@ -123,7 +123,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMa
     int maximumThreads = 50;
 
     processExecutable = executable;
-    executableNumBytes = 40 + noffH.code.size + noffH.initData.size;
+
 
 
     //stackLock = Lock("Stack Lock");
@@ -137,6 +137,9 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMa
 		(WordToHost(noffH.noffMagic) == NOFFMAGIC))
     	SwapHeader(&noffH);
     ASSERT(noffH.noffMagic == NOFFMAGIC);
+
+    executableNumBytes = 40 + noffH.code.size + noffH.initData.size;
+    executableNumPages = divRoundUp(noffH.code.size + noffH.initData.size,PageSize);
 
 
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size ;
@@ -155,16 +158,20 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMa
     DEBUG('f', "Initializing address space, num pages %d, size %d\n",
 					numPages, size);
 // first, set up the translation 
-    pageTable = new TranslationEntry[numPages];
+    pageTable = new IPTEntry[numPages];
     for (i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = i;    // for now, virtual page # = phys page #
         //pageTable[i].physicalPage = i;
-        pageTable[i].physicalPage = freePageBitMap->Find();
+        //pageTable[i].physicalPage = freePageBitMap->Find();
+        pageTable[i].physicalPage = 0;
         int ppn = pageTable[i].physicalPage;
-        pageTable[i].valid = TRUE;
+        //Making the page entry FALSE, because we're no longer preloading
+        //pageTable[i].valid = TRUE;
+        pageTable[i].valid = FALSE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
-        pageTable[i].readOnly = FALSE;   
+        pageTable[i].readOnly = FALSE;
+        //pageTable[i].byteOffset = 40 + i*PageSize;
         // if the code segment was entirely on
         // a separate page, we could set its
         // pages to be read-only
@@ -173,12 +180,12 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMa
         IPT[ppn].physicalPage = ppn;
         IPT[ppn].owner = this; 
         IPT[ppn].virtualPage = i;
-        IPT[ppn].valid = TRUE;
+        IPT[ppn].valid = FALSE;
         IPT[ppn].use = FALSE;
         IPT[ppn].dirty = FALSE;
         IPT[ppn].readOnly = FALSE;
 
-        executable->ReadAt(&(machine->mainMemory[ppn * PageSize]), PageSize, 40 + i * PageSize);
+        //executable->ReadAt(&(machine->mainMemory[ppn * PageSize]), PageSize, 40 + i * PageSize);
     }
 
 
@@ -303,12 +310,14 @@ void AddrSpace::RestoreState()
 
     //Invalidate TLB on a context switch
     //TODO Add this back in for
-    cout<<"***ADD BACK IN THE CONTEXT SWITCH STUFF\n";
+    //cout<<"***ADD BACK IN THE CONTEXT SWITCH STUFF\n";
     /*
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); //Disable interrupts
     for(int i = 0;i<TLBSize;i++){
         machine->tlb[i].valid = FALSE;
     }
-     */
+    (void) interrupt->SetLevel(oldLevel); //Reenable interrupts
+*/
 
     //machine->pageTable = pageTable;
     //machine->pageTableSize = numPages;

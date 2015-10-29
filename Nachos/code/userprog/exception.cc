@@ -718,18 +718,53 @@ void HandlePageFault() {
 
     //Will hold the IPT entry that we need
     IPTEntry old;
-    old.physicalPage = -1;
+    bool inIPT = false;
 
     for(int i = 0; i < NumPhysPages; i++) {
-      //get the IPT entry based on virtual page # and address space
-      if(IPT[i].valid && IPT[i].virtualPage == badPage && IPT[i].owner == currentThread->space) {
-        old = IPT[i]; 
-        break;
-      }
+        //get the IPT entry based on virtual page # and address space
+        if (IPT[i].valid && IPT[i].virtualPage == badPage && IPT[i].owner == currentThread->space) {
+            //TODO This is a shallow copy? Problem?
+            old = IPT[i];
+            inIPT = true;
+            break;
+        }
     }
 
-    if(old.physicalPage==-1){
-        int q = 0;
+    //Handle IPT miss
+    if(!inIPT) {
+
+        //cout<<"Handling IPT miss\n";
+
+        //Get a page of physical memory
+        int ppn = freePageBitMap->Find();
+
+        //Get byte offset, read from executable if it's in there
+        //int byteOffset = currentThread->space->pageTable[badPage].byteOffset;
+        int byteOffset = 40 + badPage*PageSize;
+        //if(byteOffset<currentThread->space->executableNumBytes) {
+        if(badPage<currentThread->space->executableNumPages) {
+            //cout<<"Reading from executable\n";
+            currentThread->space->processExecutable->ReadAt(&(machine->mainMemory[ppn * PageSize]), PageSize, byteOffset);
+        }
+
+        // IPT population is here
+        IPT[ppn].virtualPage = badPage;
+        IPT[ppn].physicalPage = ppn;
+        IPT[ppn].owner = currentThread->space;
+        IPT[ppn].valid = TRUE;
+        IPT[ppn].use = FALSE;
+        IPT[ppn].dirty = FALSE;
+        IPT[ppn].readOnly = FALSE;
+
+        TranslationEntry* pageTableEntry = &(currentThread->space->pageTable[badPage]);
+        pageTableEntry->valid = TRUE;
+        pageTableEntry->physicalPage = ppn;
+        pageTableEntry->virtualPage = badPage;
+        pageTableEntry->dirty = FALSE;
+
+        //TODO This is a shallow copy? Problem?
+        old = IPT[ppn];
+
     }
 
     //Add that translation entry to TLB

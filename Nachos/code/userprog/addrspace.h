@@ -60,6 +60,7 @@ class AddrSpace {
 
     OpenFile* processExecutable;
     int executableNumBytes;
+    int executableNumPages;
 
 
  private:
