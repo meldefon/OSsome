@@ -306,8 +306,8 @@ void cashierDo() {
 			Uprintf("Cashier #%d has received $100 from Customer #%d before certification. They are to go to the back of the line\n", 109, id, customerSSN,0,0);
 			Release(workLock);
 			continue;
-			//THIS IS THE LINE THAT CUASED THE HUGE BUG, IN PROJECT 2 BUT NOT PROJECT 1 - no exit
-			return;
+			/*THIS IS THE LINE THAT CUASED THE HUGE BUG, IN PROJECT 2 BUT NOT PROJECT 1 - no exit
+			return;*/
 		}
 
 		/*Now customer has paid, so give passport and mark*/
