@@ -311,13 +311,13 @@ void AddrSpace::RestoreState()
     //Invalidate TLB on a context switch
     //TODO Add this back in for
     //cout<<"***ADD BACK IN THE CONTEXT SWITCH STUFF\n";
-    /*
+
     IntStatus oldLevel = interrupt->SetLevel(IntOff); //Disable interrupts
     for(int i = 0;i<TLBSize;i++){
         machine->tlb[i].valid = FALSE;
     }
     (void) interrupt->SetLevel(oldLevel); //Reenable interrupts
-*/
+
 
     //machine->pageTable = pageTable;
     //machine->pageTableSize = numPages;
