@@ -739,9 +739,9 @@ void HandlePageFault() {
         int ppn = freePageBitMap->Find();
 
         //Get byte offset, read from executable if it's in there
-        //int byteOffset = currentThread->space->pageTable[badPage].byteOffset;
-        int byteOffset = 40 + badPage*PageSize;
-        //if(byteOffset<currentThread->space->executableNumBytes) {
+        //TODO Add byte offset as a member to the pagetable
+        //int byteOffset = 40 + badPage*PageSize;
+        int byteOffset = currentThread->space->pageTable[badPage].byteOffset;
         if(badPage<currentThread->space->executableNumPages) {
             //cout<<"Reading from executable\n";
             currentThread->space->processExecutable->ReadAt(&(machine->mainMemory[ppn * PageSize]), PageSize, byteOffset);
@@ -768,6 +768,7 @@ void HandlePageFault() {
     }
 
     //Add that translation entry to TLB
+    //TODO while you overwrite, you should copy dirty bits
     machine->tlb[currentTLB].physicalPage = old.physicalPage;
     machine->tlb[currentTLB].virtualPage = old.virtualPage;
     machine->tlb[currentTLB].valid = old.valid;

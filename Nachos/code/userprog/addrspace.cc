@@ -171,7 +171,7 @@ AddrSpace::AddrSpace(OpenFile *executable) : fileTable(MaxOpenFiles), stackBitMa
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
         pageTable[i].readOnly = FALSE;
-        //pageTable[i].byteOffset = 40 + i*PageSize;
+        pageTable[i].byteOffset = 40 + i*PageSize;
         // if the code segment was entirely on
         // a separate page, we could set its
         // pages to be read-only

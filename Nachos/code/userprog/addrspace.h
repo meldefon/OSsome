@@ -25,6 +25,7 @@
 #define MaxChildSpaces 256
 
 class Lock;
+class IPTEntry;
 
 class AddrSpace {
   public:
@@ -50,7 +51,7 @@ class AddrSpace {
     unsigned int numPages;		// Number of pages in the virtual
     // address space
 
-    TranslationEntry *pageTable;	// Assume linear page table translation
+    IPTEntry *pageTable;	// Assume linear page table translation
     // for now!
 
     unsigned int numNonStackPages;
