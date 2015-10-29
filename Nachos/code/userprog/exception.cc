@@ -767,8 +767,15 @@ void HandlePageFault() {
 
     }
 
+
+    //Before you overwrite, you should copy dirty bits
+    if(machine->tlb[currentTLB].valid) {
+        bool dirtyBit = machine->tlb[currentTLB].dirty;
+        IPT[machine->tlb[currentTLB].physicalPage].dirty = dirtyBit;
+        currentThread->space->pageTable[badPage].dirty = dirtyBit;
+    }
+
     //Add that translation entry to TLB
-    //TODO while you overwrite, you should copy dirty bits
     machine->tlb[currentTLB].physicalPage = old.physicalPage;
     machine->tlb[currentTLB].virtualPage = old.virtualPage;
     machine->tlb[currentTLB].valid = old.valid;
