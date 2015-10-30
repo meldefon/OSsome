@@ -700,6 +700,8 @@ void Yield_Syscall() {
 
 int HandleMemoryFull(){
 
+    DEBUG('M',"Handling memory full\n");
+
     //Pick a page to evict
     int pageToEvict = rand() % NumPhysPages;
 
@@ -707,10 +709,13 @@ int HandleMemoryFull(){
     //Check if that page is in the TLB right now
     int tlbInd = -1;
     for(int i = 0;i<TLBSize;i++){
+        //TODO shallow copy, might get us into trouble
         TranslationEntry tlbEntry = machine->tlb[i];
         if(tlbEntry.valid && tlbEntry.physicalPage==pageToEvict){
-            //Now we know we have to copy dirty bits and update pageTable IPT
-
+            //Now we know we have to copy dirty bits and update pageTable IPT, invalidate TLB entry
+            IPT[pageToEvict].dirty = tlbEntry.dirty;
+            IPT[pageToEvict].owner->pageTable[IPT[pageToEvict].virtualPage].dirty = tlbEntry.dirty;
+            machine->tlb[i].valid = FALSE;
         }
     }
 
@@ -718,7 +723,7 @@ int HandleMemoryFull(){
     //Check dirty bit
     bool dirtyBit = IPT[pageToEvict].dirty;
     if(!dirtyBit){
-        //Now we can just overwrite this page, since it's not dirty and it can be read directly from file again
+        //Now we can just overwrite this page, since it's not dirty and it can be read directly from file later
         return pageToEvict;
     }
 
@@ -727,8 +732,12 @@ int HandleMemoryFull(){
     int swapFilePage = swapFileBitMap->Find();
     int swapFileByteOffset = 40 + PageSize*swapFilePage;
 
-    //Write to swap file TODO Update tables
-    swapFile->WriteAt(&(machine->mainMemory[pageToEvict * PageSize]), PageSize, swapFileByteOffset);
+    //Write to swap file
+    IPT[pageToEvict].owner->pageTable[IPT[pageToEvict].virtualPage].byteOffset = swapFileByteOffset; //store location
+    ASSERT(IPT[pageToEvict].owner->pageTable[IPT[pageToEvict].virtualPage].dirty); //sanity check
+    swapFile->WriteAt(&(machine->mainMemory[pageToEvict * PageSize]), PageSize, swapFileByteOffset); //write file
+
+    return pageToEvict;
 
 
     //return 0;
@@ -741,8 +750,6 @@ void HandlePageFault() {
 
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff); //Disable interrupts
-
-    //TODO: Copy dirty bits to IPT and Page table if entry is valid
 
     //Get the bad address from register
     int badVAddr = machine->ReadRegister(BadVAddrReg);

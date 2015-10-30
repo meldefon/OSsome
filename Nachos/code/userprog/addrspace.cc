@@ -328,7 +328,10 @@ void AddrSpace::RestoreState()
                 int q = 0;
             }*/
             IPT[machine->tlb[i].physicalPage].dirty = dirtyBit;
-            currentThread->space->pageTable[machine->tlb[i].virtualPage].dirty = dirtyBit;
+            IPT[machine->tlb[i].physicalPage].owner->pageTable[machine->tlb[i].virtualPage].dirty = dirtyBit;
+            //This could've been a bug, you need to allow for the possibility that the TLB entry refers to another
+            //process's page
+            //currentThread->space->pageTable[machine->tlb[i].virtualPage].dirty = dirtyBit;
         }
 
         machine->tlb[i].valid = FALSE;
