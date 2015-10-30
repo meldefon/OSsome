@@ -55,7 +55,13 @@ extern Lock* progLock;
 extern Lock sysLock;
 extern Lock sysCondition;
 
+//Keeps track of next TLB entry to write to
 extern int currentTLB;
+
+//Swapfile stuff
+extern OpenFile* swapFile;
+extern BitMap* swapFileBitMap;
+extern int swapFileSize;
 
 
 #ifdef USER_PROGRAM

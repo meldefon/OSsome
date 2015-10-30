@@ -44,7 +44,13 @@ Lock* progLock;
 Lock sysLock;
 Lock sysCondition;
 
+//TLB index
 int currentTLB;
+
+//Swapfile stuff
+OpenFile* swapFile;
+BitMap* swapFileBitMap;
+int swapFileSize;
 
 
 #ifdef FILESYS_NEEDED
@@ -187,6 +193,12 @@ Initialize(int argc, char **argv)
     CallOnUserAbort(Cleanup);			// if user hits ctl-C
 
     currentTLB = 0;
+
+    swapFileSize = 512;
+    swapFile = fileSystem->Open("swapFile.txt");
+    swapFileBitMap = new BitMap(swapFileSize);
+
+
     
 #ifdef USER_PROGRAM
     machine = new Machine(debugUserProg);	// this must come first
