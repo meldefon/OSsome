@@ -25,6 +25,7 @@
 #include "system.h"
 #include "syscall.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <iostream>
 
 using namespace std;
@@ -697,6 +698,45 @@ void Yield_Syscall() {
   currentThread->Yield();
 }
 
+int HandleMemoryFull(){
+
+    //Pick a page to evict
+    int pageToEvict = rand() % NumPhysPages;
+
+
+    //Check if that page is in the TLB right now
+    int tlbInd = -1;
+    for(int i = 0;i<TLBSize;i++){
+        TranslationEntry tlbEntry = machine->tlb[i];
+        if(tlbEntry.valid && tlbEntry.physicalPage==pageToEvict){
+            //Now we know we have to copy dirty bits and update pageTable IPT
+
+        }
+    }
+
+
+    //Check dirty bit
+    bool dirtyBit = IPT[pageToEvict].dirty;
+    if(!dirtyBit){
+        //Now we can just overwrite this page, since it's not dirty and it can be read directly from file again
+        return pageToEvict;
+    }
+
+    //Now we know that we have a dirty page, which is no longer in the TLB
+    //We have to copy the page into the swapFIle and note where we put it by modifying the pageTable
+    int swapFilePage = swapFileBitMap->Find();
+    int swapFileByteOffset = 40 + PageSize*swapFilePage;
+
+    //Write to swap file TODO Update tables
+    swapFile->WriteAt(&(machine->mainMemory[pageToEvict * PageSize]), PageSize, swapFileByteOffset);
+
+
+    //return 0;
+
+
+
+}
+
 void HandlePageFault() {
 
 
@@ -738,9 +778,13 @@ void HandlePageFault() {
         //Get a page of physical memory
         int ppn = freePageBitMap->Find();
 
+        //Handle memory full
+        if(ppn==-1){
+            ppn = HandleMemoryFull();
+        }
+
+        //TODO Check dirty bits and offset to know where to load from
         //Get byte offset, read from executable if it's in there
-        //TODO Add byte offset as a member to the pagetable
-        //int byteOffset = 40 + badPage*PageSize;
         int byteOffset = currentThread->space->pageTable[badPage].byteOffset;
         if(badPage<currentThread->space->executableNumPages) {
             //cout<<"Reading from executable\n";
