@@ -314,6 +314,23 @@ void AddrSpace::RestoreState()
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff); //Disable interrupts
     for(int i = 0;i<TLBSize;i++){
+
+        //Copy dirty bits
+        if(machine->tlb[i].valid) {
+            bool dirtyBit = machine->tlb[i].dirty;
+            //Just some sanity checks
+
+            ASSERT(IPT[machine->tlb[i].physicalPage].owner == this);
+            ASSERT(IPT[machine->tlb[i].physicalPage].virtualPage == machine->tlb[i].virtualPage);
+
+            /*if (!(IPT[machine->tlb[i].physicalPage].owner == this) ||
+                !(IPT[machine->tlb[i].physicalPage].virtualPage == machine->tlb[i].virtualPage)) {
+                int q = 0;
+            }*/
+            IPT[machine->tlb[i].physicalPage].dirty = dirtyBit;
+            currentThread->space->pageTable[machine->tlb[i].virtualPage].dirty = dirtyBit;
+        }
+
         machine->tlb[i].valid = FALSE;
     }
     (void) interrupt->SetLevel(oldLevel); //Reenable interrupts
