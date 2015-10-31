@@ -706,19 +706,19 @@ int HandleMemoryFull(){
     int pageToEvict = rand() % NumPhysPages;
 
 
-    //Check if that page is in the TLB right now
-    int tlbInd = -1;
+    //Check if that page is in the TLB right now;
     for(int i = 0;i<TLBSize;i++){
         //TODO shallow copy, might get us into trouble
         TranslationEntry tlbEntry = machine->tlb[i];
         if(tlbEntry.valid && tlbEntry.physicalPage==pageToEvict){
-            //Now we know we have to copy dirty bits and update pageTable IPT, invalidate TLB entry
+            //Now we know we have to copy dirty bits and update pageTable, IPT, invalidate TLB entry
             IPT[pageToEvict].dirty = tlbEntry.dirty;
             IPT[pageToEvict].owner->pageTable[IPT[pageToEvict].virtualPage].dirty = tlbEntry.dirty;
             machine->tlb[i].valid = FALSE;
         }
     }
 
+    DEBUG('M',"Evicting VP %d from PP %d with dirty %d\n",IPT[pageToEvict].virtualPage,pageToEvict,IPT[pageToEvict].dirty);
 
     //Check dirty bit
     bool dirtyBit = IPT[pageToEvict].dirty;
@@ -727,6 +727,8 @@ int HandleMemoryFull(){
         return pageToEvict;
     }
 
+
+
     //Now we know that we have a dirty page, which is no longer in the TLB
     //We have to copy the page into the swapFIle and note where we put it by modifying the pageTable
     int swapFilePage = swapFileBitMap->Find();
@@ -734,15 +736,14 @@ int HandleMemoryFull(){
 
     //Write to swap file
     IPT[pageToEvict].owner->pageTable[IPT[pageToEvict].virtualPage].byteOffset = swapFileByteOffset; //store location
-    ASSERT(IPT[pageToEvict].owner->pageTable[IPT[pageToEvict].virtualPage].dirty); //sanity check
+    IPT[pageToEvict].owner->pageTable[IPT[pageToEvict].virtualPage].dirty = TRUE; //store info in pageTable
     swapFile->WriteAt(&(machine->mainMemory[pageToEvict * PageSize]), PageSize, swapFileByteOffset); //write file
+    DEBUG('M',"Writing to swapfile byte %d\n",swapFileByteOffset);
 
     return pageToEvict;
 
 
     //return 0;
-
-
 
 }
 
@@ -790,12 +791,25 @@ void HandlePageFault() {
             ppn = HandleMemoryFull();
         }
 
-        //TODO Check dirty bits and offset to know where to load from
+        //Check dirty bits and offset to know where to load from
         //Get byte offset, read from executable if it's in there
         int byteOffset = currentThread->space->pageTable[badPage].byteOffset;
-        if(badPage<currentThread->space->executableNumPages) {
+        bool loadingDirtyBit = currentThread->space->pageTable[badPage].dirty;
+        IPT[ppn].dirty = FALSE;
+        //If the page is clean and in the executable, load it
+        if(!loadingDirtyBit && badPage<currentThread->space->executableNumPages) {
             //cout<<"Reading from executable\n";
             currentThread->space->processExecutable->ReadAt(&(machine->mainMemory[ppn * PageSize]), PageSize, byteOffset);
+            IPT[ppn].dirty = FALSE; //set dirty bit to clean
+            DEBUG('M',"Loading from executable byte %d\n",byteOffset);
+        }
+        else if(loadingDirtyBit){
+            //Now the page to be loaded in is dirty, so we must get it from the swap file
+            swapFile->ReadAt(&(machine->mainMemory[ppn * PageSize]), PageSize, byteOffset);
+            swapFileBitMap->Clear(divRoundUp(byteOffset-40,PageSize));
+            IPT[ppn].dirty = TRUE;
+            DEBUG('M',"Loading from swapFile byte %d\n",byteOffset);
+            //ASSERT(FALSE); //TODO Deal with dirty bit
         }
 
         // IPT population is here
@@ -804,14 +818,15 @@ void HandlePageFault() {
         IPT[ppn].owner = currentThread->space;
         IPT[ppn].valid = TRUE;
         IPT[ppn].use = FALSE;
-        IPT[ppn].dirty = FALSE;
+        DEBUG('M',"Loading VP %d to PP %d with dirty %d\n",badPage,ppn,IPT[ppn].dirty);
+
         IPT[ppn].readOnly = FALSE;
 
         TranslationEntry* pageTableEntry = &(currentThread->space->pageTable[badPage]);
         pageTableEntry->valid = TRUE;
         pageTableEntry->physicalPage = ppn;
         pageTableEntry->virtualPage = badPage;
-        pageTableEntry->dirty = FALSE;
+        pageTableEntry->dirty = IPT[ppn].dirty;
 
         //TODO This is a shallow copy? Problem?
         old = IPT[ppn];
@@ -823,6 +838,8 @@ void HandlePageFault() {
     if(machine->tlb[currentTLB].valid) {
         bool dirtyBit = machine->tlb[currentTLB].dirty;
         IPT[machine->tlb[currentTLB].physicalPage].dirty = dirtyBit;
+        //TODO This was copying the dirty bit to the wrong place
+        IPT[machine->tlb[currentTLB].physicalPage].owner->pageTable[machine->tlb[currentTLB].virtualPage].dirty = dirtyBit;
         currentThread->space->pageTable[badPage].dirty = dirtyBit;
     }
 
@@ -833,6 +850,10 @@ void HandlePageFault() {
     machine->tlb[currentTLB].dirty = old.dirty;
     machine->tlb[currentTLB].use = old.use;
     machine->tlb[currentTLB].readOnly = old.readOnly;
+    if(!inIPT) {
+        DEBUG('M', "Writing to %d TLB a PP %d, VP %d, dirty %d\n", currentTLB, old.physicalPage, old.virtualPage,
+              old.dirty);
+    }
 
     //Increment TLB index
     currentTLB = (currentTLB+1)%TLBSize;

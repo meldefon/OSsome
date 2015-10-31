@@ -33,6 +33,8 @@ main()
 	     C[i][j] = 0;
 	}
 
+	Write("Initialized\n",12,ConsoleOutput);
+
     for (i = 0; i < Dim; i++)		/* then multiply them together */
 	for (j = 0; j < Dim; j++)
             for (k = 0; k < Dim; k++)
