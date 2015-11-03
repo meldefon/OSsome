@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -232,130 +233,163 @@ void Close_Syscall(int fd) {
     }
 }
 
-int Acquire_Syscall(int id) { 
-  int val;
-  //sysLock.Acquire();
-  if(id > (locks.size() - 1) || id < 0) { 
-    val = -1; //if the id they gave us is bad, return -1
-  } else { //they gave us a valid id, lets check if it's in the same address space
-    KernelLock *kl = locks[id]; //grab the struct
+int Acquire_Syscall(int id) {
+    int val;
 
-    if(kl != NULL) {
-      if(kl->addrSpace != currentThread->space) {
-        val = -1; //if not the same address space, return -1
-      } else {
-        kl->lock->Acquire(); //acquire the lock
-        val = 0; //return 0 once acquired
-      }
-    } else {
-      val = -1;
-    } 
-  }
-  //sysLock.Release();
-  return val;
+    //Making syscall message
+    stringstream ss;
+    ss<<SC_Acquire<<" "<<id<<"\n";
+    DEBUG('N',ss.str().c_str());
+
+    //sysLock.Acquire();
+    if (id > (locks.size() - 1) || id < 0) {
+        val = -1; //if the id they gave us is bad, return -1
+    } else { //they gave us a valid id, lets check if it's in the same address space
+        KernelLock *kl = locks[id]; //grab the struct
+
+        if (kl != NULL) {
+            if (kl->addrSpace != currentThread->space) {
+                val = -1; //if not the same address space, return -1
+            } else {
+                kl->lock->Acquire(); //acquire the lock
+                val = 0; //return 0 once acquired
+            }
+        } else {
+            val = -1;
+        }
+    }
+    //sysLock.Release();
+    return val;
 }
 
-int Release_Syscall(int id) { 
-  int val;
-  //sysLock.Acquire();
-  if(id > (locks.size() - 1) || id < 0) { 
-    val = -1; //if the id they gave us is bad, return -1
-  } else { //they gave us a valid id, lets check if it's in the same address space
-    KernelLock *kl = locks[id]; //grab the struct
+int Release_Syscall(int id) {
+    int val;
+    //sysLock.Acquire();
 
-    if(kl != NULL) {
-      if(kl->addrSpace != currentThread->space) {
-        val = -1; //if not the same address space, return -1
-      } else {
-        kl->lock->Release(); //release the lock
-        val = 0; //return 0 once released
-      }
-    } else {
-      val = -1;
+    //Making syscall message
+    stringstream ss;
+    ss << SC_Release << " " << id << "\n";
+    DEBUG('N',ss.str().c_str());
+
+    if (id > (locks.size() - 1) || id < 0) {
+        val = -1; //if the id they gave us is bad, return -1
+    } else { //they gave us a valid id, lets check if it's in the same address space
+        KernelLock *kl = locks[id]; //grab the struct
+
+        if (kl != NULL) {
+            if (kl->addrSpace != currentThread->space) {
+                val = -1; //if not the same address space, return -1
+            } else {
+                kl->lock->Release(); //release the lock
+                val = 0; //return 0 once released
+            }
+        } else {
+            val = -1;
+        }
     }
-  }
-  //sysLock.Release();
-  return val;
+    //sysLock.Release();
+    return val;
 }
 
-int Wait_Syscall(int c, int l) { 
-  int val;
-  //sysLock.Acquire();
-  //sysCondition.Acquire();
-  if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
-    val = -1; //if the id they gave us is bad, return -1
-  } else { //they gave us a valid id, lets check if it's in the same address space
-    KernelLock *kl = locks[l]; //grab the struct
-    KernelCondition *kc = conditions[c]; //grab the struct
+int Wait_Syscall(int c, int l) {
+    int val;
+    //sysLock.Acquire();
+    //sysCondition.Acquire();
 
-    if(kl != NULL && kc != NULL) {
-      if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-        val = -1; //if not the same address space, return -1
-      } else {
+    //Making syscall message
+    stringstream ss;
+    ss << SC_Wait << " " << c << " " << l << "\n";
+    DEBUG('N',ss.str().c_str());
 
-        kc->condition->Wait(kl->lock); //wait
-        val = 0; //we were able to wait
-      }
-    } else {
-      val = -1;
+    if ((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) {
+        val = -1; //if the id they gave us is bad, return -1
+    } else { //they gave us a valid id, lets check if it's in the same address space
+        KernelLock *kl = locks[l]; //grab the struct
+        KernelCondition *kc = conditions[c]; //grab the struct
+
+        if (kl != NULL && kc != NULL) {
+            if ((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
+                val = -1; //if not the same address space, return -1
+            } else {
+
+                kc->condition->Wait(kl->lock); //wait
+                val = 0; //we were able to wait
+            }
+        } else {
+            val = -1;
+        }
     }
-  }
-  //sysLock.Release();
-  //sysCondition.Release(); 
-  return val;
+    //sysLock.Release();
+    //sysCondition.Release();
+    return val;
 }
 
-int Signal_Syscall(int c, int l) { 
-  int val;
-  //sysLock.Acquire();
-  //sysCondition.Acquire();  
-  if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) {    
-    val = -1; //if the id they gave us is bad, return -1
-  } else { //they gave us a valid id, lets check if it's in the same address space
-    KernelLock *kl = locks[l]; //grab the struct
-    KernelCondition *kc = conditions[c]; //grab the struct
+int Signal_Syscall(int c, int l) {
+    int val;
+    //sysLock.Acquire();
+    //sysCondition.Acquire();
 
-    if(kl != NULL && kc != NULL) {
-      if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-        val = -1; //if not the same address space, return -1
-      } else {
-        kc->condition->Signal(kl->lock); //signal
-        val = 0; //we were able to signal
-      }
-    } else {
-      val = -1;
+    //Making syscall message
+    stringstream ss;
+    ss << SC_Signal << " " << c << " " << l << "\n";
+    DEBUG('N',ss.str().c_str());
+
+
+    if ((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) {
+        val = -1; //if the id they gave us is bad, return -1
+    } else { //they gave us a valid id, lets check if it's in the same address space
+        KernelLock *kl = locks[l]; //grab the struct
+        KernelCondition *kc = conditions[c]; //grab the struct
+
+        if (kl != NULL && kc != NULL) {
+            if ((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
+                val = -1; //if not the same address space, return -1
+            } else {
+                kc->condition->Signal(kl->lock); //signal
+                val = 0; //we were able to signal
+            }
+        } else {
+            val = -1;
+        }
     }
-  }
-  //sysLock.Release();
-  //sysCondition.Release();
-  return val; 
+    //sysLock.Release();
+    //sysCondition.Release();
+    return val;
 }
 
 int Broadcast_Syscall(int c, int l) {
-  int val;
-  //sysLock.Acquire();
-  //sysCondition.Acquire();
-  if((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) { 
-    val = -1; //if the id they gave us is bad, return -1
-  } else { //they gave us a valid id, lets check if it's in the same address space
-    KernelLock *kl = locks[l]; //grab the struct
-    KernelCondition *kc = conditions[c]; //grab the struct
+    int val;
+    //sysLock.Acquire();
+    //sysCondition.Acquire();
 
-    if(kl != NULL && kc != NULL) {
-      if((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
-        val = -1; //if not the same address space, return -1
-      } else {
-        kc->condition->Broadcast(kl->lock); //broadcast
-        val = 0; //we were able to broadcast
-      }
-    } else {
-      val = -1;
+    //Making syscall message
+    stringstream ss;
+    ss << SC_Broadcast << " " << c << " " << l << "\n";
+    DEBUG('N',ss.str().c_str());
+
+
+    if ((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) {
+        val = -1; //if the id they gave us is bad, return -1
+    } else { //they gave us a valid id, lets check if it's in the same address space
+        KernelLock *kl = locks[l]; //grab the struct
+        KernelCondition *kc = conditions[c]; //grab the struct
+
+        if (kl != NULL && kc != NULL) {
+            if ((kl->addrSpace != currentThread->space) || (kc->addrSpace != currentThread->space)) {
+                val = -1; //if not the same address space, return -1
+            } else {
+                kc->condition->Broadcast(kl->lock); //broadcast
+                val = 0; //we were able to broadcast
+            }
+        } else {
+            val = -1;
+        }
     }
-  }
-  //sysLock.Release();
-  //sysCondition.Release();
-  return val; 
+    //sysLock.Release();
+    //sysCondition.Release();
+    return val;
 }
+
 
 int CreateLock_Syscall() {
   KernelLock *kl = new KernelLock(); //create new struct
@@ -374,6 +408,12 @@ int CreateLock_Syscall() {
 int DestroyLock_Syscall(int id) {
   int val; 
   //sysLock.Acquire();
+
+    //Making syscall message
+    stringstream ss;
+    ss << SC_DestroyLock << " "<< id<<"\n";
+    cout << ss.str().c_str();
+
   if(id > (locks.size() - 1) || id < 0) { 
     val = -1; //if the id they gave us is bad, return -1
   } else { //they gave us a valid id, lets check if it's in the same address space
@@ -397,42 +437,48 @@ int DestroyLock_Syscall(int id) {
 }
 
 int CreateCondition_Syscall() {
-  KernelCondition *kc = new KernelCondition(); //create new struct
-  Condition *c = new Condition(); //create new condition
-  
-  kc->condition = c; //assign condition pointer 
-  kc->addrSpace = currentThread->space; //assign address space
+    KernelCondition *kc = new KernelCondition(); //create new struct
+    Condition *c = new Condition(); //create new condition
 
-  sysCondition.Acquire();
-  conditions.push_back(kc); //add new struct to our conditions vector
-  int index = conditions.size() - 1;
-  sysCondition.Release();
-  return index; //return new index of condition 
+    kc->condition = c; //assign condition pointer
+    kc->addrSpace = currentThread->space; //assign address space
+
+    sysCondition.Acquire();
+    conditions.push_back(kc); //add new struct to our conditions vector
+    int index = conditions.size() - 1;
+    sysCondition.Release();
+    return index; //return new index of condition
 }
 
 int DestroyCondition_Syscall(int id) {
-  int val; 
-  //sysCondition.Acquire();
-  if(id > (conditions.size() - 1) || id < 0) { 
-    val = -1; //if the id they gave us is bad, return -1
-  } else { //they gave us a valid id, lets check if it's in the same address space
-    KernelCondition *kc = conditions[id]; //grab the struct
+    int val;
+    //sysCondition.Acquire();
 
-    if(kc != NULL) {
-      if(kc->addrSpace != currentThread->space) {
-        val = -1; //if not the same address space, return -1
-      } else if(kc->isToBeDeleted == true) {
-        val = -1;
-      } else {
-        kc->isToBeDeleted = true; //set it to be deleted
-        val = 0; //return 0
-      }
-    } else {
-      val = -1;
+    //Making syscall message
+    stringstream ss;
+    ss << SC_DestroyCondition << " " <<id<< "\n";
+    cout << ss.str().c_str();
+
+    if (id > (conditions.size() - 1) || id < 0) {
+        val = -1; //if the id they gave us is bad, return -1
+    } else { //they gave us a valid id, lets check if it's in the same address space
+        KernelCondition *kc = conditions[id]; //grab the struct
+
+        if (kc != NULL) {
+            if (kc->addrSpace != currentThread->space) {
+                val = -1; //if not the same address space, return -1
+            } else if (kc->isToBeDeleted == true) {
+                val = -1;
+            } else {
+                kc->isToBeDeleted = true; //set it to be deleted
+                val = 0; //return 0
+            }
+        } else {
+            val = -1;
+        }
     }
-  }
-  //sysCondition.Release();
-  return val;
+    //sysCondition.Release();
+    return val;
 }
 
 int Rand_syscall(int range, int offset) {
