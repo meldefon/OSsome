@@ -1,6 +1,7 @@
 #include "copyright.h"
 #include "system.h"
 #include <iostream>
+#include <sstream>
 #include <test_code.cc>
 using namespace std;
 #include "synch.h"
@@ -8,6 +9,99 @@ using namespace std;
 #include "customer.cpp"
 #include "clerks.cpp"
 #include "globalVars.h"
+#include "serverStructs.h"
+#include <vector>
+#include "syscall.h"
+
+void Server() {
+
+	//Initialization
+	vector<ServerLock>* serverLocks = new vector<ServerLock>;
+	vector<ServerCV>* serverCVs = new vector<ServerCV>;
+	vector<ServerMV>* serverMVs = new vector<ServerMV>;
+
+
+	cout << "Running server\n";
+
+	//Vars for holding message details
+	PacketHeader outPktHdr, inPktHdr;
+	MailHeader outMailHdr, inMailHdr;
+	char buffer[MaxMailSize];
+
+	while (true) {
+		// Wait for message from a client machine
+		postOffice->Receive(0, &inPktHdr, &inMailHdr, buffer);
+		DEBUG('S',"Got \"%s\" from %d, box %d\n", buffer, inPktHdr.from, inMailHdr.from);
+
+		//Pull out message type
+		int type;
+		stringstream ss; //new one every time to be safe
+		ss<<buffer;
+		ss>>type;
+
+		//Decide what to do based on message type
+		string name;
+		int lockNum, cvNum;
+		switch (type){
+			case SC_CreateLock:
+				DEBUG('S',"Message: Create lock\n");
+				ss.get();
+				getline(ss,name,'@'); //get name of lock
+
+				break;
+			case SC_DestroyLock:
+				DEBUG('S',"Message: Destroy lock\n");
+				ss>>lockNum; //get lock ID
+				break;
+			case SC_CreateCondition:
+				DEBUG('S',"Message: Create condition\n");
+				ss.get();
+				getline(ss,name,'@'); //get name of CV
+
+				break;
+			case SC_DestroyCondition:
+				DEBUG('S',"Message: Destroy Condition\n");
+				ss>>cvNum; //get lock ID
+
+				break;
+			case SC_Acquire:
+				DEBUG('S',"Message: Acquire\n");
+				ss>>lockNum; //get lock ID
+
+				break;
+			case SC_Release:
+				DEBUG('S',"Message: Release\n");
+				ss>>lockNum; //get lock ID
+
+				break;
+			case SC_Signal:
+				DEBUG('S',"Message: Signal\n");
+				ss>>cvNum>>lockNum; //get lock and CV num
+
+				break;
+			case SC_Wait:
+				DEBUG('S',"Message: Wait\n");
+				ss>>cvNum>>lockNum; //get lock and CV num
+
+				break;
+			case SC_Broadcast:
+				DEBUG('S',"Message: Broadcast\n");
+				ss>>cvNum>>lockNum; //get lock and CV num
+
+				break;
+
+			default:
+				cout<<"Unkonwn message type. Ignoring.\n";
+				continue;
+				break;
+		}
+
+
+	}
+
+
+
+}
 
 void ThreadTest() {
 	//STestSuite();

@@ -63,6 +63,10 @@ extern void MailTest(int networkID);
 #ifdef THREADS
 extern void Part2(void), TestSuite(void);
 #endif
+
+#ifdef NETWORK
+extern void Server(void);
+#endif
 //----------------------------------------------------------------------
 // main
 // 	Bootstrap the operating system kernel.  
@@ -158,6 +162,10 @@ main(int argc, char **argv)
             MailTest(atoi(*(argv + 1)));
             argCount = 2;
         }
+		else if(!strcmp(*argv, "-server")){
+		ASSERT(argc>1);
+		Server();
+		}
 #endif // NETWORK
     }
 

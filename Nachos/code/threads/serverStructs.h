@@ -6,12 +6,14 @@
 #define OSSOME_SERVERSTRUCTS_H
 
 #include "../machine/network.h"
+#include <string>
 
-enum serverLockState {Busy, Available};
+enum ServerLockState {Busy, Available};
 
-struct serverLock{
+struct ServerLock{
 
-    serverLockState state;
+    string name;
+    ServerLockState state;
     int ownerMachineID;
     int ownerMalboxNum;
     PacketHeader* waitQ;
@@ -19,14 +21,14 @@ struct serverLock{
 };
 
 
-struct serverCV{
+struct ServerCV{
 
     PacketHeader* waitQ;
     int lockID;
 
 };
 
-struct serverMV{
+struct ServerMV{
 
     int* vals;
     int length;

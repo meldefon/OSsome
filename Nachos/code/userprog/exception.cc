@@ -242,7 +242,7 @@ void sendAndRecieveSyscallMessage(char* msg,char* inBuffer){
     //Set up headers (Packet header does not need the from field set, since it will be set automatically on send).
     outPktHdr.to = SERVER_M;
     outMailHdr.to = 0;
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->baseStackAddr;
     outMailHdr.length = strlen(msg) + 1;
 
     //Send message
@@ -265,7 +265,7 @@ int Acquire_Syscall(int id) {
 
     //Making syscall message
     stringstream ss;
-    ss<<SC_Acquire<<" "<<id<<"\n";
+    ss<<SC_Acquire<<" "<<id;
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
@@ -297,7 +297,7 @@ int Release_Syscall(int id) {
 
     //Making syscall message
     stringstream ss;
-    ss << SC_Release << " " << id << "\n";
+    ss << SC_Release << " " << id;
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
@@ -328,7 +328,7 @@ int Wait_Syscall(int c, int l) {
 
     //Making syscall message
     stringstream ss;
-    ss << SC_Wait << " " << c << " " << l << "\n";
+    ss << SC_Wait << " " << c << " " << l;
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
@@ -362,7 +362,7 @@ int Signal_Syscall(int c, int l) {
 
     //Making syscall message
     stringstream ss;
-    ss << SC_Signal << " " << c << " " << l << "\n";
+    ss << SC_Signal << " " << c << " " << l;
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
@@ -396,7 +396,7 @@ int Broadcast_Syscall(int c, int l) {
 
     //Making syscall message
     stringstream ss;
-    ss << SC_Broadcast << " " << c << " " << l << "\n";
+    ss << SC_Broadcast << " " << c << " " << l;
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
@@ -427,39 +427,38 @@ int Broadcast_Syscall(int c, int l) {
 int CreateLock_Syscall(unsigned int name, int len) {
 
     //Set up string lock name
-    char *buf;		// Kernel buffer for output
-    if ( !(buf = new char[len]) ) {
-        printf("%s","Error allocating kernel buffer for write!\n");
+    char *buf;        // Kernel buffer for output
+    if (!(buf = new char[len])) {
+        printf("%s", "Error allocating kernel buffer for write!\n");
         return -1;
     } else {
-        if ( copyin(name,len,buf) == -1 ) {
-            printf("%s","Bad name pointer\n");
+        if (copyin(name, len, buf) == -1) {
+            printf("%s", "Bad name pointer\n");
             delete[] buf;
             return -1;
         }
     }
-    buf[len]='\0';
+    buf[len] = '\0';
 
 
     //Making syscall message
     stringstream ss;
-    ss << SC_CreateLock << " "<< buf <<"\n";
+    ss << SC_CreateLock << " " << buf<<"@";
     char inBuffer[MaxMailSize];
-    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
+    sendAndRecieveSyscallMessage((char *) ss.str().c_str(), inBuffer);
 
 
+    KernelLock *kl = new KernelLock(); //create new struct
+    Lock *l = new Lock(); //create new lock
 
-  KernelLock *kl = new KernelLock(); //create new struct
-  Lock *l = new Lock(); //create new lock
-  
-  kl->lock = l; //assign lock pointer 
-  kl->addrSpace = currentThread->space; //assign address space
+    kl->lock = l; //assign lock pointer
+    kl->addrSpace = currentThread->space; //assign address space
 
-  sysLock.Acquire();
-  locks.push_back(kl); //add new struct to our locks vector
-  int index = locks.size() - 1;
-  sysLock.Release();
-  return index;; //return new index of lock
+    sysLock.Acquire();
+    locks.push_back(kl); //add new struct to our locks vector
+    int index = locks.size() - 1;
+    sysLock.Release();
+    return index;; //return new index of lock
 }
 
 int DestroyLock_Syscall(int id) {
@@ -468,7 +467,7 @@ int DestroyLock_Syscall(int id) {
 
     //Making syscall message
     stringstream ss;
-    ss << SC_DestroyLock << " " << id << "\n";
+    ss << SC_DestroyLock << " " << id;
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
@@ -514,7 +513,7 @@ int CreateCondition_Syscall(unsigned int name, int len) {
 
     //Making syscall message
     stringstream ss;
-    ss << SC_CreateCondition << " "<< buf <<"\n";
+    ss << SC_CreateCondition << " "<< buf<<"@";
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
@@ -538,7 +537,7 @@ int DestroyCondition_Syscall(int id) {
 
     //Making syscall message
     stringstream ss;
-    ss << SC_DestroyCondition << " " <<id<< "\n";
+    ss << SC_DestroyCondition << " " <<id;
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
