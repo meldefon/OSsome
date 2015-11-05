@@ -52,6 +52,7 @@ void Server() {
 			case SC_DestroyLock:
 				DEBUG('S',"Message: Destroy lock\n");
 				ss>>lockNum; //get lock ID
+				
 				break;
 			case SC_CreateCondition:
 				DEBUG('S',"Message: Create condition\n");
