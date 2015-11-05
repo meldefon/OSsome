@@ -230,7 +230,7 @@ void Condition::Wait(Lock* conditionLock) {
 //  Wakes one sleeping thread if one exists
 void Condition::Signal(Lock* conditionLock) { 
     IntStatus oldLevel = interrupt->SetLevel(IntOff); //disable interrupts
-    if(waitingLock != conditionLock){ //locks don't match
+    if(waitingLock != conditionLock && waitingLock!=NULL){ //locks don't match
         printf("Signal Error: Locks don't match \n");
         (void) interrupt->SetLevel(oldLevel);  // restore interrupts
         return;

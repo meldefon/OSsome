@@ -24,6 +24,11 @@ main()
 
     int i, j, k;
 
+	int l1 = CreateLock("lock1",5);
+
+	Acquire(l1);
+	Release(l1);
+
 	Write("Exec called mat_mult!\n",22,ConsoleOutput);
 
     for (i = 0; i < Dim; i++)		/* first initialize the matrices */

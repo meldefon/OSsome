@@ -233,13 +233,42 @@ void Close_Syscall(int fd) {
     }
 }
 
+void sendAndRecieveSyscallMessage(char* msg,char* inBuffer){
+
+    //Declare headers
+    PacketHeader outPktHdr, inPktHdr;
+    MailHeader outMailHdr, inMailHdr;
+
+    //Set up headers (Packet header does not need the from field set, since it will be set automatically on send).
+    outPktHdr.to = SERVER_M;
+    outMailHdr.to = 0;
+    outMailHdr.from = 0;
+    outMailHdr.length = strlen(msg) + 1;
+
+    //Send message
+    DEBUG('N',msg);
+    bool success = postOffice->Send(outPktHdr, outMailHdr, msg);
+    if ( !success ) {
+        printf("The postOffice Send failed. You must not have the other Nachos running. Terminating Nachos.\n");
+        interrupt->Halt();
+    }
+
+    //Receive reply message
+    //postOffice->Receive(0, &inPktHdr, &inMailHdr, inBuffer); //For now, don't recieve because server isn't set up
+
+    return;
+
+}
+
 int Acquire_Syscall(int id) {
     int val;
 
     //Making syscall message
     stringstream ss;
     ss<<SC_Acquire<<" "<<id<<"\n";
-    DEBUG('N',ss.str().c_str());
+    char inBuffer[MaxMailSize];
+    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
+
 
     //sysLock.Acquire();
     if (id > (locks.size() - 1) || id < 0) {
@@ -269,7 +298,8 @@ int Release_Syscall(int id) {
     //Making syscall message
     stringstream ss;
     ss << SC_Release << " " << id << "\n";
-    DEBUG('N',ss.str().c_str());
+    char inBuffer[MaxMailSize];
+    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
     if (id > (locks.size() - 1) || id < 0) {
         val = -1; //if the id they gave us is bad, return -1
@@ -299,7 +329,8 @@ int Wait_Syscall(int c, int l) {
     //Making syscall message
     stringstream ss;
     ss << SC_Wait << " " << c << " " << l << "\n";
-    DEBUG('N',ss.str().c_str());
+    char inBuffer[MaxMailSize];
+    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
     if ((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) {
         val = -1; //if the id they gave us is bad, return -1
@@ -332,7 +363,8 @@ int Signal_Syscall(int c, int l) {
     //Making syscall message
     stringstream ss;
     ss << SC_Signal << " " << c << " " << l << "\n";
-    DEBUG('N',ss.str().c_str());
+    char inBuffer[MaxMailSize];
+    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
 
     if ((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) {
@@ -365,7 +397,8 @@ int Broadcast_Syscall(int c, int l) {
     //Making syscall message
     stringstream ss;
     ss << SC_Broadcast << " " << c << " " << l << "\n";
-    DEBUG('N',ss.str().c_str());
+    char inBuffer[MaxMailSize];
+    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
 
     if ((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) {
@@ -391,7 +424,31 @@ int Broadcast_Syscall(int c, int l) {
 }
 
 
-int CreateLock_Syscall() {
+int CreateLock_Syscall(unsigned int name, int len) {
+
+    //Set up string lock name
+    char *buf;		// Kernel buffer for output
+    if ( !(buf = new char[len]) ) {
+        printf("%s","Error allocating kernel buffer for write!\n");
+        return -1;
+    } else {
+        if ( copyin(name,len,buf) == -1 ) {
+            printf("%s","Bad name pointer\n");
+            delete[] buf;
+            return -1;
+        }
+    }
+    buf[len]='\0';
+
+
+    //Making syscall message
+    stringstream ss;
+    ss << SC_CreateLock << " "<< buf <<"\n";
+    char inBuffer[MaxMailSize];
+    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
+
+
+
   KernelLock *kl = new KernelLock(); //create new struct
   Lock *l = new Lock(); //create new lock
   
@@ -406,37 +463,62 @@ int CreateLock_Syscall() {
 }
 
 int DestroyLock_Syscall(int id) {
-  int val; 
-  //sysLock.Acquire();
+    int val;
+    //sysLock.Acquire();
 
     //Making syscall message
     stringstream ss;
-    ss << SC_DestroyLock << " "<< id<<"\n";
-    cout << ss.str().c_str();
+    ss << SC_DestroyLock << " " << id << "\n";
+    char inBuffer[MaxMailSize];
+    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
-  if(id > (locks.size() - 1) || id < 0) { 
-    val = -1; //if the id they gave us is bad, return -1
-  } else { //they gave us a valid id, lets check if it's in the same address space
-    KernelLock *kl = locks[id]; //grab the struct
 
-    if(kl != NULL) {
-      if(kl->addrSpace != currentThread->space) {
-        val = -1; //if not the same address space, return -1
-      } else if(kl->isToBeDeleted == true){
-        val = -1;
-      } else {
-        kl->isToBeDeleted = true; //set it to be deleted
-        val = 0; //return 0
-      }
-    } else {
-      val = -1;
+    if (id > (locks.size() - 1) || id < 0) {
+        val = -1; //if the id they gave us is bad, return -1
+    } else { //they gave us a valid id, lets check if it's in the same address space
+        KernelLock *kl = locks[id]; //grab the struct
+
+        if (kl != NULL) {
+            if (kl->addrSpace != currentThread->space) {
+                val = -1; //if not the same address space, return -1
+            } else if (kl->isToBeDeleted == true) {
+                val = -1;
+            } else {
+                kl->isToBeDeleted = true; //set it to be deleted
+                val = 0; //return 0
+            }
+        } else {
+            val = -1;
+        }
     }
-  }
-  //sysLock.Release();
-  return val; 
+    //sysLock.Release();
+    return val;
 }
 
-int CreateCondition_Syscall() {
+int CreateCondition_Syscall(unsigned int name, int len) {
+
+    //Set up string lock name
+    char *buf;		// Kernel buffer for output
+    if ( !(buf = new char[len]) ) {
+        printf("%s","Error allocating kernel buffer for write!\n");
+        return -1;
+    } else {
+        if ( copyin(name,len,buf) == -1 ) {
+            printf("%s","Bad name pointern\n");
+            delete[] buf;
+            return -1;
+        }
+    }
+    buf[len]='\0';
+
+
+    //Making syscall message
+    stringstream ss;
+    ss << SC_CreateCondition << " "<< buf <<"\n";
+    char inBuffer[MaxMailSize];
+    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
+
+
     KernelCondition *kc = new KernelCondition(); //create new struct
     Condition *c = new Condition(); //create new condition
 
@@ -457,7 +539,9 @@ int DestroyCondition_Syscall(int id) {
     //Making syscall message
     stringstream ss;
     ss << SC_DestroyCondition << " " <<id<< "\n";
-    cout << ss.str().c_str();
+    char inBuffer[MaxMailSize];
+    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
+
 
     if (id > (conditions.size() - 1) || id < 0) {
         val = -1; //if the id they gave us is bad, return -1
@@ -986,7 +1070,7 @@ void ExceptionHandler(ExceptionType which) {
     break;
       case SC_CreateLock:
     DEBUG('a', "CreateLock syscall.\n");
-    rv = CreateLock_Syscall();
+    rv = CreateLock_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
     break;
       case SC_DestroyLock:
     DEBUG('a', "DestroyLock syscall.\n");
@@ -994,7 +1078,7 @@ void ExceptionHandler(ExceptionType which) {
     break;
       case SC_CreateCondition:
     DEBUG('a', "CreateCondition syscall.\n");
-    rv = CreateCondition_Syscall();
+    rv = CreateCondition_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
     break;
       case SC_DestroyCondition:
     DEBUG('a', "DestroyCondition syscall.\n");

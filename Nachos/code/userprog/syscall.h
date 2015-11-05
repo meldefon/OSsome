@@ -49,7 +49,12 @@
 
 #define MAXFILENAME 256
 
+/*Give the server a special address*/
+#define SERVER_M 0
+
 #ifndef IN_ASM
+
+
 
 /* A unique identifier for an open Nachos file. */
 typedef int OpenFileId;
@@ -150,7 +155,7 @@ void Yield();
  */
 
 /* Creates a lock for the user program */
-int CreateLock();
+int CreateLock(char* name,int len);
 
  /* Destroys a lock for the user program */
  int DestroyLock(int id);
@@ -166,7 +171,7 @@ int CreateLock();
  */
 
  /* Creates a condition variable for the user program */	
-int CreateCondition();
+int CreateCondition(char* name, int len);
 
  /* Destroys a condition variable for the user program */
  int DestroyCondition(int id);
