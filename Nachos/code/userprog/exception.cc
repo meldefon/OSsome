@@ -233,6 +233,19 @@ void Close_Syscall(int fd) {
     }
 }
 
+int convertMessageToInt(char* inBuffer) {
+    //Declare our stream so we can pull out the int
+    stringstream str;
+    string word(inBuffer);
+    int val;
+
+    //Put the string into the stream then pull the int value out
+    str << word;
+    str >> val;
+
+    return val;
+}
+
 void sendAndRecieveSyscallMessage(char* msg,char* inBuffer){
 
     //Declare headers
@@ -257,7 +270,7 @@ void sendAndRecieveSyscallMessage(char* msg,char* inBuffer){
     }
 
     //Receive reply message
-    //postOffice->Receive(outMailHdr.from, &inPktHdr, &inMailHdr, inBuffer); //For now, don't recieve because server isn't set up
+    postOffice->Receive(outMailHdr.from, &inPktHdr, &inMailHdr, inBuffer); //For now, don't recieve because server isn't set up
 
     return;
 
@@ -272,7 +285,11 @@ int Acquire_Syscall(int id) {
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
+    //Convert the message to int
+    val = convertMessageToInt(inBuffer);
+    return val;
 
+    /*
     //sysLock.Acquire();
     if (id > (locks.size() - 1) || id < 0) {
         val = -1; //if the id they gave us is bad, return -1
@@ -291,7 +308,7 @@ int Acquire_Syscall(int id) {
         }
     }
     //sysLock.Release();
-    return val;
+    */
 }
 
 int Release_Syscall(int id) {
@@ -304,6 +321,11 @@ int Release_Syscall(int id) {
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
+    //Convert the message to int
+    val = convertMessageToInt(inBuffer);
+    return val;
+
+    /*
     if (id > (locks.size() - 1) || id < 0) {
         val = -1; //if the id they gave us is bad, return -1
     } else { //they gave us a valid id, lets check if it's in the same address space
@@ -321,7 +343,7 @@ int Release_Syscall(int id) {
         }
     }
     //sysLock.Release();
-    return val;
+    */
 }
 
 int Wait_Syscall(int c, int l) {
@@ -335,6 +357,17 @@ int Wait_Syscall(int c, int l) {
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
+    //Convert the message to int
+    val = convertMessageToInt(inBuffer);
+
+    //This means we were woken up and must go on to acquire
+    if(val == -2) {
+        val = Acquire_Syscall(l);
+    }
+
+    return val;
+
+    /*
     if ((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) {
         val = -1; //if the id they gave us is bad, return -1
     } else { //they gave us a valid id, lets check if it's in the same address space
@@ -355,7 +388,7 @@ int Wait_Syscall(int c, int l) {
     }
     //sysLock.Release();
     //sysCondition.Release();
-    return val;
+    */
 }
 
 int Signal_Syscall(int c, int l) {
@@ -368,8 +401,12 @@ int Signal_Syscall(int c, int l) {
     ss << SC_Signal << " " << c << " " << l;
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
+    
+    //Convert the message to int
+    val = convertMessageToInt(inBuffer);
+    return val;
 
-
+    /*
     if ((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) {
         val = -1; //if the id they gave us is bad, return -1
     } else { //they gave us a valid id, lets check if it's in the same address space
@@ -389,7 +426,7 @@ int Signal_Syscall(int c, int l) {
     }
     //sysLock.Release();
     //sysCondition.Release();
-    return val;
+    */
 }
 
 int Broadcast_Syscall(int c, int l) {
@@ -403,7 +440,11 @@ int Broadcast_Syscall(int c, int l) {
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
+    //Convert the message to int
+    val = convertMessageToInt(inBuffer);
+    return val;
 
+    /*
     if ((l > (locks.size() - 1) || l < 0) || (c > (conditions.size() - 1) || c < 0)) {
         val = -1; //if the id they gave us is bad, return -1
     } else { //they gave us a valid id, lets check if it's in the same address space
@@ -423,7 +464,7 @@ int Broadcast_Syscall(int c, int l) {
     }
     //sysLock.Release();
     //sysCondition.Release();
-    return val;
+    */
 }
 
 
@@ -450,7 +491,11 @@ int CreateLock_Syscall(unsigned int name, int len) {
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char *) ss.str().c_str(), inBuffer);
 
+    //Convert the message to int, which will contain either an error code or our new index
+    int val = convertMessageToInt(inBuffer);
+    return val;
 
+    /*
     KernelLock *kl = new KernelLock(); //create new struct
     Lock *l = new Lock(); //create new lock
 
@@ -462,6 +507,7 @@ int CreateLock_Syscall(unsigned int name, int len) {
     int index = locks.size() - 1;
     sysLock.Release();
     return index;; //return new index of lock
+    */
 }
 
 int DestroyLock_Syscall(int id) {
@@ -474,7 +520,11 @@ int DestroyLock_Syscall(int id) {
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
+    //Convert the message to int
+    int val = convertMessageToInt(inBuffer);
+    return val;
 
+    /*
     if (id > (locks.size() - 1) || id < 0) {
         val = -1; //if the id they gave us is bad, return -1
     } else { //they gave us a valid id, lets check if it's in the same address space
@@ -494,7 +544,7 @@ int DestroyLock_Syscall(int id) {
         }
     }
     //sysLock.Release();
-    return val;
+    */
 }
 
 int CreateCondition_Syscall(unsigned int name, int len) {
@@ -520,7 +570,11 @@ int CreateCondition_Syscall(unsigned int name, int len) {
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
+    //Convert the message to int, which will contain either an error code or our new index
+    int val = convertMessageToInt(inBuffer);
+    return val;
 
+    /*
     KernelCondition *kc = new KernelCondition(); //create new struct
     Condition *c = new Condition(); //create new condition
 
@@ -532,6 +586,7 @@ int CreateCondition_Syscall(unsigned int name, int len) {
     int index = conditions.size() - 1;
     sysCondition.Release();
     return index; //return new index of condition
+    */
 }
 
 int DestroyCondition_Syscall(int id) {
@@ -543,8 +598,12 @@ int DestroyCondition_Syscall(int id) {
     ss << SC_DestroyCondition << " " <<id;
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
+   
+    //Convert the message to int
+    int val = convertMessageToInt(inBuffer);
+    return val;
 
-
+    /*
     if (id > (conditions.size() - 1) || id < 0) {
         val = -1; //if the id they gave us is bad, return -1
     } else { //they gave us a valid id, lets check if it's in the same address space
@@ -564,7 +623,7 @@ int DestroyCondition_Syscall(int id) {
         }
     }
     //sysCondition.Release();
-    return val;
+    */
 }
 
 int Rand_syscall(int range, int offset) {
@@ -1015,12 +1074,13 @@ int CreateMV_Syscall(unsigned int name, int nameLen, int size){
     ss << SC_CreateMV << " "<< buf<<"@"<<" "<<size;
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
-
-
-    return 0;
+    
+    //Convert the message to int
+    int val = convertMessageToInt(inBuffer);
+    return val;
 }
 
-void DestroyMV_Syscall(int id){
+int DestroyMV_Syscall(int id){
 
     //Making syscall message
     stringstream ss;
@@ -1028,10 +1088,12 @@ void DestroyMV_Syscall(int id){
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
-    return;
+    //Convert the message to int
+    int val = convertMessageToInt(inBuffer);
+    return val;
 }
 
-void SetMV_Syscall(int MVid, int index, int value){
+int SetMV_Syscall(int MVid, int index, int value){
 
     //Making syscall message
     stringstream ss;
@@ -1039,10 +1101,12 @@ void SetMV_Syscall(int MVid, int index, int value){
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
-    return;
+    //Convert the message to int
+    int val = convertMessageToInt(inBuffer);
+    return val;
 }
 
-int GetyMV_Syscall(int MVid, int index){
+int GetMV_Syscall(int MVid, int index){
 
     //Making syscall message
     stringstream ss;
@@ -1050,7 +1114,9 @@ int GetyMV_Syscall(int MVid, int index){
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
-    return 0;
+    //Convert the message to int
+    int val = convertMessageToInt(inBuffer);
+    return val;
 }
 
 
@@ -1174,7 +1240,7 @@ void ExceptionHandler(ExceptionType which) {
                 break;
             case SC_GetMV:
                 DEBUG('a', "GetMV syscall.\n");
-                rv = GetyMV_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+                rv = GetMV_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
                 break;
 
         }
