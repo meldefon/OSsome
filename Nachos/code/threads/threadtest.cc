@@ -13,12 +13,24 @@ using namespace std;
 #include <vector>
 #include "syscall.h"
 
+void sendReply(PacketHeader& outPktHdr,MailHeader& outMailHdr,stringstream& replyStream){
+
+	char replyMsg[replyStream.str().length()+1];
+	strcpy(replyMsg,replyStream.str().c_str());
+	bool success = postOffice->Send(outPktHdr, outMailHdr, replyMsg);
+	if ( !success ) {
+		printf("The postOffice Send failed. You must not have the other Nachos running. Terminating Nachos.\n");
+		interrupt->Halt();
+	}
+
+}
+
 void Server() {
 
 	//Initialization
-	vector<ServerLock>* serverLocks = new vector<ServerLock>;
-	vector<ServerCV>* serverCVs = new vector<ServerCV>;
-	vector<ServerMV>* serverMVs = new vector<ServerMV>;
+	vector<ServerLock*>* serverLocks = new vector<ServerLock*>;
+	vector<ServerCV*>* serverCVs = new vector<ServerCV*>;
+	vector<ServerMV*>* serverMVs = new vector<ServerMV*>;
 
 
 	cout << "Running server\n";
@@ -35,6 +47,12 @@ void Server() {
 		postOffice->Receive(0, &inPktHdr, &inMailHdr, buffer);
 		DEBUG('S',"Got \"%s\" from %d, box %d\n", buffer, inPktHdr.from, inMailHdr.from);
 
+		// Send acknowledgement to the other machine (using "reply to" mailbox
+		// in the message that just arrived
+		outPktHdr.to = inPktHdr.from;
+		outMailHdr.to = inMailHdr.from;
+		outMailHdr.from = 0;
+
 		//Pull out message type
 		int type;
 		stringstream ss; //new one every time to be safe
@@ -44,79 +62,103 @@ void Server() {
 		//Decide what to do based on message type
 		string name;
 		int lockNum, cvNum, mvSiz, mvNum, mvPos, mvVal;
+		stringstream replyStream;
 		switch (type){
-			case SC_CreateLock:
-				DEBUG('S',"Message: Create lock\n");
+			case SC_CreateLock: {
+				DEBUG('S', "Message: Create lock\n");
 				ss.get();
-				getline(ss,name,'@'); //get name of lock
+				getline(ss, name, '@'); //get name of lock
 
-				
-
-				break;
-			case SC_DestroyLock:
-				DEBUG('S',"Message: Destroy lock\n");
-				ss>>lockNum; //get lock ID
 
 				break;
-			case SC_CreateCondition:
-				DEBUG('S',"Message: Create condition\n");
+			}
+			case SC_DestroyLock: {
+				DEBUG('S', "Message: Destroy lock\n");
+				ss >> lockNum; //get lock ID
+
+				break;
+			}
+			case SC_CreateCondition: {
+				DEBUG('S', "Message: Create condition\n");
 				ss.get();
-				getline(ss,name,'@'); //get name of CV
+				getline(ss, name, '@'); //get name of CV
 
 				break;
-			case SC_DestroyCondition:
-				DEBUG('S',"Message: Destroy Condition\n");
-				ss>>cvNum; //get lock ID
+			}
+			case SC_DestroyCondition: {
+				DEBUG('S', "Message: Destroy Condition\n");
+				ss >> cvNum; //get lock ID
 
 				break;
-			case SC_Acquire:
-				DEBUG('S',"Message: Acquire\n");
-				ss>>lockNum; //get lock ID
+			}
+			case SC_Acquire: {
+				DEBUG('S', "Message: Acquire\n");
+				ss >> lockNum; //get lock ID
 
 				break;
-			case SC_Release:
-				DEBUG('S',"Message: Release\n");
-				ss>>lockNum; //get lock ID
+			}
+			case SC_Release: {
+				DEBUG('S', "Message: Release\n");
+				ss >> lockNum; //get lock ID
 
 				break;
-			case SC_Signal:
-				DEBUG('S',"Message: Signal\n");
-				ss>>cvNum>>lockNum; //get lock and CV num
+			}
+			case SC_Signal: {
+				DEBUG('S', "Message: Signal\n");
+				ss >> cvNum >> lockNum; //get lock and CV num
 
 				break;
-			case SC_Wait:
-				DEBUG('S',"Message: Wait\n");
-				ss>>cvNum>>lockNum; //get lock and CV num
+			}
+			case SC_Wait: {
+				DEBUG('S', "Message: Wait\n");
+				ss >> cvNum >> lockNum; //get lock and CV num
 
 				break;
-			case SC_Broadcast:
-				DEBUG('S',"Message: Broadcast\n");
-				ss>>cvNum>>lockNum; //get lock and CV num
+			}
+			case SC_Broadcast: {
+				DEBUG('S', "Message: Broadcast\n");
+				ss >> cvNum >> lockNum; //get lock and CV num
 
 				break;
-			case SC_CreateMV:
-				DEBUG('S',"Message: CreateMV\n");
+			}
+			case SC_CreateMV: {
+				DEBUG('S', "Message: CreateMV\n");
 				ss.get();
-				getline(ss,name,'@'); //get name of lock
-				ss>>mvSiz;
+				getline(ss, name, '@'); //get name of lock
+				ss >> mvSiz;
+
+				//Create MV
+				ServerMV *newMV = new ServerMV;
+				newMV->vals = new int[mvSiz];
+				newMV->length = mvSiz;
+
+				//Add to vector
+				serverMVs->push_back(newMV);
+
+				//Send reply - copy this template
+				replyStream << serverMVs->size()-1;
+				sendReply(outPktHdr, outMailHdr, replyStream);
 
 				break;
-			case SC_DestroyMV:
-				DEBUG('S',"Message: DestroyMV\n");
-				ss>>mvNum;
+			}
+			case SC_DestroyMV: {
+				DEBUG('S', "Message: DestroyMV\n");
+				ss >> mvNum;
 
 				break;
-			case SC_SetMV:
-				DEBUG('S',"Message: SetMV\n");
-				ss>>mvNum>>mvPos>>mvVal;
+			}
+			case SC_SetMV: {
+				DEBUG('S', "Message: SetMV\n");
+				ss >> mvNum >> mvPos >> mvVal;
 
 				break;
-			case SC_GetMV:
-				DEBUG('S',"Message: GetMV\n");
-				ss>>mvNum>>mvPos;
+			}
+			case SC_GetMV: {
+				DEBUG('S', "Message: GetMV\n");
+				ss >> mvNum >> mvPos;
 
 				break;
-
+			}
 			default:
 				cout<<"Unkonwn message type. Ignoring.\n";
 				continue;

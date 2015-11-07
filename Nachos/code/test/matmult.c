@@ -23,11 +23,30 @@ main()
 
 
     int i, j, k;
+	int m1;
+	int val;
+	int l1;
 
-	int l1 = CreateLock("lock1",5);
+
+
+	m1 = CreateMV("mv1",3,1);
+
+
+	val = GetMV(m1,0);
+	Printf("MV value%d",10,val,0);
+	SetMV(m1,0,1);
+	val = GetMV(m1,0);
+	Printf("MV value%d",10,val,0);
+
+
+
+	l1 = CreateLock("lock1",5);
 
 	Acquire(l1);
 	Release(l1);
+
+
+
 
 	Write("Exec called mat_mult!\n",22,ConsoleOutput);
 

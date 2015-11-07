@@ -7,6 +7,7 @@
 
 #include "../machine/network.h"
 #include <string>
+#include <queue>
 
 enum ServerLockState {Busy, Available};
 
@@ -16,14 +17,14 @@ struct ServerLock{
     ServerLockState state;
     int ownerMachineID;
     int ownerMalboxNum;
-    PacketHeader* waitQ;
+    queue<PacketHeader*>* waitQ;
 
 };
 
 
 struct ServerCV{
 
-    PacketHeader* waitQ;
+    queue<PacketHeader*>* waitQ;
     int lockID;
 
 };

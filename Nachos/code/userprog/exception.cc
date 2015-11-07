@@ -1011,7 +1011,7 @@ int CreateMV_Syscall(unsigned int name, int nameLen, int size){
 
     //Making syscall message
     stringstream ss;
-    ss << SC_CreateMV << " "<< buf<<"@";
+    ss << SC_CreateMV << " "<< buf<<"@"<<" "<<size;
     char inBuffer[MaxMailSize];
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
