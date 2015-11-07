@@ -248,6 +248,7 @@ void sendAndRecieveSyscallMessage(char* msg,char* inBuffer){
 
     //Send message
     DEBUG('N',msg);
+    DEBUG('N',"\n");
     bool success = postOffice->Send(outPktHdr, outMailHdr, msg);
     if ( !success ) {
         printf("The postOffice Send failed. You must not have the other Nachos running. Terminating Nachos.\n");
@@ -992,124 +993,160 @@ void HandlePageFault() {
 
 }
 
+int CreateMV_Syscall(unsigned int name, int nameLen, int size){
+    return 0;
+}
+
+void DestroyMV_Syscall(int id){
+    return;
+}
+
+void SetMV_Syscall(int MVid, int index, int value){
+    return;
+}
+
+int GetyMV_Syscall(int MVid, int index){
+    return 0;
+}
+
+
 void ExceptionHandler(ExceptionType which) {
     int type = machine->ReadRegister(2); // Which syscall?
-    int rv=0; 	// the return value from a syscall
-    DEBUG('a',"Syscall: %d \n",type);
+    int rv = 0;    // the return value from a syscall
+    DEBUG('a', "Syscall: %d \n", type);
 
-    if ( which == SyscallException ) {
-	switch (type) {
-	    default:
-		DEBUG('a', "Unknown syscall - shutting down.\n");
-	    case SC_Halt:
-		DEBUG('a', "Shutdown, initiated by user program.\n");
-		interrupt->Halt();
-		break;         
-      case SC_Exit:
-    DEBUG('a', "Exit syscall.\n");
-    Exit_Syscall(machine->ReadRegister(4));
-    break;
-      case SC_Exec:
-    DEBUG('a', "Exec syscall.\n");
-    Exec_Syscall(machine->ReadRegister(4),machine->ReadRegister(5));
-    break;
+    if (which == SyscallException) {
+        switch (type) {
+            default:
+                DEBUG('a', "Unknown syscall - shutting down.\n");
+            case SC_Halt:
+                DEBUG('a', "Shutdown, initiated by user program.\n");
+                interrupt->Halt();
+                break;
+            case SC_Exit:
+                DEBUG('a', "Exit syscall.\n");
+                Exit_Syscall(machine->ReadRegister(4));
+                break;
+            case SC_Exec:
+                DEBUG('a', "Exec syscall.\n");
+                Exec_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+                break;
 
-    case SC_Fork:
-    DEBUG('a', "Fork syscall.\n");
-    Fork_Syscall(machine->ReadRegister(4));
-    break;
+            case SC_Fork:
+                DEBUG('a', "Fork syscall.\n");
+                Fork_Syscall(machine->ReadRegister(4));
+                break;
 
-    case SC_Yield:
-    DEBUG('a', "Yield syscall.\n");
-    Yield_Syscall();
-    break;
-	    case SC_Create:
-		DEBUG('a', "Create syscall.\n");
-		Create_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
-		break;
- 
-	    case SC_Open:
-		DEBUG('a', "Open syscall.\n");
-		rv = Open_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
-		break;
-	    case SC_Write:
-		DEBUG('a', "Write syscall.\n");
-		Write_Syscall(machine->ReadRegister(4),
-			      machine->ReadRegister(5),
-			      machine->ReadRegister(6));
-		break;
-	    case SC_Read:
-		DEBUG('a', "Read syscall.\n");
-		rv = Read_Syscall(machine->ReadRegister(4),
-			      machine->ReadRegister(5),
-			      machine->ReadRegister(6));
-		break;
-	    case SC_Close:
-		DEBUG('a', "Close syscall.\n");
-		Close_Syscall(machine->ReadRegister(4));
-		break;
-      case SC_Acquire:
-    DEBUG('a', "Acquire syscall.\n");
-    rv = Acquire_Syscall(machine->ReadRegister(4));
-    break;
-      case SC_Release:
-    DEBUG('a', "Release syscall.\n");
-    rv = Release_Syscall(machine->ReadRegister(4));
-    break;
-      case SC_Wait:
-    DEBUG('a', "Wait syscall.\n");
-    rv = Wait_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
-    break;
-      case SC_Signal:
-    DEBUG('a', "Signal syscall.\n");
-    rv = Signal_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
-    break;
-      case SC_Broadcast:
-    DEBUG('a', "Broadcast syscall.\n");
-    rv = Broadcast_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
-    break;
-      case SC_CreateLock:
-    DEBUG('a', "CreateLock syscall.\n");
-    rv = CreateLock_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
-    break;
-      case SC_DestroyLock:
-    DEBUG('a', "DestroyLock syscall.\n");
-    rv = DestroyLock_Syscall(machine->ReadRegister(4));
-    break;
-      case SC_CreateCondition:
-    DEBUG('a', "CreateCondition syscall.\n");
-    rv = CreateCondition_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
-    break;
-      case SC_DestroyCondition:
-    DEBUG('a', "DestroyCondition syscall.\n");
-    rv = DestroyCondition_Syscall(machine->ReadRegister(4));
-    break;
-      case SC_Rand:
-    DEBUG('a', "Rand syscall.\n");
-    rv = Rand_syscall(machine->ReadRegister(4), machine->ReadRegister(5));
-    break;
-      case SC_Printf:
-    DEBUG('a', "Printf syscall.\n");
-    Printf_syscall(machine->ReadRegister(4), machine->ReadRegister(5), machine->ReadRegister(6), machine->ReadRegister(7));
-    break;
-      case SC_Scanf:
-    DEBUG('a', "Scanf syscall.\n");
-    rv = Scanf_syscall();
-    break;  
-	}
+            case SC_Yield:
+                DEBUG('a', "Yield syscall.\n");
+                Yield_Syscall();
+                break;
+            case SC_Create:
+                DEBUG('a', "Create syscall.\n");
+                Create_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+                break;
 
-	// Put in the return value and increment the PC
-	machine->WriteRegister(2,rv);
-	machine->WriteRegister(PrevPCReg,machine->ReadRegister(PCReg));
-	machine->WriteRegister(PCReg,machine->ReadRegister(NextPCReg));
-	machine->WriteRegister(NextPCReg,machine->ReadRegister(PCReg)+4);
-	return;
+            case SC_Open:
+                DEBUG('a', "Open syscall.\n");
+                rv = Open_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+                break;
+            case SC_Write:
+                DEBUG('a', "Write syscall.\n");
+                Write_Syscall(machine->ReadRegister(4),
+                              machine->ReadRegister(5),
+                              machine->ReadRegister(6));
+                break;
+            case SC_Read:
+                DEBUG('a', "Read syscall.\n");
+                rv = Read_Syscall(machine->ReadRegister(4),
+                                  machine->ReadRegister(5),
+                                  machine->ReadRegister(6));
+                break;
+            case SC_Close:
+                DEBUG('a', "Close syscall.\n");
+                Close_Syscall(machine->ReadRegister(4));
+                break;
+            case SC_Acquire:
+                DEBUG('a', "Acquire syscall.\n");
+                rv = Acquire_Syscall(machine->ReadRegister(4));
+                break;
+            case SC_Release:
+                DEBUG('a', "Release syscall.\n");
+                rv = Release_Syscall(machine->ReadRegister(4));
+                break;
+            case SC_Wait:
+                DEBUG('a', "Wait syscall.\n");
+                rv = Wait_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+                break;
+            case SC_Signal:
+                DEBUG('a', "Signal syscall.\n");
+                rv = Signal_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+                break;
+            case SC_Broadcast:
+                DEBUG('a', "Broadcast syscall.\n");
+                rv = Broadcast_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+                break;
+            case SC_CreateLock:
+                DEBUG('a', "CreateLock syscall.\n");
+                rv = CreateLock_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+                break;
+            case SC_DestroyLock:
+                DEBUG('a', "DestroyLock syscall.\n");
+                rv = DestroyLock_Syscall(machine->ReadRegister(4));
+                break;
+            case SC_CreateCondition:
+                DEBUG('a', "CreateCondition syscall.\n");
+                rv = CreateCondition_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+                break;
+            case SC_DestroyCondition:
+                DEBUG('a', "DestroyCondition syscall.\n");
+                rv = DestroyCondition_Syscall(machine->ReadRegister(4));
+                break;
+            case SC_Rand:
+                DEBUG('a', "Rand syscall.\n");
+                rv = Rand_syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+                break;
+            case SC_Printf:
+                DEBUG('a', "Printf syscall.\n");
+                Printf_syscall(machine->ReadRegister(4), machine->ReadRegister(5), machine->ReadRegister(6),
+                               machine->ReadRegister(7));
+                break;
+            case SC_Scanf:
+                DEBUG('a', "Scanf syscall.\n");
+                rv = Scanf_syscall();
+                break;
+
+            case SC_CreateMV:
+                DEBUG('a', "CreateMV syscall.\n");
+                rv = CreateMV_Syscall(machine->ReadRegister(4), machine->ReadRegister(5), machine->ReadRegister(6));
+                break;
+            case SC_DestroyMV:
+                DEBUG('a', "DestroyMV syscall.\n");
+                DestroyMV_Syscall(machine->ReadRegister(4));
+                break;
+            case SC_SetMV:
+                DEBUG('a', "SetMV syscall.\n");
+                SetMV_Syscall(machine->ReadRegister(4), machine->ReadRegister(5), machine->ReadRegister(6));
+                break;
+            case SC_GetMV:
+                DEBUG('a', "GetMV syscall.\n");
+                rv = GetyMV_Syscall(machine->ReadRegister(4), machine->ReadRegister(5));
+                break;
+
+        }
+
+        // Put in the return value and increment the PC
+        machine->WriteRegister(2, rv);
+        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+        machine->WriteRegister(NextPCReg, machine->ReadRegister(PCReg) + 4);
+        return;
     }
-    else if(which==PageFaultException) {
+    else if (which == PageFaultException) {
         HandlePageFault();
         return;
-    }else {
-      cout<<"Unexpected user mode exception - which:"<<which<<"  type:"<< type<<endl;
-      interrupt->Halt();
+    } else {
+        cout << "Unexpected user mode exception - which:" << which << "  type:" << type << endl;
+        interrupt->Halt();
     }
 }

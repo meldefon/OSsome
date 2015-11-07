@@ -46,6 +46,11 @@
 #define SC_Rand             20
 #define SC_Printf           21
 #define SC_Scanf			22
+#define SC_CreateMV			23
+#define SC_DestroyMV        24
+#define SC_SetMV			25
+#define SC_GetMV			26
+
 
 #define MAXFILENAME 256
 
@@ -197,6 +202,20 @@ int CreateCondition(char* name, int len);
  
  /* Allows user to print with integers */
  void Printf(char* string, int length, int Num_1, int Num_2);
+
+
+/* Creates a MV for the user program */
+int CreateMV(char* name,int nameLen, int size);
+
+/* Destroys a MV for the user program */
+int DestroyMV(int id);
+
+/* Sets a MV at position index to value value for the user program */
+int SetMV(int MVid, int index, int value);
+
+/* Gets a MV at position index for the user program */
+int GetMV(int MVid, int index);
+
 
 #endif /* IN_ASM */
 
