@@ -15,7 +15,9 @@ using namespace std;
 
 void sendReply(PacketHeader& outPktHdr,MailHeader& outMailHdr,stringstream& replyStream){
 
-	char replyMsg[replyStream.str().length()+1];
+	int msgLength = replyStream.str().length()+1;
+	outMailHdr.length = msgLength;
+	char replyMsg[msgLength];
 	strcpy(replyMsg,replyStream.str().c_str());
 	bool success = postOffice->Send(outPktHdr, outMailHdr, replyMsg);
 	if ( !success ) {

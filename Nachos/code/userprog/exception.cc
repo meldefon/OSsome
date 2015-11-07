@@ -244,6 +244,7 @@ void sendAndRecieveSyscallMessage(char* msg,char* inBuffer){
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->baseStackAddr; //TODO EVEN THIS IS NOT UNIQUE OVER THREADS, Since two threads could
     //TODO have the same base stack address if virtual memory is being used.
+    outMailHdr.from = 0;
     outMailHdr.length = strlen(msg) + 1;
 
     //Send message

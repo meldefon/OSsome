@@ -33,10 +33,10 @@ main()
 
 
 	val = GetMV(m1,0);
-	Printf("MV value%d",10,val,0);
+	Printf("MV value%d\n",11,val,0);
 	SetMV(m1,0,1);
 	val = GetMV(m1,0);
-	Printf("MV value%d",10,val,0);
+	Printf("MV value%d\n",11,val,0);
 
 
 
