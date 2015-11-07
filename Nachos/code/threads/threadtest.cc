@@ -23,12 +23,14 @@ void Server() {
 
 	cout << "Running server\n";
 
-	//Vars for holding message details
-	PacketHeader outPktHdr, inPktHdr;
-	MailHeader outMailHdr, inMailHdr;
-	char buffer[MaxMailSize];
 
 	while (true) {
+
+		//Vars for holding message details
+		PacketHeader outPktHdr, inPktHdr;
+		MailHeader outMailHdr, inMailHdr;
+		char buffer[MaxMailSize];
+
 		// Wait for message from a client machine
 		postOffice->Receive(0, &inPktHdr, &inMailHdr, buffer);
 		DEBUG('S',"Got \"%s\" from %d, box %d\n", buffer, inPktHdr.from, inMailHdr.from);
@@ -41,12 +43,14 @@ void Server() {
 
 		//Decide what to do based on message type
 		string name;
-		int lockNum, cvNum;
+		int lockNum, cvNum, mvSiz, mvNum, mvPos, mvVal;
 		switch (type){
 			case SC_CreateLock:
 				DEBUG('S',"Message: Create lock\n");
 				ss.get();
 				getline(ss,name,'@'); //get name of lock
+
+				
 
 				break;
 			case SC_DestroyLock:
@@ -88,6 +92,28 @@ void Server() {
 			case SC_Broadcast:
 				DEBUG('S',"Message: Broadcast\n");
 				ss>>cvNum>>lockNum; //get lock and CV num
+
+				break;
+			case SC_CreateMV:
+				DEBUG('S',"Message: CreateMV\n");
+				ss.get();
+				getline(ss,name,'@'); //get name of lock
+				ss>>mvSiz;
+
+				break;
+			case SC_DestroyMV:
+				DEBUG('S',"Message: DestroyMV\n");
+				ss>>mvNum;
+
+				break;
+			case SC_SetMV:
+				DEBUG('S',"Message: SetMV\n");
+				ss>>mvNum>>mvPos>>mvVal;
+
+				break;
+			case SC_GetMV:
+				DEBUG('S',"Message: GetMV\n");
+				ss>>mvNum>>mvPos;
 
 				break;
 

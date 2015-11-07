@@ -256,7 +256,7 @@ void sendAndRecieveSyscallMessage(char* msg,char* inBuffer){
     }
 
     //Receive reply message
-    //postOffice->Receive(0, &inPktHdr, &inMailHdr, inBuffer); //For now, don't recieve because server isn't set up
+    //postOffice->Receive(outMailHdr.from, &inPktHdr, &inMailHdr, inBuffer); //For now, don't recieve because server isn't set up
 
     return;
 
@@ -994,18 +994,61 @@ void HandlePageFault() {
 }
 
 int CreateMV_Syscall(unsigned int name, int nameLen, int size){
+
+    //Set up string MV name
+    char *buf;		// Kernel buffer for output
+    if ( !(buf = new char[nameLen]) ) {
+        printf("%s","Error allocating kernel buffer for write!\n");
+        return -1;
+    } else {
+        if ( copyin(name,nameLen,buf) == -1 ) {
+            printf("%s","Bad name pointern\n");
+            delete[] buf;
+            return -1;
+        }
+    }
+    buf[nameLen]='\0';
+
+    //Making syscall message
+    stringstream ss;
+    ss << SC_CreateMV << " "<< buf<<"@";
+    char inBuffer[MaxMailSize];
+    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
+
+
     return 0;
 }
 
 void DestroyMV_Syscall(int id){
+
+    //Making syscall message
+    stringstream ss;
+    ss << SC_DestroyMV << " "<< id;
+    char inBuffer[MaxMailSize];
+    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
+
     return;
 }
 
 void SetMV_Syscall(int MVid, int index, int value){
+
+    //Making syscall message
+    stringstream ss;
+    ss << SC_SetMV << " "<< MVid<<" "<<index<<" "<<value;
+    char inBuffer[MaxMailSize];
+    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
+
     return;
 }
 
 int GetyMV_Syscall(int MVid, int index){
+
+    //Making syscall message
+    stringstream ss;
+    ss << SC_GetMV <<" "<<MVid<<" "<< index;
+    char inBuffer[MaxMailSize];
+    sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
+
     return 0;
 }
 
