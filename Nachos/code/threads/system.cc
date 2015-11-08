@@ -52,6 +52,9 @@ OpenFile* swapFile;
 BitMap* swapFileBitMap;
 int swapFileSize;
 
+//Another copy of the machineID to be used by syscall code
+int machineIDCopy;
+
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -158,6 +161,7 @@ Initialize(int argc, char **argv)
 	} else if (!strcmp(*argv, "-m")) {
 	    ASSERT(argc > 1);
 	    netname = atoi(*(argv + 1));
+	    machineIDCopy = atoi(*(argv + 1));
 	    argCount = 2;
 	}
 #endif

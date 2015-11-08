@@ -63,6 +63,9 @@ extern OpenFile* swapFile;
 extern BitMap* swapFileBitMap;
 extern int swapFileSize;
 
+//Another copy of the machineID to be used by syscall code
+extern int machineIDCopy;
+
 
 #ifdef USER_PROGRAM
 #include "machine.h"

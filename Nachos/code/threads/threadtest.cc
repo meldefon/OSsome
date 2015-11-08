@@ -12,6 +12,7 @@ using namespace std;
 #include "serverStructs.h"
 #include <vector>
 #include "syscall.h"
+#include <string.h>
 
 void sendReply(PacketHeader* outPktHdr,MailHeader* outMailHdr,stringstream& replyStream){
 
@@ -73,21 +74,36 @@ void Server() {
 				ss.get();
 				getline(ss, name, '@'); //get name of lock
 
-				//TODO Check to see if there's already a lock with this name
-				//Create Lock, don't register ownerID or ownerMailbox
-				ServerLock *newLock = new ServerLock;
-				newLock->name = name;
-				newLock->packetWaitQ = new queue<PacketHeader*>();
-				newLock->mailWaitQ = new queue<MailHeader*>();				
-				newLock->state = Available;
-				newLock->isToBeDeleted = false;
-				newLock->ownerMachineID = -1;
+				//Check to see if that lock exists already
+				int existingLockID = -1;
+				for(int i = 0;i<serverLocks->size();i++){
+					if(name.compare(serverLocks->at(i)->name)==0){
+						existingLockID = i;
+					}
+				}
 
-				//Add to vector
-				serverLocks->push_back(newLock);
+				//If doesn't, make a new lock
+				if(existingLockID==-1) {
+					//TODO Check to see if there's already a lock with this name
+					//Create Lock, don't register ownerID or ownerMailbox
+					ServerLock *newLock = new ServerLock;
+					newLock->name = name;
+					newLock->packetWaitQ = new queue<PacketHeader *>();
+					newLock->mailWaitQ = new queue<MailHeader *>();
+					newLock->state = Available;
+					newLock->isToBeDeleted = false;
+					newLock->ownerMachineID = -1;
 
-				//Send reply - copy this template
-				replyStream << serverLocks->size()-1;
+					//Add to vector
+					serverLocks->push_back(newLock);
+
+					//Send reply - copy this template
+					replyStream << serverLocks->size() - 1;
+				}
+				else{ //Lock does exist, so just give its ID
+					replyStream << existingLockID;
+				}
+
 				sendReply(outPktHdr, outMailHdr, replyStream);
 				break;
 			}

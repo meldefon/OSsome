@@ -163,6 +163,7 @@ void Write_Syscall(unsigned int vaddr, int len, int id) {
 	}
     }
 
+    cout<<"m"<<machineIDCopy<<": ";
     if ( id == ConsoleOutput) {
       for (int ii=0; ii<len; ii++) {
 	printf("%c",buf[ii]);
