@@ -73,6 +73,7 @@ void Server() {
 				DEBUG('S', "Message: Create lock\n");
 				ss.get();
 				getline(ss, name, '@'); //get name of lock
+				
 
 				//Check to see if that lock exists already
 				int existingLockID = -1;
@@ -131,9 +132,27 @@ void Server() {
 				ss.get();
 				getline(ss, name, '@'); //get name of CV
 
+
+				bool ifNameAlreadyExists = false;
+
+				//Once again, we have to check to see if there's already a CV made with this name
+				for(int i = 0; i < serverCVs->size(); i++) {
+					if(serverCVs->at(i) != NULL) {
+						if(serverCVs->at(i)->name.compare(name) == 0) {
+							ifNameAlreadyExists = true;
+							break;
+						}
+					}
+				}
+
+				//If the lock already exists, exit syscall
+				if(ifNameAlreadyExists) {
+					replyStream << -1;
+					sendReply(outPktHdr, outMailHdr, replyStream);
+					break;
+				}
+
 				//Create Condition
-				//TODO: Once again, we have to check to see if there's already a CV made with this name
-				//TODO: does the serverCV not need a lock owner to make sure signals are coming from legit place?
 				ServerCV *newCV = new ServerCV;
 				newCV->packetWaitQ = new queue<PacketHeader*>();
 				newCV->mailWaitQ = new queue<MailHeader*>();
@@ -285,7 +304,9 @@ void Server() {
 					if(serverLocks->at(lockNum) == NULL || serverCVs->at(cvNum) == NULL) {
 						replyStream << -1;
 					} else if(serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to || (serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
-						//TODO The or and then and int he above else if are confusing, maybe parenthises?
+						//Enters this condition block if the lock owner does not match machine ID
+						//And if the CV lock does not match lock ID and the lock is assigned
+						//Which means it doesnt have index value of -1
 						replyStream << -1;
 					} else {
 						ifReply = false;
@@ -343,8 +364,26 @@ void Server() {
 				getline(ss, name, '@'); //get name of lock
 				ss >> mvSiz;
 
+				bool ifNameAlreadyExists = false;
+
+				//Check if there's already a MV with this name
+				for(int i = 0; i < serverMVs->size(); i++) {
+					if(serverMVs->at(i) != NULL) {
+						if(serverMVs->at(i)->name.compare(name) == 0) {
+							ifNameAlreadyExists = true;
+							break;
+						}
+					}
+				}
+
+				//If the lock already exists, exit syscall
+				if(ifNameAlreadyExists) {
+					replyStream << -1;
+					sendReply(outPktHdr, outMailHdr, replyStream);
+					break;
+				}
+				
 				//Create MV
-				//TODO Check if there's already a MV with this name
 				ServerMV *newMV = new ServerMV;
 				newMV->vals = new int[mvSiz];
 				newMV->length = mvSiz;
@@ -413,8 +452,7 @@ void Server() {
 					} else {
 						replyStream << serverMVs->at(mvNum)->vals[mvPos];
 					}
-				}//TODO could we get a problem here if the actual array value is -1?
-				//TODO Does that matter?
+				}
 				sendReply(outPktHdr, outMailHdr, replyStream);
 				break;
 			}
