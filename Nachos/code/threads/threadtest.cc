@@ -113,7 +113,7 @@ void Server() {
 			case SC_DestroyLock: {
 				DEBUG('S', "Message: Destroy lock\n");
 				ss >> lockNum; //get lock ID
-				DEBUG('T', "Destroy lock %s for machine %d\n",name.c_str(),inPktHdr->from);
+				DEBUG('T', "Destroy lock %s for machine %d\n",serverLocks->at(lockNum)->name.c_str(),inPktHdr->from);
 
 
 				//Validate user input: send -1 if bad
@@ -135,6 +135,7 @@ void Server() {
 				DEBUG('S', "Message: Create condition\n");
 				ss.get();
 				getline(ss, name, '@'); //get name of CV
+				DEBUG('T', "Creating CV %s for machine %d\n",name.c_str(),inPktHdr->from);
 
 
 				int existingCVID = -1;
@@ -173,6 +174,7 @@ void Server() {
 			case SC_DestroyCondition: {
 				DEBUG('S', "Message: Destroy Condition\n");
 				ss >> cvNum; //get lock ID
+				DEBUG('T', "Destroy CV %s for machine %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from);
 
 				//Validate user input: send -1 if bad
 				if(cvNum < 0 || cvNum >= serverCVs->size()) {
@@ -265,6 +267,7 @@ void Server() {
 			case SC_Signal: {
 				DEBUG('S', "Message: Signal\n");
 				ss >> cvNum >> lockNum; //get lock and CV num
+				DEBUG('T', "Signal CV %s for machine %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from);
 
 				//Validate user input: send -1 if bad
 				if(lockNum < 0 || lockNum >= serverLocks->size() || cvNum < 0 || cvNum >= serverCVs->size()) {
@@ -300,6 +303,7 @@ void Server() {
 			case SC_Wait: {
 				DEBUG('S', "Message: Wait\n");
 				ss >> cvNum >> lockNum; //get lock and CV num
+				DEBUG('T', "Wait on CV %s for machine %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from);
 
 				bool ifReply = true;
 
@@ -323,6 +327,15 @@ void Server() {
 						}
 						serverCVs->at(cvNum)->packetWaitQ->push(outPktHdr);
 						serverCVs->at(cvNum)->mailWaitQ->push(outMailHdr);
+
+						//Change ownership and send message to waiting client
+						PacketHeader* tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
+						serverLocks->at(lockNum)->packetWaitQ->pop();
+						MailHeader* tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
+						serverLocks->at(lockNum)->mailWaitQ->pop();
+						serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
+						replyStream<<-2;
+						sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
 					}
 				}
 				
@@ -334,6 +347,7 @@ void Server() {
 			case SC_Broadcast: {
 				DEBUG('S', "Message: Broadcast\n");
 				ss >> cvNum >> lockNum; //get lock and CV num
+				DEBUG('T', "Broadcast CV %s for machine %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from);
 
 				//Validate user input: send -1 if bad
 				if(lockNum < 0 || lockNum >= serverLocks->size() || cvNum < 0 || cvNum >= serverCVs->size()) {
