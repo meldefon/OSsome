@@ -26,6 +26,7 @@ struct ServerLock{
 
 struct ServerCV{
 
+    string name;
     queue<PacketHeader*>* packetWaitQ;
     queue<MailHeader*>* mailWaitQ;    
     int lockID;
@@ -35,6 +36,7 @@ struct ServerCV{
 
 struct ServerMV{
 
+    string name;
     int* vals;
     int length;
     bool isToBeDeleted;

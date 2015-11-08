@@ -73,13 +73,14 @@ void Server() {
 				DEBUG('S', "Message: Create lock\n");
 				ss.get();
 				getline(ss, name, '@'); //get name of lock
-				
+
 
 				//Check to see if that lock exists already
 				int existingLockID = -1;
 				for(int i = 0;i<serverLocks->size();i++){
 					if(name.compare(serverLocks->at(i)->name)==0){
 						existingLockID = i;
+						break;
 					}
 				}
 
@@ -133,37 +134,36 @@ void Server() {
 				getline(ss, name, '@'); //get name of CV
 
 
-				bool ifNameAlreadyExists = false;
+				int existingCVID = -1;
 
 				//Once again, we have to check to see if there's already a CV made with this name
 				for(int i = 0; i < serverCVs->size(); i++) {
-					if(serverCVs->at(i) != NULL) {
-						if(serverCVs->at(i)->name.compare(name) == 0) {
-							ifNameAlreadyExists = true;
-							break;
-						}
+					if (name.compare(serverCVs->at(i)->name) == 0) {
+						existingCVID = i;
+						break;
 					}
 				}
 
-				//If the lock already exists, exit syscall
-				if(ifNameAlreadyExists) {
-					replyStream << -1;
-					sendReply(outPktHdr, outMailHdr, replyStream);
-					break;
+
+				//If CV doesn't exist, make a new one
+				if(existingCVID==-1) {
+					//Create Condition
+					ServerCV *newCV = new ServerCV;
+					newCV->name = name;
+					newCV->packetWaitQ = new queue<PacketHeader *>();
+					newCV->mailWaitQ = new queue<MailHeader *>();
+					newCV->isToBeDeleted = false;
+					newCV->lockID = -1;
+
+					//Add to vector
+					serverCVs->push_back(newCV);
+
+					//Send reply - copy this template
+					replyStream << serverCVs->size() - 1;
 				}
-
-				//Create Condition
-				ServerCV *newCV = new ServerCV;
-				newCV->packetWaitQ = new queue<PacketHeader*>();
-				newCV->mailWaitQ = new queue<MailHeader*>();
-				newCV->isToBeDeleted = false;
-				newCV->lockID = -1;
-
-				//Add to vector
-				serverCVs->push_back(newCV);
-
-				//Send reply - copy this template
-				replyStream << serverCVs->size()-1;
+				else{ //CV does exist, so give its ID
+					replyStream<<existingCVID;
+				}
 				sendReply(outPktHdr, outMailHdr, replyStream);
 				break;
 			}
@@ -364,35 +364,37 @@ void Server() {
 				getline(ss, name, '@'); //get name of lock
 				ss >> mvSiz;
 
-				bool ifNameAlreadyExists = false;
+				int existingMVID = -1;
 
-				//Check if there's already a MV with this name
+				//Once again, we have to check to see if there's already a MV made with this name
 				for(int i = 0; i < serverMVs->size(); i++) {
-					if(serverMVs->at(i) != NULL) {
-						if(serverMVs->at(i)->name.compare(name) == 0) {
-							ifNameAlreadyExists = true;
-							break;
-						}
+					if (name.compare(serverMVs->at(i)->name) == 0) {
+						existingMVID = i;
+						break;
 					}
 				}
 
-				//If the lock already exists, exit syscall
-				if(ifNameAlreadyExists) {
-					replyStream << -1;
-					sendReply(outPktHdr, outMailHdr, replyStream);
-					break;
+
+				//If MV doesn't exist, create one
+				if(existingMVID==-1) {
+
+					//Create MV
+					ServerMV *newMV = new ServerMV;
+					newMV->name = name;
+					newMV->vals = new int[mvSiz];
+					newMV->length = mvSiz;
+					newMV->isToBeDeleted = false;
+
+					//Add to vector
+					serverMVs->push_back(newMV);
+
+					//Send reply - copy this template
+					replyStream << serverMVs->size() - 1;
 				}
-				
-				//Create MV
-				ServerMV *newMV = new ServerMV;
-				newMV->vals = new int[mvSiz];
-				newMV->length = mvSiz;
+				else {//MV Does exist, so return ID
+					replyStream << existingMVID;
+				}
 
-				//Add to vector
-				serverMVs->push_back(newMV);
-
-				//Send reply - copy this template
-				replyStream << serverMVs->size()-1;
 				sendReply(outPktHdr, outMailHdr, replyStream);
 				break;
 			}
