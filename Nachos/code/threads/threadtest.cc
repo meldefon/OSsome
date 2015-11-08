@@ -73,6 +73,7 @@ void Server() {
 				ss.get();
 				getline(ss, name, '@'); //get name of lock
 
+				//TODO Check to see if there's already a lock with this name
 				//Create Lock, don't register ownerID or ownerMailbox
 				ServerLock *newLock = new ServerLock;
 				newLock->name = name;
@@ -95,14 +96,14 @@ void Server() {
 				ss >> lockNum; //get lock ID
 
 				//Validate user input: send -1 if bad
-				if(lockNum < 0 || lockNum >= serverLocks.size()) {
+				if(lockNum < 0 || lockNum >= serverLocks->size()) {
 					replyStream << -1;
 				} else { 
 					//Validate whether or not the lock exists
-					if(serverLocks[lockNum] == NULL) {
+					if(serverLocks->at(lockNum) == NULL) {
 						replyStream << -1;
 					} else {
-						serverLocks[lockNum]->isToBeDeleted = true;
+						serverLocks->at(lockNum)->isToBeDeleted = true;
 						replyStream << -2;
 					}
 				}
@@ -115,6 +116,8 @@ void Server() {
 				getline(ss, name, '@'); //get name of CV
 
 				//Create Condition
+				//TODO: Once again, we have to check to see if there's already a CV made with this name
+				//TODO: does the serverCV not need a lock owner to make sure signals are coming from legit place?
 				ServerCV *newCV = new ServerCV;
 				newCV->packetWaitQ = new queue<PacketHeader*>();
 				newCV->mailWaitQ = new queue<MailHeader*>();
@@ -134,14 +137,14 @@ void Server() {
 				ss >> cvNum; //get lock ID
 
 				//Validate user input: send -1 if bad
-				if(cvNum < 0 || cvNum >= serverCVs.size()) {
+				if(cvNum < 0 || cvNum >= serverCVs->size()) {
 					replyStream << -1;
 				} else { 
 					//Validate whether or not the CV exists
-					if(serverCVs[cvNum] == NULL) {
+					if(serverCVs->at(cvNum) == NULL) {
 						replyStream << -1;
 					} else {
-						serverCVs[cvNum]->isToBeDeleted = true;
+						serverCVs->at(cvNum)->isToBeDeleted = true;
 						replyStream << -2;
 					}
 				}
@@ -155,23 +158,25 @@ void Server() {
 				bool ifReply = true;
 
 				//Validate user input: send -1 if bad
-				if(lockNum < 0 || lockNum >= serverLocks.size()) {
+				if(lockNum < 0 || lockNum >= serverLocks->size()) {
 					replyStream << -1;
 				} else { 
 					//Check whether or not we can acquire it
-					if(serverLocks[lockNum] == NULL) { 
+					if(serverLocks->at(lockNum) == NULL) {
 						replyStream << -1;
-					} else if(serverLocks[lockNum]->ownerMachineID == outPktHdr->to && serverLocks[lockNum]->state == Busy) {
+					} else if(serverLocks->at(lockNum)->ownerMachineID == outPktHdr->to && serverLocks->at(lockNum)->state == Busy) {
+						//TODO add check int he else if above to make sure not just ownerMachineID, but some kind of
+						//TODO thread-specific id matches
 						replyStream << -1;
-					} else if(serverLocks[lockNum]->state == Busy) {
+					} else if(serverLocks->at(lockNum)->state == Busy) {
 						//Go on the wait queue
 						ifReply = false;
-						serverLocks[lockNum]->packetWaitQ->push(outPktHdr);
-						serverLocks[lockNum]->mailWaitQ->push(outMailHdr);
+						serverLocks->at(lockNum)->packetWaitQ->push(outPktHdr);
+						serverLocks->at(lockNum)->mailWaitQ->push(outMailHdr);
 					} else { 
 						//Assign ownership of the lock and change state
-						serverLocks[lockNum]->ownerMachineID = outPktHdr->to;
-						serverLocks[lockNum]->state = Busy;
+						serverLocks->at(lockNum)->ownerMachineID = outPktHdr->to;
+						serverLocks->at(lockNum)->state = Busy;
 						replyStream << -2;
 					}
 				}
@@ -187,25 +192,27 @@ void Server() {
 				ss >> lockNum; //get lock ID
 				
 				//Validate user input: send -1 if bad
-				if(lockNum < 0 || lockNum >= serverLocks.size()) {
+				if(lockNum < 0 || lockNum >= serverLocks->size()) {
 					replyStream << -1;
 				} else { 
 					//Check whether or not we can release it
-					if(serverLocks[lockNum] == NULL) {
+					if(serverLocks->at(lockNum) == NULL) {
 						replyStream << -1;					
-					} else if(serverLocks[lockNum]->state == Available || serverLocks[lockNum]->ownerMachineID != outPktHdr->to) {
+					} else if(serverLocks->at(lockNum)->state == Available || serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to) {
 						replyStream << -1;
 					} else { 
 						replyStream << -2;
 						//Check if anyone is waiting so they must be woken up
-						if(serverLocks[lockNum]->packetWaitQ->empty()) {
-							serverLocks[lockNum]->state = Available;
-							serverLocks[lockNum]->ownerMachineID = -1;
+						if(serverLocks->at(lockNum)->packetWaitQ->empty()) {
+							serverLocks->at(lockNum)->state = Available;
+							serverLocks->at(lockNum)->ownerMachineID = -1;
 						} else {
 							//Change ownership and send message to waiting client
-							PacketHeader* tempOutPktHdr = serverLocks[lockNum]->packetWaitQ->pop();
-							MailHeader* tempOutMailHdr = serverLocks[lockNum]->mailWaitQ->pop();
-							serverLocks[lockNum]->ownerMachineID = tempOutPktHdr->to;
+							PacketHeader* tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
+							serverLocks->at(lockNum)->packetWaitQ->pop();
+							MailHeader* tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
+							serverLocks->at(lockNum)->mailWaitQ->pop();
+							serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
 							sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
 						}
 					}
@@ -218,27 +225,29 @@ void Server() {
 				ss >> cvNum >> lockNum; //get lock and CV num
 
 				//Validate user input: send -1 if bad
-				if(lockNum < 0 || lockNum >= serverLocks.size() || cvNum < 0 || cvNum >= serverCVs.size()) {
+				if(lockNum < 0 || lockNum >= serverLocks->size() || cvNum < 0 || cvNum >= serverCVs->size()) {
 					replyStream << -1;
 				} else {
 					//Do some more checks to ensure we can signal, like checking if the lock owner matches and the lock id matches the CV lock id
-					if(serverLocks[lockNum] == NULL || serverCVs[cvNum] == NULL) {
+					if(serverLocks->at(lockNum) == NULL || serverCVs->at(cvNum) == NULL) {
 						replyStream << -1;
-					} else if(serverLocks[lockNum]->ownerMachineID != outPktHdr->to || serverCVs[cvNum]->lockID != lockNum) {
+					} else if(serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to || serverCVs->at(cvNum)->lockID != lockNum) {
 						replyStream << -1;						
 					} else {
 						//If there is a waiting client, send reply so they can wake and go on to acquire
-						if(serverCVs[cvNum]->packetWaitQ->empty()) {
+						if(serverCVs->at(cvNum)->packetWaitQ->empty()) {
 							replyStream << -1;
 						} else {
 							//Send message to waiting client
 							replyStream << -2;						
-							PacketHeader* tempOutPktHdr = serverCVs[cvNum]->packetWaitQ->pop();
-							MailHeader* tempOutMailHdr = serverCVs[cvNum]->mailWaitQ->pop();
+							PacketHeader* tempOutPktHdr = serverCVs->at(cvNum)->packetWaitQ->front();
+							serverCVs->at(cvNum)->packetWaitQ->pop();
+							MailHeader* tempOutMailHdr = serverCVs->at(cvNum)->mailWaitQ->front();
+							serverCVs->at(cvNum)->mailWaitQ->pop();
 							sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
 
-							if(serverCVs[cvNum]->packetWaitQ->empty()) {
-								serverCVs[cvNum]->lockID = -1;						
+							if(serverCVs->at(cvNum)->packetWaitQ->empty()) {
+								serverCVs->at(cvNum)->lockID = -1;
 							}
 						}
 					}
@@ -253,22 +262,23 @@ void Server() {
 				bool ifReply = true;
 
 				//Validate user input: send -1 if bad
-				if(lockNum < 0 || lockNum >= serverLocks.size() || cvNum < 0 || cvNum >= serverCVs.size()) {
+				if(lockNum < 0 || lockNum >= serverLocks->size() || cvNum < 0 || cvNum >= serverCVs->size()) {
 					replyStream << -1;
 				} else {
 					//Do some more checks to ensure we can wait
-					if(serverLocks[lockNum] == NULL || serverCVs[cvNum] == NULL) {
+					if(serverLocks->at(lockNum) == NULL || serverCVs->at(cvNum) == NULL) {
 						replyStream << -1;
-					} else if(serverLocks[lockNum]->ownerMachineID != outPktHdr->to || (serverCVs[cvNum]->lockID != lockNum && serverCVs[cvNum]->lockID != -1)) {
-						replyStream << -1;						
+					} else if(serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to || (serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
+						//TODO The or and then and int he above else if are confusing, maybe parenthises?
+						replyStream << -1;
 					} else {
 						ifReply = false;
 						//If CV is unused, assign new lock 
-						if(serverCVs[cvNum]->lockID == -1) {
-							serverCVs[cvNum]->lockID = lockNum;						
+						if(serverCVs->at(cvNum)->lockID == -1) {
+							serverCVs->at(cvNum)->lockID = lockNum;
 						}
-						serverCVs[cvNum]->packetWaitQ->push(outPktHdr);
-						serverCVs[cvNum]->mailWaitQ->push(outMailHdr);
+						serverCVs->at(cvNum)->packetWaitQ->push(outPktHdr);
+						serverCVs->at(cvNum)->mailWaitQ->push(outMailHdr);
 					}
 				}
 				
@@ -282,27 +292,29 @@ void Server() {
 				ss >> cvNum >> lockNum; //get lock and CV num
 
 				//Validate user input: send -1 if bad
-				if(lockNum < 0 || lockNum >= serverLocks.size() || cvNum < 0 || cvNum >= serverCVs.size()) {
+				if(lockNum < 0 || lockNum >= serverLocks->size() || cvNum < 0 || cvNum >= serverCVs->size()) {
 					replyStream << -1;
 				} else {
 					//Do some more checks to ensure we can broadcast
-					if(serverLocks[lockNum] == NULL || serverCVs[cvNum] == NULL) {
+					if(serverLocks->at(lockNum) == NULL || serverCVs->at(cvNum) == NULL) {
 						replyStream << -1;
-					} else if(serverLocks[lockNum]->ownerMachineID != outPktHdr->to || (serverCVs[cvNum]->lockID != lockNum && serverCVs[cvNum]->lockID != -1)) {
+					} else if(serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to || (serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
 						replyStream << -1;						
 					} else {
 						//If there is a waiting client, send reply so they can wake and go on to acquire
-						if(serverCVs[cvNum]->packetWaitQ->empty()) {
+						if(serverCVs->at(cvNum)->packetWaitQ->empty()) {
 							replyStream << -1;						
 						} else {
 							//do a simple loop and wake everybody up by message
-							while(!serverCVs[cvNum]->packetWaitQ->empty()) {
+							while(!serverCVs->at(cvNum)->packetWaitQ->empty()) {
 								replyStream << -2;						
-								PacketHeader* tempOutPktHdr = serverCVs[cvNum]->packetWaitQ->pop();
-								MailHeader* tempOutMailHdr = serverCVs[cvNum]->mailWaitQ->pop();
+								PacketHeader* tempOutPktHdr = serverCVs->at(cvNum)->packetWaitQ->front();
+								serverCVs->at(cvNum)->packetWaitQ->pop();
+								MailHeader* tempOutMailHdr = serverCVs->at(cvNum)->mailWaitQ->front();
+								serverCVs->at(cvNum)->mailWaitQ->pop();
 								sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
 							}
-							serverCVs[cvNum]->lockID = -1; //since we've woken everyone up, no one is waiting on the lock anymore						
+							serverCVs->at(cvNum)->lockID = -1; //since we've woken everyone up, no one is waiting on the lock anymore
 						}
 					}
 				}
@@ -316,6 +328,7 @@ void Server() {
 				ss >> mvSiz;
 
 				//Create MV
+				//TODO Check if there's already a MV with this name
 				ServerMV *newMV = new ServerMV;
 				newMV->vals = new int[mvSiz];
 				newMV->length = mvSiz;
@@ -333,14 +346,14 @@ void Server() {
 				ss >> mvNum;
 
 				//Validate user input: send -1 if bad
-				if(mvNum < 0 || mvNum >= serverMVs.size()) {
+				if(mvNum < 0 || mvNum >= serverMVs->size()) {
 					replyStream << -1;
 				} else {
 					//Do one more check before destroying
-					if(serverMVs[mvNum] == NULL) {
+					if(serverMVs->at(mvNum) == NULL) {
 						replyStream << -1;						
 					} else {
-						serverMVs[mvNum]->isToBeDeleted = true;
+						serverMVs->at(mvNum)->isToBeDeleted = true;
 						replyStream << -2;						
 					}
 				}
@@ -352,16 +365,16 @@ void Server() {
 				ss >> mvNum >> mvPos >> mvVal;
 				
 				//Validate user input: send -1 if bad
-				if(mvNum < 0 || mvNum >= serverMVs.size() || mvPos < 0) {
+				if(mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {
 					replyStream << -1;
 				} else {
 					//Do some more checks before setting value
-					if(serverMVs[mvNum] == NULL) {
+					if(serverMVs->at(mvNum) == NULL) {
 						replyStream << -1;						
-					} else if(mvPos >= serverMVs[mvNum]->length) {
+					} else if(mvPos >= serverMVs->at(mvNum)->length) {
 						replyStream << -1;						
 					} else {
-						serverMVs[mvNum]->vals[mvPos] = mvVal;
+						serverMVs->at(mvNum)->vals[mvPos] = mvVal;
 						replyStream << -2;						
 					}
 				}
@@ -373,18 +386,19 @@ void Server() {
 				ss >> mvNum >> mvPos;
 				
 				//Validate user input: send -1 if bad
-				if(mvNum < 0 || mvNum >= serverMVs.size() || mvPos < 0) {
+				if(mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {
 					replyStream << -1;
 				} else {
 					//Do some more checks before setting value
-					if(serverMVs[mvNum] == NULL) {
+					if(serverMVs->at(mvNum) == NULL) {
 						replyStream << -1;						
-					} else if(mvPos >= serverMVs[mvNum]->length) {
+					} else if(mvPos >= serverMVs->at(mvNum)->length) {
 						replyStream << -1;						
 					} else {
-						replyStream << serverMVs[mvNum]->vals[mvPos];						
+						replyStream << serverMVs->at(mvNum)->vals[mvPos];
 					}
-				}
+				}//TODO could we get a problem here if the actual array value is -1?
+				//TODO Does that matter?
 				sendReply(outPktHdr, outMailHdr, replyStream);
 				break;
 			}

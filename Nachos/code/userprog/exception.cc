@@ -521,7 +521,7 @@ int DestroyLock_Syscall(int id) {
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
 
     //Convert the message to int
-    int val = convertMessageToInt(inBuffer);
+    val = convertMessageToInt(inBuffer);
     return val;
 
     /*
@@ -600,7 +600,7 @@ int DestroyCondition_Syscall(int id) {
     sendAndRecieveSyscallMessage((char*)ss.str().c_str(),inBuffer);
    
     //Convert the message to int
-    int val = convertMessageToInt(inBuffer);
+    val = convertMessageToInt(inBuffer);
     return val;
 
     /*
