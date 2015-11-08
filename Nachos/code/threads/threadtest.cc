@@ -73,6 +73,7 @@ void Server() {
 				DEBUG('S', "Message: Create lock\n");
 				ss.get();
 				getline(ss, name, '@'); //get name of lock
+				DEBUG('T', "Creating lock %s for machine %d\n",name.c_str(),inPktHdr->from);
 
 
 				//Check to see if that lock exists already
@@ -112,6 +113,8 @@ void Server() {
 			case SC_DestroyLock: {
 				DEBUG('S', "Message: Destroy lock\n");
 				ss >> lockNum; //get lock ID
+				DEBUG('T', "Destroy lock %s for machine %d\n",name.c_str(),inPktHdr->from);
+
 
 				//Validate user input: send -1 if bad
 				if(lockNum < 0 || lockNum >= serverLocks->size()) {
@@ -189,6 +192,8 @@ void Server() {
 			case SC_Acquire: {
 				DEBUG('S', "Message: Acquire\n");
 				ss >> lockNum; //get lock ID
+				DEBUG('T', "Acquire lock %s for machine %d\n",serverLocks->at(lockNum)->name.c_str(),inPktHdr->from);
+
 
 				bool ifReply = true;
 
@@ -225,7 +230,9 @@ void Server() {
 			case SC_Release: {
 				DEBUG('S', "Message: Release\n");
 				ss >> lockNum; //get lock ID
-				
+				DEBUG('T', "Release lock %s for machine %d\n",serverLocks->at(lockNum)->name.c_str(),inPktHdr->from);
+
+
 				//Validate user input: send -1 if bad
 				if(lockNum < 0 || lockNum >= serverLocks->size()) {
 					replyStream << -1;
@@ -252,7 +259,7 @@ void Server() {
 						}
 					}
 				}
-				sendReply(outPktHdr, outMailHdr, replyStream);				
+				sendReply(outPktHdr, outMailHdr, replyStream);
 				break;
 			}
 			case SC_Signal: {
