@@ -20,7 +20,7 @@ void LockTest(){
 
 	/*Create lock*/
 	Write("Test: Create one lock\n", 22, ConsoleOutput);	
-	lock1 = CreateLock();
+	lock1 = CreateLock(" ", 1);
 	Write("Result: Success\n\n", 18, ConsoleOutput);
 
 	/*Destroy lock*/
@@ -41,11 +41,11 @@ void LockTest(){
 
 	/*Create Multiple locks*/
 	Write("Test: Create mulitple locks\n", 28, ConsoleOutput);
-	lock1 = CreateLock();
-	lock2 = CreateLock();
-	lock3 = CreateLock();
-	lock4 = CreateLock();
-	lock5 = CreateLock();
+	lock1 = CreateLock(" ", 1);
+	lock2 = CreateLock(" ", 1);
+	lock3 = CreateLock(" ", 1);
+	lock4 = CreateLock(" ", 1);
+	lock5 = CreateLock(" ", 1);
 	Write("Result: Success\n\n", 18, ConsoleOutput);
 
 	/*Destroy multiple locks*/
@@ -94,7 +94,7 @@ void ConditionTest(){
 	
 	/*Create one CV*/
 	Write("Test: Create CV\n", 16, ConsoleOutput);
-	cv1 = CreateCondition();
+	cv1 = CreateCondition(" ", 1);
 	Write("Result: Success\n\n", 18, ConsoleOutput);
 
 	/*Destroy one CV*/
@@ -115,11 +115,11 @@ void ConditionTest(){
 
 	/*Create Multiple CVs*/
 	Write("Test: Create multiple CVs\n", 26, ConsoleOutput);
-	cv1 = CreateCondition();
-	cv2 = CreateCondition();
-	cv3 = CreateCondition();
-	cv4 = CreateCondition();
-	cv5 = CreateCondition();
+	cv1 = CreateCondition(" ", 1);
+	cv2 = CreateCondition(" ", 1);
+	cv3 = CreateCondition(" ", 1);
+	cv4 = CreateCondition(" ", 1);
+	cv5 = CreateCondition(" ", 1);
 	Write("Result: Success\n\n", 18, ConsoleOutput);
 
 	/*Destroy Mulitple CVs*/
@@ -168,7 +168,7 @@ void AcquireAndReleaseTest(){
 	
 	/*Acquire a lock*/
 	Write("Test: Acquire a lock\n", 21, ConsoleOutput);
-	lock1 = CreateLock();
+	lock1 = CreateLock(" ", 1);
 	result = Acquire(lock1);
 	Write("Result: ", 8,ConsoleOutput);
 	if (result == 0){
@@ -196,7 +196,7 @@ void AcquireAndReleaseTest(){
 
 	/*Acquire a deleted lock - user's responsibility
 	Write("Test: Acquire a deleted lock\n", 29, ConsoleOutput);
-	lock2 = CreateLock();
+	lock2 = CreateLock(" ", 1);
 	DestroyLock(lock2);
 	result = Acquire(lock2);
 	Write("Result: ", 8,ConsoleOutput);
@@ -253,7 +253,7 @@ void AcquireAndReleaseTest(){
 
 	/*Acquire a lock that is already acquired - user responsibility
 	Write("Test: Acquire a lock that is already acquired\n", 46, ConsoleOutput);
-	lock2 = CreateLock();
+	lock2 = CreateLock(" ", 1);
 	Acquire(lock2);
 	result = Acquire(lock2);
 	Write("Result: ", 8,ConsoleOutput);
@@ -277,7 +277,7 @@ void WaitSignalBroadcastTest(){
 	/*Wait - Valid CV, Invalid Lock - min*/
 	Write("Test: Wait - valid CV, invalid Lock - Min case\n", 47, ConsoleOutput);
 	lock1 = -1;
-	cv1 = CreateCondition();
+	cv1 = CreateCondition(" ", 1);
 	Acquire(lock1);
 	result = Wait(cv1, lock1);
 	Write("Result: ", 8, ConsoleOutput);
@@ -291,7 +291,7 @@ void WaitSignalBroadcastTest(){
 	/*Wait - Valid CV, Invalid Lock - max*/
 	Write("Test: Wait - valid CV, invalid Lock - Max case\n", 47, ConsoleOutput);
 	lock1 = 9999;
-	cv1 = CreateCondition();
+	cv1 = CreateCondition(" ", 1);
 	Acquire(lock1);
 	result = Wait(cv1, lock1);
 	Write("Result: ", 8, ConsoleOutput);
@@ -304,7 +304,7 @@ void WaitSignalBroadcastTest(){
 
 	/*Wait - Valid Lock, Invalid CV - min*/
 	Write("Test: Wait - valid Lock, invalid CV - Min case\n", 47, ConsoleOutput);
-	lock1 = CreateLock();
+	lock1 = CreateLock(" ", 1);
 	cv1 = -1;
 	Acquire(lock1);
 	result = Wait(cv1, lock1);
@@ -318,7 +318,7 @@ void WaitSignalBroadcastTest(){
 
 	/*Wait - Valid Lock, Invalid CV - max*/
 	Write("Test: Wait - valid Lock, invalid CV - Max case\n", 47, ConsoleOutput);
-	lock1 = CreateLock();
+	lock1 = CreateLock(" ", 1);
 	cv1 = 9999;
 	Acquire(lock1);
 	result = Wait(cv1, lock1);
@@ -336,7 +336,7 @@ void WaitSignalBroadcastTest(){
 	/*Signal - Valid CV, Invalid Lock - min*/
 	Write("Test: Signal - valid CV, invalid Lock - Min case\n", 49, ConsoleOutput);
 	lock1 = -1;
-	cv1 = CreateCondition();
+	cv1 = CreateCondition(" ", 1);
 	Acquire(lock1);
 	result = Signal(cv1, lock1);
 	Write("Result: ", 8, ConsoleOutput);
@@ -350,7 +350,7 @@ void WaitSignalBroadcastTest(){
 	/*Signal - Valid CV, Invalid Lock - max*/
 	Write("Test: Signal - valid CV, invalid Lock - Max case\n", 49, ConsoleOutput);
 	lock1 = 9999;
-	cv1 = CreateCondition();
+	cv1 = CreateCondition(" ", 1);
 	Acquire(lock1);
 	result = Signal(cv1, lock1);
 	Write("Result: ", 8, ConsoleOutput);
@@ -363,7 +363,7 @@ void WaitSignalBroadcastTest(){
 
 	/*Signal - Valid Lock, Invalid CV - min*/
 	Write("Test: Signal - valid Lock, invalid CV - Min case\n", 49, ConsoleOutput);
-	lock1 = CreateLock();
+	lock1 = CreateLock(" ", 1);
 	cv1 = -1;
 	Acquire(lock1);
 	result = Signal(cv1, lock1);
@@ -377,7 +377,7 @@ void WaitSignalBroadcastTest(){
 
 	/*Signal - Valid Lock, Invalid CV - max*/
 	Write("Test: Signal - valid Lock, invalid CV - Max case\n", 49, ConsoleOutput);
-	lock1 = CreateLock();
+	lock1 = CreateLock(" ", 1);
 	cv1 = 9999;
 	Acquire(lock1);
 	result = Signal(cv1, lock1);
@@ -392,7 +392,7 @@ void WaitSignalBroadcastTest(){
 	/*Broadcast - Valid CV, Invalid Lock - min*/
 	Write("Test: Broadcast - valid CV, invalid Lock - Min case\n", 52, ConsoleOutput);
 	lock1 = -1;
-	cv1 = CreateCondition();
+	cv1 = CreateCondition(" ", 1);
 	Acquire(lock1);
 	result = Broadcast(cv1, lock1);
 	Write("Result: ", 8, ConsoleOutput);
@@ -406,7 +406,7 @@ void WaitSignalBroadcastTest(){
 	/*Broadcast - Valid CV, Invalid Lock - max*/
 	Write("Test: Broadcast - valid CV, invalid Lock - Max case\n", 52, ConsoleOutput);
 	lock1 = 9999;
-	cv1 = CreateCondition();
+	cv1 = CreateCondition(" ", 1);
 	Acquire(lock1);
 	result = Broadcast(cv1, lock1);
 	Write("Result: ", 8, ConsoleOutput);
@@ -419,7 +419,7 @@ void WaitSignalBroadcastTest(){
 
 	/*Broadcast - Valid Lock, Invalid CV - min*/
 	Write("Test: Broadcast - valid Lock, invalid CV - Min case\n", 52, ConsoleOutput);
-	lock1 = CreateLock();
+	lock1 = CreateLock(" ", 1);
 	cv1 = -1;
 	Acquire(lock1);
 	result = Broadcast(cv1, lock1);
@@ -433,7 +433,7 @@ void WaitSignalBroadcastTest(){
 
 	/*Broadcast - Valid Lock, Invalid CV - max*/
 	Write("Test: Broadcast - valid Lock, invalid CV - Max case\n", 52, ConsoleOutput);
-	lock1 = CreateLock();
+	lock1 = CreateLock(" ", 1);
 	cv1 = 9999;
 	Acquire(lock1);
 	result = Broadcast(cv1, lock1);

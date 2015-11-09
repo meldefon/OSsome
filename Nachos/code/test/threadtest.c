@@ -7,14 +7,14 @@
 void initialize(struct Monitor *m, char* lockName,int clerkType_, int size) {
         int i;
 
-        m->lineLock = CreateLock();
+        m->lineLock = CreateLock(" ", 1);
    		m->newClerkId = 0;
-    	m->newClerkIdLock = CreateLock();        
+    	m->newClerkIdLock = CreateLock(" ", 1);        
         /*lineCV = (int*) malloc(size * sizeof(int));
         clerkLock = (int*) malloc(size * sizeof(int));
         clerkCV = (int*) malloc(size * sizeof(int));
         lineCount = (int*) malloc(size * sizeof(int));
-        limboLineCV = CreateCondition();
+        limboLineCV = CreateCondition(" ", 1);
         bribeLineCount = (int*) malloc(size * sizeof(int));
         bribeLineCV = (int*) malloc(size * sizeof(int));
         senLineCV = (int*) malloc(size * sizeof(int));
@@ -23,16 +23,16 @@ void initialize(struct Monitor *m, char* lockName,int clerkType_, int size) {
         currentCustomer = (int*) malloc(size * sizeof(int));*/
         m->numOfClerks = size;
         m->clerkType = clerkType_;
-        m->breakCV = CreateCondition();
+        m->breakCV = CreateCondition(" ", 1);
         m->numCustomersInLimbo = 0;
         m->cashReceived = 0;
 
         for(i = 0; i < size; i++) {
-            m->lineCV[i] = CreateCondition();
-            m->clerkLock[i] = CreateLock(); 
-            m->clerkCV[i] = CreateCondition();    
-            m->bribeLineCV[i] = CreateCondition();    
-            m->senLineCV[i] = CreateCondition();    
+            m->lineCV[i] = CreateCondition(" ", 1);
+            m->clerkLock[i] = CreateLock(" ", 1); 
+            m->clerkCV[i] = CreateCondition(" ", 1);    
+            m->bribeLineCV[i] = CreateCondition(" ", 1);    
+            m->senLineCV[i] = CreateCondition(" ", 1);    
 
             m->lineCount[i] = 0;
             m->bribeLineCount[i] = 0;
@@ -77,9 +77,9 @@ void TestSuite() {
 			senatorWorking = NULL;
 			clerksCanWork = 1;
 			newCustomerId = 0;
-			newCustomerIdLock = CreateLock();
-			senatorLock = CreateLock();
-			senatorCV = CreateCondition();
+			newCustomerIdLock = CreateLock(" ", 1);
+			senatorLock = CreateLock(" ", 1);
+			senatorCV = CreateCondition(" ", 1);
 
 			/*initialize customer threads*/
 			for(i = 0; i < 10; i++) {
@@ -118,10 +118,10 @@ void TestSuite() {
 			numCustomersLeft = 5;
 			senatorWorking = NULL;
 			clerksCanWork = 1;
-			senatorLock = CreateLock();
-			senatorCV = CreateCondition();
+			senatorLock = CreateLock(" ", 1);
+			senatorCV = CreateCondition(" ", 1);
 			newCustomerId = 0;
-			newCustomerIdLock = CreateLock();	
+			newCustomerIdLock = CreateLock(" ", 1);	
 
 			Fork(applicationClerk);
 			Fork(pictureClerk);
@@ -166,10 +166,10 @@ void TestSuite() {
 			numCustomersLeft = 5;
 			senatorWorking = NULL;
 			clerksCanWork = 1;
-			senatorLock = CreateLock();
-			senatorCV = CreateCondition();
+			senatorLock = CreateLock(" ", 1);
+			senatorCV = CreateCondition(" ", 1);
 			newCustomerId = 0;
-			newCustomerIdLock = CreateLock();
+			newCustomerIdLock = CreateLock(" ", 1);
 
 			/*make five customers*/
 			for(i = 0; i < 5; i++) {
@@ -205,10 +205,10 @@ void TestSuite() {
 			numCustomersLeft = 1;
 			senatorWorking = NULL;
 			clerksCanWork = 1;
-			senatorLock = CreateLock();
-			senatorCV = CreateCondition();
+			senatorLock = CreateLock(" ", 1);
+			senatorCV = CreateCondition(" ", 1);
 			newCustomerId = 0;
-			newCustomerIdLock = CreateLock();	
+			newCustomerIdLock = CreateLock(" ", 1);	
 
 			for(i = 0; i < appClerk.numOfClerks; i++) {
 				Fork(applicationClerk);
@@ -248,10 +248,10 @@ void TestSuite() {
 			numCustomersLeft = 5;
 			senatorWorking = NULL;
 			clerksCanWork = 1;
-			senatorLock = CreateLock();
-			senatorCV = CreateCondition();
+			senatorLock = CreateLock(" ", 1);
+			senatorCV = CreateCondition(" ", 1);
 			newCustomerId = 0;
-			newCustomerIdLock = CreateLock();
+			newCustomerIdLock = CreateLock(" ", 1);
 			
 			/*make one cashier*/
 			Fork(cashierDo);
@@ -301,10 +301,10 @@ void TestSuite() {
 			numCustomersLeft = numCustsForTest;
 			senatorWorking = NULL;
 			clerksCanWork = 1;
-			senatorLock = CreateLock();
-			senatorCV = CreateCondition();
+			senatorLock = CreateLock(" ", 1);
+			senatorCV = CreateCondition(" ", 1);
 			newCustomerId = 0;
-			newCustomerIdLock = CreateLock();
+			newCustomerIdLock = CreateLock(" ", 1);
 			
 			Fork(applicationClerk);
 			Fork(pictureClerk);
@@ -354,10 +354,10 @@ void TestSuite() {
 			numCustomersLeft = 5;
 			senatorWorking = NULL;
 			clerksCanWork = 1;
-			senatorLock = CreateLock();
-			senatorCV = CreateCondition();
+			senatorLock = CreateLock(" ", 1);
+			senatorCV = CreateCondition(" ", 1);
 			newCustomerId = 0;
-			newCustomerIdLock = CreateLock();
+			newCustomerIdLock = CreateLock(" ", 1);
 			
 			Fork(applicationClerk);
 			Fork(pictureClerk);
@@ -454,7 +454,7 @@ int main() {
 		*/
 		bribesEnabled = 1;
 		newCustomerId = 0;
-		newCustomerIdLock = CreateLock();
+		newCustomerIdLock = CreateLock(" ", 1);
 
 		/*Initialize everything*/
 		for(i = 0;i<size;i++) {
@@ -476,8 +476,8 @@ int main() {
 		clerksCanWork = 1;
 
 		/*Instantiate senator lock/CV*/
-		senatorLock = CreateLock();
-		senatorCV = CreateCondition();
+		senatorLock = CreateLock(" ", 1);
+		senatorCV = CreateCondition(" ", 1);
 		
 		/*will hold currentCust SSN for checking*/
 		/*
