@@ -113,7 +113,7 @@ void Server() {
 			case SC_DestroyLock: {
 				DEBUG('S', "Message: Destroy lock\n");
 				ss >> lockNum; //get lock ID
-				DEBUG('T', "Destroy lock %s for machine %d\n",serverLocks->at(lockNum)->name.c_str(),inPktHdr->from);
+				DEBUG('T', "Set destroy lock %s for machine %d\n",serverLocks->at(lockNum)->name.c_str(),inPktHdr->from);
 
 
 				//Validate user input: send -1 if bad
@@ -174,7 +174,7 @@ void Server() {
 			case SC_DestroyCondition: {
 				DEBUG('S', "Message: Destroy Condition\n");
 				ss >> cvNum; //get lock ID
-				DEBUG('T', "Destroy CV %s for machine %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from);
+				DEBUG('T', "Set destroy CV %s for machine %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from);
 
 				//Validate user input: send -1 if bad
 				if(cvNum < 0 || cvNum >= serverCVs->size()) {
@@ -330,12 +330,17 @@ void Server() {
 
 						//Change ownership and send message to waiting client
 						PacketHeader* tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
-						serverLocks->at(lockNum)->packetWaitQ->pop();
 						MailHeader* tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
-						serverLocks->at(lockNum)->mailWaitQ->pop();
-						serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
-						replyStream<<-2;
-						sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+						if(!(tempOutPktHdr==NULL)) {
+							serverLocks->at(lockNum)->packetWaitQ->pop();
+							serverLocks->at(lockNum)->mailWaitQ->pop();
+							serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
+							replyStream << -2;
+							sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+						}
+						else{
+							serverLocks->at(lockNum)->state = Available;
+						}
 					}
 				}
 				
@@ -484,6 +489,8 @@ void Server() {
 				continue;
 				break;
 		}
+
+		cout<<serverLocks->at(0)->packetWaitQ->size()<<"\n";
 
 
 	}
