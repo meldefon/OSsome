@@ -44,6 +44,9 @@ Lock* progLock;
 Lock sysLock;
 Lock sysCondition;
 
+// New globals for FIFO
+queue<int> pagesQueue;
+
 //TLB index
 int currentTLB;
 

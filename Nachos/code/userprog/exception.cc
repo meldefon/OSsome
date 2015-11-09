@@ -902,8 +902,15 @@ int HandleMemoryFull(){
     DEBUG('M',"Handling memory full\n");
 
     //Pick a page to evict
-    int pageToEvict = rand() % NumPhysPages;
+    int pageToEvict;
 
+    //If FIFO policy, grab page, else pick random page
+    if(ifFIFO) { 
+        pageToEvict = pagesQueue.pop();
+        pagesQueue.push(pageToEvict);
+    } else {
+        pageToEvict = rand() % NumPhysPages;
+    }
 
     //Check if that page is in the TLB right now;
     for(int i = 0;i<TLBSize;i++){
@@ -988,6 +995,8 @@ void HandlePageFault() {
         //Handle memory full
         if(ppn==-1){
             ppn = HandleMemoryFull();
+        } else if(ifFIFO) {
+            pagesQueue.push(ppn); //add the page to the queue if we are using FIFO
         }
 
         //Check dirty bits and offset to know where to load from

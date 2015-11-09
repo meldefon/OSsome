@@ -47,6 +47,10 @@ extern vector<KernelCondition*> conditions;
 // IPT table for assignment 3
 extern IPTEntry *IPT;
 
+// New globals for FIFO
+extern queue<int> pagesQueue;
+bool ifFIFO = true;
+
 //Global process table
 extern vector<ProcessStruct*>* processTable;
 extern Lock* progLock;
