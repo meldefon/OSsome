@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt matmult sort serverCode testfiles testpart1 testpart2 threadtest
+all: halt matmult sort lockTests CVTests CVTestsWaiter CVTestsSignaller CVTestsBroadcaster serverCode testfiles testpart1 testpart2 threadtest
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -55,6 +55,36 @@ matmult.o: matmult.c
 matmult: matmult.o start.o
 	$(LD) $(LDFLAGS) start.o matmult.o -o matmult.coff
 	../bin/coff2noff matmult.coff matmult
+
+lockTests.o: lockTests.c
+	$(CC) $(CFLAGS) -c lockTests.c
+lockTests: lockTests.o start.o
+	$(LD) $(LDFLAGS) start.o lockTests.o -o lockTests.coff
+	../bin/coff2noff lockTests.coff lockTests
+
+CVTests.o: CVTests.c
+	$(CC) $(CFLAGS) -c CVTests.c
+CVTests: CVTests.o start.o
+	$(LD) $(LDFLAGS) start.o CVTests.o -o CVTests.coff
+	../bin/coff2noff CVTests.coff CVTests
+
+CVTestsWaiter.o: CVTestsWaiter.c
+	$(CC) $(CFLAGS) -c CVTestsWaiter.c
+CVTestsWaiter: CVTestsWaiter.o start.o
+	$(LD) $(LDFLAGS) start.o CVTestsWaiter.o -o CVTestsWaiter.coff
+	../bin/coff2noff CVTestsWaiter.coff CVTestsWaiter
+
+CVTestsSignaller.o: CVTestsSignaller.c
+	$(CC) $(CFLAGS) -c CVTestsSignaller.c
+CVTestsSignaller: CVTestsSignaller.o start.o
+	$(LD) $(LDFLAGS) start.o CVTestsSignaller.o -o CVTestsSignaller.coff
+	../bin/coff2noff CVTestsSignaller.coff CVTestsSignaller
+
+CVTestsBroadcaster.o: CVTestsBroadcaster.c
+	$(CC) $(CFLAGS) -c CVTestsBroadcaster.c
+CVTestsBroadcaster: CVTestsBroadcaster.o start.o
+	$(LD) $(LDFLAGS) start.o CVTestsBroadcaster.o -o CVTestsBroadcaster.coff
+	../bin/coff2noff CVTestsBroadcaster.coff CVTestsBroadcaster
 
 serverCode.o: serverCode.c
 	$(CC) $(CFLAGS) -c serverCode.c
