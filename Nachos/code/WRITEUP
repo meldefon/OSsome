@@ -18,14 +18,20 @@ I. Requirements:
 		This part requires us to implement networking in nachos. We will implement Remote Procedure Calls for all Lock, Condition Variable and Monitor Variable system calls. The system calls will be sent as a message from a nachos client to a nachos server. The server will process the system call and return the results of the system call to the client. The server has to be able to handle multiple clients. 
 
 II. Assumptions: - Reasonable assumptions you take for your scheme.
-	+ Part 1
-
-
-	+ Part 2
-
-
-	+ Part 3
-	
+	+ Part 1:	
+		-We would need to create a new class to hold the IPT entries
+		-There is no IPT in Nachos
+		-We should do things in a step-by-step approach
+	+ Part 2:
+		-We would use the Nachos file system for the swap file
+		-We would use bitmap for file functionality alongside memory management 
+	+ Part 3:
+		-We could use stringstream to parse messages
+		-Server would be single threaded
+		-We did not have to implement thread specific messaging for this project
+		-We could use any type of message formatting
+		-We would need to create new types of structs to hold the new locks, CVs, and MVs
+		-We would need new globals that would be shared across clients
 
 III. Design:
 	+ Part 1
