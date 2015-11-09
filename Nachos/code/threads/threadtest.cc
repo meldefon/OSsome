@@ -411,6 +411,9 @@ void Server() {
 					newMV->name = name;
 					newMV->vals = new int[mvSiz];
 					newMV->length = mvSiz;
+					for(int i =0;i<mvSiz;i++){
+						newMV->vals[i] = 0;
+					}
 					newMV->isToBeDeleted = false;
 
 					//Add to vector

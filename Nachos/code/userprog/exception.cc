@@ -754,7 +754,7 @@ void Exit_Syscall(int status) {
     }
 
     //If you're the nonlast thread in your process, just clear your stack pages
-    else { 
+    else {
         DEBUG('X',"Nonlast thread, freeing up stack memory\n");
         //Just clear this threads stack num in the stack bitmap! No need to deal with pages
         //compute stack page numbers
@@ -869,7 +869,7 @@ void kernel_thread(int vaddr){
 }
 
 
-void Fork_Syscall(int forkArg, int funcArg) {
+void Fork_Syscall(int forkArg) {
 
     if (forkArg < 0){
       cout<<"Invalid input to Fork syscall: "<<forkArg<<"\n";
@@ -1152,7 +1152,7 @@ void ExceptionHandler(ExceptionType which) {
 
             case SC_Fork:
                 DEBUG('a', "Fork syscall.\n");
-                Fork_Syscall(machine->ReadRegister(4),machine->ReadRegister(5));
+                Fork_Syscall(machine->ReadRegister(4));
                 break;
 
             case SC_Yield:
