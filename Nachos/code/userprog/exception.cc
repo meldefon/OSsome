@@ -707,7 +707,7 @@ void Exit_Syscall(int status) {
         DEBUG('X', "Process's last thread, deallocating address space\n");
         //Clear all your pages
         for (int i = 0; i < currentThread->space->numPages; i++) {
-            freePageBitMap->Clear(currentThread->space->pageTable[i].physicalPage);
+            //freePageBitMap->Clear(currentThread->space->pageTable[i].physicalPage);
 
         }
 
@@ -738,6 +738,7 @@ void Exit_Syscall(int status) {
         for (int i = 0; i < NumPhysPages; i++) {
             //Clear stuff in the IPT
             if(IPT[i].owner==currentThread->space) {
+                freePageBitMap->Clear(i);
                 IPT[i].valid = FALSE;
             }
         }
@@ -753,7 +754,7 @@ void Exit_Syscall(int status) {
     }
 
     //If you're the nonlast thread in your process, just clear your stack pages
-    else {
+    else { 
         DEBUG('X',"Nonlast thread, freeing up stack memory\n");
         //Just clear this threads stack num in the stack bitmap! No need to deal with pages
         //compute stack page numbers
@@ -868,7 +869,7 @@ void kernel_thread(int vaddr){
 }
 
 
-void Fork_Syscall(int forkArg) {
+void Fork_Syscall(int forkArg, int funcArg) {
 
     if (forkArg < 0){
       cout<<"Invalid input to Fork syscall: "<<forkArg<<"\n";
@@ -881,8 +882,13 @@ void Fork_Syscall(int forkArg) {
 
     //t->space->numThreads = t->space->numThreads+1;
     //int forkArg = machine->ReadRegister(4);
+
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); //Disable interrupts
     processTable->at(t->space->processID)->numThreads = processTable->at(t->space->processID)->numThreads+1;
-    DEBUG('X',"Process %d now has %d running threads\n",currentThread->space->processID,processTable->size());
+    DEBUG('X',"Process %d now has %d running threads\n",currentThread->space->processID,processTable->at(t->space->processID)->numThreads);
+    (void) interrupt->SetLevel(oldLevel); //Reenable interrupts
+
+
     t->Fork(kernel_thread,forkArg);
 }
 
@@ -1031,9 +1037,9 @@ void HandlePageFault() {
     if(machine->tlb[currentTLB].valid) {
         bool dirtyBit = machine->tlb[currentTLB].dirty;
         IPT[machine->tlb[currentTLB].physicalPage].dirty = dirtyBit;
-        //TODO This was copying the dirty bit to the wrong place
+        //TODO This was copying the dirty bit to the wrong place, now fixed
         IPT[machine->tlb[currentTLB].physicalPage].owner->pageTable[machine->tlb[currentTLB].virtualPage].dirty = dirtyBit;
-        currentThread->space->pageTable[badPage].dirty = dirtyBit;
+        //currentThread->space->pageTable[badPage].dirty = dirtyBit;
     }
 
     //Add that translation entry to TLB
@@ -1146,7 +1152,7 @@ void ExceptionHandler(ExceptionType which) {
 
             case SC_Fork:
                 DEBUG('a', "Fork syscall.\n");
-                Fork_Syscall(machine->ReadRegister(4));
+                Fork_Syscall(machine->ReadRegister(4),machine->ReadRegister(5));
                 break;
 
             case SC_Yield:

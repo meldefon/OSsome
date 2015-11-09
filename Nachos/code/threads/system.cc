@@ -198,7 +198,7 @@ Initialize(int argc, char **argv)
 
     currentTLB = 0;
 
-    swapFileSize = 512;
+    swapFileSize = 4096;
     swapFile = fileSystem->Open("../vm/swapFile.txt");
     swapFileBitMap = new BitMap(swapFileSize);
 
