@@ -320,8 +320,8 @@ void AddrSpace::RestoreState()
             bool dirtyBit = machine->tlb[i].dirty;
             //Just some sanity checks
 
-            ASSERT(IPT[machine->tlb[i].physicalPage].owner == this);
-            ASSERT(IPT[machine->tlb[i].physicalPage].virtualPage == machine->tlb[i].virtualPage);
+            //ASSERT(IPT[machine->tlb[i].physicalPage].owner == this);
+            //ASSERT(IPT[machine->tlb[i].physicalPage].virtualPage == machine->tlb[i].virtualPage);
 
             /*if (!(IPT[machine->tlb[i].physicalPage].owner == this) ||
                 !(IPT[machine->tlb[i].physicalPage].virtualPage == machine->tlb[i].virtualPage)) {

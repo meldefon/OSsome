@@ -389,6 +389,8 @@ void Server() {
 				ss.get();
 				getline(ss, name, '@'); //get name of lock
 				ss >> mvSiz;
+				DEBUG('T', "Creating MV %s for machine %d\n",name.c_str(),inPktHdr->from);
+
 
 				int existingMVID = -1;
 
@@ -427,6 +429,8 @@ void Server() {
 			case SC_DestroyMV: {
 				DEBUG('S', "Message: DestroyMV\n");
 				ss >> mvNum;
+				DEBUG('T', "Set destroy MV %s for machine %d\n",serverMVs->at(mvNum)->name.c_str(),inPktHdr->from);
+
 
 				//Validate user input: send -1 if bad
 				if(mvNum < 0 || mvNum >= serverMVs->size()) {
@@ -446,7 +450,10 @@ void Server() {
 			case SC_SetMV: {
 				DEBUG('S', "Message: SetMV\n");
 				ss >> mvNum >> mvPos >> mvVal;
-				
+				DEBUG('T', "Set MV %s at postition %d to %d for machine %d\n",serverMVs->at(mvNum)->name.c_str(),
+					  mvPos,mvVal,inPktHdr->from);
+
+
 				//Validate user input: send -1 if bad
 				if(mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {
 					replyStream << -1;
@@ -467,6 +474,8 @@ void Server() {
 			case SC_GetMV: {
 				DEBUG('S', "Message: GetMV\n");
 				ss >> mvNum >> mvPos;
+				DEBUG('T', "Get MV %s at postition %d for machine %d\n",serverMVs->at(mvNum)->name.c_str(),
+					  mvPos,inPktHdr->from);
 				
 				//Validate user input: send -1 if bad
 				if(mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {
@@ -490,7 +499,7 @@ void Server() {
 				break;
 		}
 
-		cout<<serverLocks->at(0)->packetWaitQ->size()<<"\n";
+		//cout<<serverLocks->at(0)->packetWaitQ->size()<<"\n";
 
 
 	}

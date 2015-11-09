@@ -661,6 +661,7 @@ void Printf_syscall(unsigned int vaddr, int length, int Num_1, int Num_2) {
         }
     }
 
+    cout<<"m"<<machineIDCopy<<": ";
     if(check == 0) {
         printf(string);
     } else if(check == 1) {

@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt matmult sort lockTests CVTests CVTestsWaiter CVTestsSignaller CVTestsBroadcaster serverCode testfiles testpart1 testpart2 threadtest
+all: halt matmult matmultX2 sort lockTests CVTests CVTestsWaiter CVTestsSignaller CVTestsBroadcaster MVTests serverCode testfiles testpart1 testpart2 threadtest
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -55,6 +55,12 @@ matmult.o: matmult.c
 matmult: matmult.o start.o
 	$(LD) $(LDFLAGS) start.o matmult.o -o matmult.coff
 	../bin/coff2noff matmult.coff matmult
+
+matmultX2.o: matmultX2.c
+	$(CC) $(CFLAGS) -c matmultX2.c
+matmultX2: matmultX2.o start.o
+	$(LD) $(LDFLAGS) start.o matmultX2.o -o matmultX2.coff
+	../bin/coff2noff matmultX2.coff matmultX2
 
 lockTests.o: lockTests.c
 	$(CC) $(CFLAGS) -c lockTests.c
@@ -85,6 +91,12 @@ CVTestsBroadcaster.o: CVTestsBroadcaster.c
 CVTestsBroadcaster: CVTestsBroadcaster.o start.o
 	$(LD) $(LDFLAGS) start.o CVTestsBroadcaster.o -o CVTestsBroadcaster.coff
 	../bin/coff2noff CVTestsBroadcaster.coff CVTestsBroadcaster
+
+MVTests.o: MVTests.c
+	$(CC) $(CFLAGS) -c MVTests.c
+MVTests: MVTests.o start.o
+	$(LD) $(LDFLAGS) start.o MVTests.o -o MVTests.coff
+	../bin/coff2noff MVTests.coff MVTests
 
 serverCode.o: serverCode.c
 	$(CC) $(CFLAGS) -c serverCode.c

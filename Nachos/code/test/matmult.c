@@ -29,7 +29,7 @@ main()
 
 
 
-	m1 = CreateMV("mv1",3,1);
+	/*m1 = CreateMV("mv1",3,1);
 
 
 	val = GetMV(m1,0);
@@ -42,7 +42,7 @@ main()
 
 	l1 = CreateLock("lock1",5);
 
-	Acquire(l1);
+	Acquire(l1);*/
 
 
 
@@ -67,7 +67,7 @@ main()
 	Write("Mat_mult done!\n",15,ConsoleOutput);
 
 	Printf("Result: %d\n",11,C[Dim-1][Dim-1]*100000,0);
-	Release(l1);
+	/*Release(l1);*/
 
     Exit(C[Dim-1][Dim-1]);		/* and then we're done */
 }
