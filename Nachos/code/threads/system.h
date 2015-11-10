@@ -16,6 +16,7 @@
 #include "stats.h"
 #include "timer.h"
 #include <vector>
+#include <queue> //added this
 #include "structs.h"
 #include "bitmap.h"
 #include "synch.h"
