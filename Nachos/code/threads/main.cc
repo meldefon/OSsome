@@ -166,6 +166,21 @@ main(int argc, char **argv)
 		ASSERT(argc>1);
 		Server();
 		}
+		else if(!strcmp(*argv, "-P")){
+			ASSERT(argc>1);
+			if(!strcmp(*(argv+1), "FIFO")){
+				ifFIFO = true;
+				//vector<int>* pagesQ = new vector<int>;
+			}
+			else if(!strcmp(*(argv+1), "RAND")){
+				ifFIFO = false;
+			}
+			else{
+				cout<<"Unrecognized option for -P\n";
+				return 0;
+			}
+			cout<<"ifFIFO: "<<ifFIFO<<"\n";
+		}
 #endif // NETWORK
     }
 

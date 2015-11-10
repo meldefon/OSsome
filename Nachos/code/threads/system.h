@@ -19,6 +19,7 @@
 #include "structs.h"
 #include "bitmap.h"
 #include "synch.h"
+#include <queue>
 
 //#include "table.h"
 //#include "addrspace.h"
@@ -65,6 +66,12 @@ extern int swapFileSize;
 
 //Another copy of the machineID to be used by syscall code
 extern int machineIDCopy;
+
+//The pageQ that will be used for FIFO page replacement
+//extern queue<int> pagesQueue;
+extern bool ifFIFO;
+extern int nextPageToEvict;
+extern vector<int>* pagesQ;
 
 
 #ifdef USER_PROGRAM

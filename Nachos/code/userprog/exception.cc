@@ -902,7 +902,15 @@ int HandleMemoryFull(){
     DEBUG('M',"Handling memory full\n");
 
     //Pick a page to evict
-    int pageToEvict = rand() % NumPhysPages;
+    int pageToEvict;
+    if(ifFIFO){
+        pageToEvict = pagesQ->at(0);
+        pagesQ->erase(pagesQ->begin());
+        pagesQ->push_back(pageToEvict);
+    }
+    else{
+        pageToEvict = rand() % NumPhysPages;
+    }
 
 
     //Check if that page is in the TLB right now;
@@ -988,6 +996,9 @@ void HandlePageFault() {
         //Handle memory full
         if(ppn==-1){
             ppn = HandleMemoryFull();
+        }
+        else if(ifFIFO){
+            pagesQ->push_back(ppn);
         }
 
         //Check dirty bits and offset to know where to load from

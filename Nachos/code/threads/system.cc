@@ -55,6 +55,12 @@ int swapFileSize;
 //Another copy of the machineID to be used by syscall code
 int machineIDCopy;
 
+//The pageQ that will be used for FIFO page replacement
+//queue<int> pagesQueue;
+bool ifFIFO;
+int nextPageToEvict;
+vector<int>* pagesQ;
+
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -201,6 +207,11 @@ Initialize(int argc, char **argv)
     swapFileSize = 4096;
     swapFile = fileSystem->Open("../vm/swapFile.txt");
     swapFileBitMap = new BitMap(swapFileSize);
+
+    //For FIFO
+    ifFIFO = true;
+    nextPageToEvict = 0;
+    pagesQ = new vector<int>;
 
 
     
