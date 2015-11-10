@@ -43,68 +43,184 @@ III. Design:
 	+ Part 3
 		In part 3, we were required to implement remote procedure calls to establish the basis for server and client communication in Nachos. Our first approach to design this part was to first decide where the server would run and how it would handle client messages via message formatting. Since our server is single threaded, we thought it would be best to create a function called void Server() in the threads directory, in file threadtest.cc, that would serve as the ServerStub and ServerApp. In this function, we would have a while loop that always runs and continually handles client messages one at a time. Once it receives a message, it parses the message based on a specific message format. To accomplish specific message formatting, we used stringstream to pull out specific parts of the message since it seemed the most convenient. In regards to the formatting process: the first entry that is pulled out of a client message is the TYPE of message in the form of a string, which refers to which Syscall is being requested; after this, we use the string we pulled to enter into the specific systemcall code block in our void Server() funciton via switch-case statements where we will continue to use stringstream to pull out the remaining data arguments in the message in order to handle the remote procedure call. It is also in these switch cases where we perform user validation of the input and send back an ERROR value of -1 or success value of -2 to the ClientStub. Having discussed the general procedure of how we handle communication between the ServerStub and ClientStub, we will now turn our attention to the data structures that we used to hold the global locks, CVs, and MVs. Like our previous projects, we felt it would be best to use three structs called ServerLock, ServerCV, and ServerMV, all of which are contain data definitions in serverStructs.h and are not global system variables since they are defined and initialized only in the void Server() function using vector containers. In these structs, we hold information containing owners of locks, CV holders, MV values, etc., and manage them directly in the switch-case statements that pertain to each systemcall. Having defined our structs, we felt that it would be best to use the vectors as containers for these structs to hold them in the void Server() function called vector<ServerLock*> *serverLocks, vector<ServerCV*> *serverCVs, and vector<ServerMV*> *serverMVs, since they will always be continually growing. Once we had our data structures in place, all that was left was to implement the system calls which again sent a reply message of -1 for a success, or -2 for an error, or an actual integer value if one was requested. In the ClientStub, we handled all these syscalls in the appropiate systemcall in exception.cc, just like if it was a normal non-network systemcall, since we felt it would be much easier to manage it directly inside the syscall that made the request rather than creating a new global function which would then have to parse replies based on which syscall was requested.
 
-
-- This section is to cover your logic and ideas as to how  you are going to solve the problem presented.  This should include a description of classes, algorithms, etc. This is not code. You must document ALL parts of a project.
-
 IV. Implementation:
 	+ Part 1
 		+ Files Modified
-
-		+ Files added
+			test/threadtest.c
+			test/matmult.c
+			threads/system.cc
+			threads/system.h
+			threads/structs.h
+			userprog/addrspace.cc
+			userprog/exception.cc
 
 		+ Data Structures added, and the file they were added to.
-
-		+ Data Structures modified, and the file they were added to.
-			-For example,
-				class Lock		-- in file threads.cc/threads.h
-				{
-					//. Modified fields.
-				}
-
+			ITPEntry class in structs.h
+		
 		+ Functions added and in which file.
+			HandlePageFault() in exception.cc
+
 		+ Functions modified and in which file.
+			ExceptionHandler() in exception.cc
+			RestoreState() in addrspace.cc
+			AddrSpace() in addrspace.cc
+			main() in matmult.c
+			main() in sort.c
+			Exit_Syscall() in exception.cc
+			Initialize() in system.cc
 
 	+ Part 2
 		+ Files Modified
-		+ Files added
-		+ Data Structures added, and the file they were added to.
-		+ Data Structures modified, and the file they were added to.
-		+ Functions added and in which file.
-		+ Functions modified and in which file.
+			threads/system.h
+			threads/system.cc
+			threads/structs.h
+			threads/main.cc
+			machine/machine.h
+			test/matmult.c
+			userprog/addrspace.h
+			userprog/addrspace.cc
+			userprog/exception.cc
+			userprog/progtest.cc
 
+		+ Files added
+			test/matmultX2.c
+
+		+ Data Structures modified, and the file they were added to.
+			AddrSpace class in addrspace.h
+			ITPEntry class in structs.h
+
+		+ Functions added and in which file.
+			HandleMemoryFull() in exception.cc
+			main() in matmultX2.c
+
+		+ Functions modified and in which file.
+			Exit_Syscall() in exception.cc
+			Initialize() in system.cc
+			AddrSpace() in addrspace.cc
+			StartProcess() in progtest.cc
+			HandlePageFault() in exception.cc
+			main() in matmult.c
+			RestoreState() in addrspace.cc
+			main() in main.cc
 
 	+ Part 3
 		+ Files Modified
+			network/Makefile
+			threads/system.cc
+			threads/main.cc
+			threads/threadtest.cc
+			test/matmult.c
+			test/Makefile
+			test/start.s
+			userprog/exception.cc
+			userprog/syscall.h
+
 		+ Files added
+			threads/serverStructs.h
+			test/serverCode.c
+			test/lockTests.c
+			test/CVTests.c
+			test/CVTestsSignaller.c
+			test/CVTestsWaiter.c
+			test/CVTestsBroadcaster.c
+			test/MVTests.c
+
 		+ Data Structures added, and the file they were added to.
-		+ Data Structures modified, and the file they were added to.
+			ServerLock struct in serverStructs.h
+			ServerCV struct in serverStructs.h
+			ServerMV struct in serverStructs.h
+
 		+ Functions added and in which file.
+			sendAndRecieveSyscallMessage() in exception.cc
+			main() in serverCode.c
+			Server() in threadtest.cc
+			CreateMV_Syscall() in exception.cc
+			DestroyMV_Syscall() in exception.cc
+			SetMV_Syscall() in exception.cc
+			GetMV_Syscall() in exception.cc
+			CreateMV() in syscall.h
+			DestroyMV() in syscall.h
+			SetMV() in syscall.h
+			GetMV() in syscall.h
+			sendReply() in threadtest.cc
+			convertMessageToInt() in exception.cc
+			main() in lockTests.c
+			main() in CVTestsSignaller.c
+			main() in CVTestsWaiter.c
+			main() in CVTestsBroadcaster.c
+			main() in MVTests.c
+
+
 		+ Functions modified and in which file.
+			Initialize() in system.cc
+			main() in matmult.c
+			Acquire_Syscall() in exception.cc
+			Release_Syscall() in exception.cc
+			Wait_Syscall() in exception.cc
+			Signal_Syscall() in exception.cc
+			Broadcast_Syscall() in exception.cc
+			CreateLock_Syscall() in exception.cc
+			DestroyLock_Syscall() in exception.cc
+			CreateCondition_Syscall() in exception.cc
+			DestroyCondition_Syscall() in exception.cc
+			ExceptionHandler() in exception.cc
 
 V. Testing:  (For each test case, you must show)
-	+ Part 1
+	+ Part 1 and 2
 		+ How to test
-			- How to run the test cases, the commands, the arguments and so on.
-		+ Test Output
-			- Describe the testing output. You don't have to dump all the output info. Just make sure your description can exactly reflect your output. The grader of your submission will be wanting to compare the output they get with what you say the output is.
+			1. Compile in the /test and /network directories.
+			2. Go to the /network directory.
+			3. Enter the command "nachos -rs 2 -x ../test/matmultX2" 
 
-	+ Part 2
-		+ How to test
 		+ Test Output
+			The output of this test is supposed to show two instances of matmult running to completion. Both of the outputs are supposed to show that the result is 7220. 
 
 	+ Part 3
 		+ How to test
+			1. Compile in the /test and /network directories.
+			2. Go to the /network directory.
+
+			3a. To test the Lock syscalls:
+				a. Open two terminal windows.
+				b. Enter the command "nachos -m 0 -d T -server 1" in one terminal window.
+				c. Enter the command "nachos -m 1 -x ../test/lockTests & nachos -m 2 -x ../test/lockTests" in the other window.
+
+			3b. To test the CV syscalls:
+				a. Open three terminal windows.
+				b. Enter the command "nachos -m 0 -d T -server 1" in one terminal window.
+				c. Enter the command "nachos -m 1 -x ../test/CVTestsWaiter & nachos -m 2 -x ../test/CVTestsWaiter" in the second window.
+				d. Enter the command "nachos -m 3 -x ../test/CVTestsSignaller" in the third window.
+
+			3c. To test CV broadcast syscall:
+				a. Open three terminal windows.
+				b. Enter the command "nachos -m 0 -d T -server 1" in one terminal window.
+				c. Enter the command "nachos -m 1 -x ../test/CVTestsWaiter & nachos -m 2 -x ../test/CVTestsWaiter" in the second window.
+				d. Enter the command "nachos -m 3 -x ../test/CVTestsBroadcaster" in the third window.
+
+			3d. To test the MV syscalls:
+				a. Open two terminal windows.
+				b. Enter the command "nachos -m 0 -d T -server 1" in one terminal window.
+				c. Enter the command "nachos -m 1 -x ../test/MVTests & nachos -m 2 -x ../test/MVTests" in the other window.
+
 		+ Test Output
+			These test are meant to show that all of the system calls we implemented as remote procedure calls will work without error. 
 
+			Lock syscall output:
+				This test should show two different clients asking the server to create, acquire, release and destroy a lock. The client side should show each machine working and then leaving their critical sections. The server side should show the sequence of the system calls that it performed for each machine. 
 
+			CV syscall output:
+				This test should show two clients waiting and one client that signals them. Both the waiter and signaler create their own lock and CV and then aquires the lock. The signaler signals, then releases the lock, and destroys the lock and CV. The waiter waits until it gets a signal, then then releases the lock, and destroys the lock and CV. The server side should show the sequence of the system calls that it performed for each machine. 
+ 
+			CV broadcast output:
+				This test should show two clients waiting and one client that sends a broadcast signal to them. Both the waiter and broadcaster create their own lock and CV and then aquires the lock. The broadcaster send a broadcase signal, then releases the lock, and destroys the lock and CV. The waiter waits until it gets a signal to wake, then then releases the lock, and destroys the lock and CV. The server side should show the sequence of the system calls that it performed for each machine.
 
+			MV syscall output:
+				This test should show two different clients asking the server to create and acquier a lock, get and set an MV, then release the lock and destroy the lock and MV. The client side should show each machine getting and incrementing a MV and then leaving their respective critical sections. The server side should show the sequence of the system calls that it performed for each machine.
 
 VI. Discussion:
 	+ Experiment expectation.  (What is supposed to happen.)
+		For project 3, we expect to have Nachos support demand paged virtual memory and networking. We use caching to make it seem like Nachos is faster and has more memory than it actually does. The translation lookaside buffer is a cache for the page table to give the illusion of fast access and the main memory is used as a cache to give the illusion of unlimited virtual memory. We expect that Nachos will run successfully with either FIFO or Random as the page eviction policy. For networking in nachos, we expect our Nachos server to be able to serve multiple clients using remote procedure calls.
 	+ Experiment result.  (What actually happened.)
+		We met our experiment expectations by successfully implementing demand paged virtual memory. We also met our experiment expectations by successfully performing networking in Nachos with a server supporting multiple clients at once. 
 	+ Explanation
-		- Explain your experiment result - how it proves what 
-		  you were supposed to prove.
-
-VIII. Miscellaneous:
-- Whatever else you want the grader know about your development.  You can create your own subsections headings here.
+		To show that our experiment results were successful, we proved that we were able to implement demand paged virtual memory by running the user programs matmult and sort to completion and receiving the correct outputs. Implementing networking in Nachos was a success because we were able to have a Nachos server support more than one client's remote procedure calls. We created several user programs to test each of the system calls for Locks, Condition Variables and Monitor Variables. The user programs run to completion without errors. 
