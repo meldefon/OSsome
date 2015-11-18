@@ -73,7 +73,7 @@ void Server() {
 				DEBUG('S', "Message: Create lock\n");
 				ss.get();
 				getline(ss, name, '@'); //get name of lock
-				DEBUG('T', "Creating lock %s for machine %d\n",name.c_str(),inPktHdr->from);
+				DEBUG('T', "Creating lock %s for machine %d, mailbox %d\n",name.c_str(),inPktHdr->from,inMailHdr->from);
 
 
 				//Check to see if that lock exists already
@@ -96,6 +96,7 @@ void Server() {
 					newLock->state = Available;
 					newLock->isToBeDeleted = false;
 					newLock->ownerMachineID = -1;
+					newLock->ownerMailboxNum = -1;
 
 					//Add to vector
 					serverLocks->push_back(newLock);
@@ -113,7 +114,7 @@ void Server() {
 			case SC_DestroyLock: {
 				DEBUG('S', "Message: Destroy lock\n");
 				ss >> lockNum; //get lock ID
-				DEBUG('T', "Set destroy lock %s for machine %d\n",serverLocks->at(lockNum)->name.c_str(),inPktHdr->from);
+				DEBUG('T', "Set destroy lock %s for machine %d, mailbox %d\n",serverLocks->at(lockNum)->name.c_str(),inPktHdr->from,inMailHdr->from);
 
 
 				//Validate user input: send -1 if bad
@@ -135,7 +136,7 @@ void Server() {
 				DEBUG('S', "Message: Create condition\n");
 				ss.get();
 				getline(ss, name, '@'); //get name of CV
-				DEBUG('T', "Creating CV %s for machine %d\n",name.c_str(),inPktHdr->from);
+				DEBUG('T', "Creating CV %s for machine %d, mailbox %d\n",name.c_str(),inPktHdr->from,inMailHdr->from);
 
 
 				int existingCVID = -1;
@@ -174,7 +175,7 @@ void Server() {
 			case SC_DestroyCondition: {
 				DEBUG('S', "Message: Destroy Condition\n");
 				ss >> cvNum; //get lock ID
-				DEBUG('T', "Set destroy CV %s for machine %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from);
+				DEBUG('T', "Set destroy CV %s for machine %d, mailbox %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from,inMailHdr->from);
 
 				//Validate user input: send -1 if bad
 				if(cvNum < 0 || cvNum >= serverCVs->size()) {
@@ -194,7 +195,7 @@ void Server() {
 			case SC_Acquire: {
 				DEBUG('S', "Message: Acquire\n");
 				ss >> lockNum; //get lock ID
-				DEBUG('T', "Acquire lock %s for machine %d\n",serverLocks->at(lockNum)->name.c_str(),inPktHdr->from);
+				DEBUG('T', "Acquire lock %s for machine %d, mailbox %d\n",serverLocks->at(lockNum)->name.c_str(),inPktHdr->from,inMailHdr->from);
 
 
 				bool ifReply = true;
@@ -206,7 +207,8 @@ void Server() {
 					//Check whether or not we can acquire it
 					if(serverLocks->at(lockNum) == NULL) {
 						replyStream << -1;
-					} else if(serverLocks->at(lockNum)->ownerMachineID == outPktHdr->to && serverLocks->at(lockNum)->state == Busy) {
+					} else if(serverLocks->at(lockNum)->ownerMachineID == outPktHdr->to && serverLocks->at(lockNum)->ownerMailboxNum == outMailHdr->to &&
+							serverLocks->at(lockNum)->state == Busy) {
 						//TODO add check int he else if above to make sure not just ownerMachineID, but some kind of
 						//TODO thread-specific id matches
 						replyStream << -1;
@@ -218,6 +220,7 @@ void Server() {
 					} else { 
 						//Assign ownership of the lock and change state
 						serverLocks->at(lockNum)->ownerMachineID = outPktHdr->to;
+						serverLocks->at(lockNum)->ownerMailboxNum = outMailHdr->to;
 						serverLocks->at(lockNum)->state = Busy;
 						replyStream << -2;
 					}
@@ -232,7 +235,7 @@ void Server() {
 			case SC_Release: {
 				DEBUG('S', "Message: Release\n");
 				ss >> lockNum; //get lock ID
-				DEBUG('T', "Release lock %s for machine %d\n",serverLocks->at(lockNum)->name.c_str(),inPktHdr->from);
+				DEBUG('T', "Release lock %s for machine %d, mailbox %d\n",serverLocks->at(lockNum)->name.c_str(),inPktHdr->from,inMailHdr->from);
 
 
 				//Validate user input: send -1 if bad
@@ -242,7 +245,8 @@ void Server() {
 					//Check whether or not we can release it
 					if(serverLocks->at(lockNum) == NULL) {
 						replyStream << -1;					
-					} else if(serverLocks->at(lockNum)->state == Available || serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to) {
+					} else if(serverLocks->at(lockNum)->state == Available || serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to ||
+							serverLocks->at(lockNum)->ownerMailboxNum != outMailHdr->to) {
 						replyStream << -1;
 					} else { 
 						replyStream << -2;
@@ -250,6 +254,7 @@ void Server() {
 						if(serverLocks->at(lockNum)->packetWaitQ->empty()) {
 							serverLocks->at(lockNum)->state = Available;
 							serverLocks->at(lockNum)->ownerMachineID = -1;
+							serverLocks->at(lockNum)->ownerMailboxNum = -1;
 						} else {
 							//Change ownership and send message to waiting client
 							PacketHeader* tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
@@ -257,6 +262,7 @@ void Server() {
 							MailHeader* tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
 							serverLocks->at(lockNum)->mailWaitQ->pop();
 							serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
+							serverLocks->at(lockNum)->ownerMailboxNum = tempOutMailHdr->to;
 							sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
 						}
 					}
@@ -267,7 +273,7 @@ void Server() {
 			case SC_Signal: {
 				DEBUG('S', "Message: Signal\n");
 				ss >> cvNum >> lockNum; //get lock and CV num
-				DEBUG('T', "Signal CV %s for machine %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from);
+				DEBUG('T', "Signal CV %s for machine %d, mailbox %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from,inMailHdr->from);
 
 				//Validate user input: send -1 if bad
 				if(lockNum < 0 || lockNum >= serverLocks->size() || cvNum < 0 || cvNum >= serverCVs->size()) {
@@ -276,7 +282,8 @@ void Server() {
 					//Do some more checks to ensure we can signal, like checking if the lock owner matches and the lock id matches the CV lock id
 					if(serverLocks->at(lockNum) == NULL || serverCVs->at(cvNum) == NULL) {
 						replyStream << -1;
-					} else if(serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to || serverCVs->at(cvNum)->lockID != lockNum) {
+					} else if(serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to || serverLocks->at(lockNum)->ownerMailboxNum != outMailHdr->to ||
+							serverCVs->at(cvNum)->lockID != lockNum) {
 						replyStream << -1;						
 					} else {
 						//If there is a waiting client, send reply so they can wake and go on to acquire
@@ -303,7 +310,7 @@ void Server() {
 			case SC_Wait: {
 				DEBUG('S', "Message: Wait\n");
 				ss >> cvNum >> lockNum; //get lock and CV num
-				DEBUG('T', "Wait on CV %s for machine %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from);
+				DEBUG('T', "Wait on CV %s for machine %d, mailbox %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from,inMailHdr->from);
 
 				bool ifReply = true;
 
@@ -314,7 +321,8 @@ void Server() {
 					//Do some more checks to ensure we can wait
 					if(serverLocks->at(lockNum) == NULL || serverCVs->at(cvNum) == NULL) {
 						replyStream << -1;
-					} else if(serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to || (serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
+					} else if(serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to || serverLocks->at(lockNum)->ownerMailboxNum != outMailHdr->to ||
+							(serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
 						//Enters this condition block if the lock owner does not match machine ID
 						//And if the CV lock does not match lock ID and the lock is assigned
 						//Which means it doesnt have index value of -1
@@ -331,10 +339,11 @@ void Server() {
 						//Change ownership and send message to waiting client
 						PacketHeader* tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
 						MailHeader* tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
-						if(!(tempOutPktHdr==NULL)) {
+						if(!(serverLocks->at(lockNum)->packetWaitQ->empty())) {
 							serverLocks->at(lockNum)->packetWaitQ->pop();
 							serverLocks->at(lockNum)->mailWaitQ->pop();
 							serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
+							serverLocks->at(lockNum)->ownerMailboxNum = tempOutMailHdr->to;
 							replyStream << -2;
 							sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
 						}
@@ -352,7 +361,7 @@ void Server() {
 			case SC_Broadcast: {
 				DEBUG('S', "Message: Broadcast\n");
 				ss >> cvNum >> lockNum; //get lock and CV num
-				DEBUG('T', "Broadcast CV %s for machine %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from);
+				DEBUG('T', "Broadcast CV %s for machine %d, mailbox %d\n",serverCVs->at(cvNum)->name.c_str(),inPktHdr->from,inMailHdr->from);
 
 				//Validate user input: send -1 if bad
 				if(lockNum < 0 || lockNum >= serverLocks->size() || cvNum < 0 || cvNum >= serverCVs->size()) {
@@ -361,7 +370,8 @@ void Server() {
 					//Do some more checks to ensure we can broadcast
 					if(serverLocks->at(lockNum) == NULL || serverCVs->at(cvNum) == NULL) {
 						replyStream << -1;
-					} else if(serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to || (serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
+					} else if(serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to || serverLocks->at(lockNum)->ownerMailboxNum != outMailHdr->to ||
+							(serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
 						replyStream << -1;						
 					} else {
 						//If there is a waiting client, send reply so they can wake and go on to acquire
@@ -389,7 +399,7 @@ void Server() {
 				ss.get();
 				getline(ss, name, '@'); //get name of lock
 				ss >> mvSiz;
-				DEBUG('T', "Creating MV %s for machine %d\n",name.c_str(),inPktHdr->from);
+				DEBUG('T', "Creating MV %s for machine %d, mailbox %d\n",name.c_str(),inPktHdr->from,inMailHdr->from);
 
 
 				int existingMVID = -1;
@@ -432,7 +442,7 @@ void Server() {
 			case SC_DestroyMV: {
 				DEBUG('S', "Message: DestroyMV\n");
 				ss >> mvNum;
-				DEBUG('T', "Set destroy MV %s for machine %d\n",serverMVs->at(mvNum)->name.c_str(),inPktHdr->from);
+				DEBUG('T', "Set destroy MV %s for machine %d, mailbox %d\n",serverMVs->at(mvNum)->name.c_str(),inPktHdr->from,inMailHdr->from);
 
 
 				//Validate user input: send -1 if bad
@@ -453,8 +463,8 @@ void Server() {
 			case SC_SetMV: {
 				DEBUG('S', "Message: SetMV\n");
 				ss >> mvNum >> mvPos >> mvVal;
-				DEBUG('T', "Set MV %s at postition %d to %d for machine %d\n",serverMVs->at(mvNum)->name.c_str(),
-					  mvPos,mvVal,inPktHdr->from);
+				DEBUG('T', "Set MV %s at postition %d to %d for machine %d, mailbox %d\n",serverMVs->at(mvNum)->name.c_str(),
+					  mvPos,mvVal,inPktHdr->from,inMailHdr->from);
 
 
 				//Validate user input: send -1 if bad
@@ -477,8 +487,8 @@ void Server() {
 			case SC_GetMV: {
 				DEBUG('S', "Message: GetMV\n");
 				ss >> mvNum >> mvPos;
-				DEBUG('T', "Get MV %s at postition %d for machine %d\n",serverMVs->at(mvNum)->name.c_str(),
-					  mvPos,inPktHdr->from);
+				DEBUG('T', "Get MV %s at postition %d for machine %d, mailbox %d\n",serverMVs->at(mvNum)->name.c_str(),
+					  mvPos,inPktHdr->from,inMailHdr->from);
 				
 				//Validate user input: send -1 if bad
 				if(mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {

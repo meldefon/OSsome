@@ -16,7 +16,7 @@ struct ServerLock{
     string name;
     ServerLockState state;
     int ownerMachineID;
-    int ownerMalboxNum;
+    int ownerMailboxNum;
     queue<PacketHeader*>* packetWaitQ;
     queue<MailHeader*>* mailWaitQ;
     bool isToBeDeleted;

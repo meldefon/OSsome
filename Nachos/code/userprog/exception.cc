@@ -258,7 +258,7 @@ void sendAndRecieveSyscallMessage(char* msg,char* inBuffer){
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->baseStackAddr; //TODO EVEN THIS IS NOT UNIQUE OVER THREADS, Since two threads could
     //TODO have the same base stack address if virtual memory is being used.
-    outMailHdr.from = 0;
+    outMailHdr.from = currentThread->threadNum;
     outMailHdr.length = strlen(msg) + 1;
 
     //Send message
@@ -684,26 +684,27 @@ void Exit_Syscall(int status) {
     int numActiveThreads = processTable->at(myPID)->numThreads;
 
     int numActiveProcesses = 0;
-    for(int i = 0;i<processTable->size();i++){
-        if(processTable->at(i)->running){
-            numActiveProcesses+=1;
+    for (int i = 0; i < processTable->size(); i++) {
+        if (processTable->at(i)->running) {
+            numActiveProcesses += 1;
         }
     }
-    DEBUG('X',"Exit called on process %d with %d processes and %d threads\n",myPID,numActiveProcesses,numActiveThreads);
+    DEBUG('X', "Exit called on process %d with %d processes and %d threads\n", myPID, numActiveProcesses,
+          numActiveThreads);
 
 
     //If you're the last thread of the last process, kill the machine
-    if(numActiveThreads==1 && numActiveProcesses==1){
-        DEBUG('X',"Last thread. Killing execution\n");
+    if (numActiveThreads == 1 && numActiveProcesses == 1) {
+        DEBUG('X', "Last thread. Killing execution\n");
         interrupt->Halt();
         ASSERT(FALSE);
         return;
     }
 
 
-    //If you're the last thread in your nonlast process, clear your memory, set your process to not
-    //running, and delete your address space
-    else if(numActiveThreads==1) {
+        //If you're the last thread in your nonlast process, clear your memory, set your process to not
+        //running, and delete your address space
+    else if (numActiveThreads == 1) {
         DEBUG('X', "Process's last thread, deallocating address space\n");
         //Clear all your pages
         for (int i = 0; i < currentThread->space->numPages; i++) {
@@ -737,7 +738,7 @@ void Exit_Syscall(int status) {
 
         for (int i = 0; i < NumPhysPages; i++) {
             //Clear stuff in the IPT
-            if(IPT[i].owner==currentThread->space) {
+            if (IPT[i].owner == currentThread->space) {
                 freePageBitMap->Clear(i);
                 IPT[i].valid = FALSE;
             }
@@ -753,17 +754,19 @@ void Exit_Syscall(int status) {
         //return;
     }
 
-    //If you're the nonlast thread in your process, just clear your stack pages
+        //If you're the nonlast thread in your process, just clear your stack pages
     else {
-        DEBUG('X',"Nonlast thread, freeing up stack memory\n");
+        DEBUG('X', "Nonlast thread, freeing up stack memory\n");
         //Just clear this threads stack num in the stack bitmap! No need to deal with pages
         //compute stack page numbers
         //int endingPage = divRoundUp(currentThread->baseStackAddr + 16, PageSize);
         int numStackPages = divRoundUp(UserStackSize, PageSize);
         int numCodeDataPages = currentThread->space->numNonStackPages;
-        int myStackNum = divRoundUp(divRoundUp(currentThread->baseStackAddr + 16,PageSize) - numCodeDataPages,numStackPages) - 1;
+        int myStackNum =
+                divRoundUp(divRoundUp(currentThread->baseStackAddr + 16, PageSize) - numCodeDataPages, numStackPages) -
+                1;
         currentThread->space->stackBitMap.Clear(myStackNum);
-        DEBUG('X',"Freeing stack #%d\n",myStackNum);
+        DEBUG('X', "Freeing stack #%d\n", myStackNum);
         /*DEBUG('X',"Freeing stack pages %d through %d\n",endingPage-numStackPages,endingPage);
         for (int i = endingPage - numStackPages + 1; i <= endingPage; i++) {
 
@@ -776,9 +779,10 @@ void Exit_Syscall(int status) {
     }
 
 
-
     progLock->Release();
-    currentThread->Finish(); //Stop running the current thread
+    Thread *nextThread;
+    currentThread->Finish();//Stop running the current thread
+
 
     //Simplest case - if nothing is left, just halt the whole run
     interrupt->Halt();
@@ -843,6 +847,12 @@ SpaceId Exec_Syscall(unsigned int vaddr,int len) {
     Thread* t = new Thread("Execed");
     t->space = space;
 
+    //TODO dirty - use a lock
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); //Disable interrupts
+    t->threadNum = globalThreads;
+    globalThreads+=1;
+    (void) interrupt->SetLevel(oldLevel); //Reenable interrupts
+
     progLock->Release();
 
     //After this point, we have no more control of the new process from here
@@ -863,7 +873,7 @@ void kernel_thread(int vaddr){
     //Store the base stack address for deallocation on exti
     currentThread->baseStackAddr = nextStackAddr;
     machine->WriteRegister(StackReg, nextStackAddr);
-    DEBUG('f',"Assigning new thread's stack address to %d \n",nextStackAddr);
+    DEBUG('f',"Assigning new %d thread's stack address to %d \n",currentThread->threadNum,nextStackAddr);
     //machine->WriteRegister(StackReg, numPages * PageSize - 16);
     machine->Run();
 }
@@ -880,10 +890,16 @@ void Fork_Syscall(int forkArg) {
     Thread* t = new Thread("Forked");
     t->space = currentThread->space;
 
+    //TODO dirty - use a lock
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); //Disable interrupts
+    t->threadNum = globalThreads;
+    globalThreads+=1;
+    (void) interrupt->SetLevel(oldLevel); //Reenable interrupts
+
     //t->space->numThreads = t->space->numThreads+1;
     //int forkArg = machine->ReadRegister(4);
 
-    IntStatus oldLevel = interrupt->SetLevel(IntOff); //Disable interrupts
+    oldLevel = interrupt->SetLevel(IntOff); //Disable interrupts
     processTable->at(t->space->processID)->numThreads = processTable->at(t->space->processID)->numThreads+1;
     DEBUG('X',"Process %d now has %d running threads\n",currentThread->space->processID,processTable->at(t->space->processID)->numThreads);
     (void) interrupt->SetLevel(oldLevel); //Reenable interrupts

@@ -64,6 +64,8 @@ bool ifFIFO;
 int nextPageToEvict;
 vector<int>* pagesQ;
 
+int globalThreads;
+
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -216,6 +218,8 @@ Initialize(int argc, char **argv)
     nextPageToEvict = 0;
     pagesQ = new vector<int>;
 
+    globalThreads = 0;
+
 
     
 #ifdef USER_PROGRAM
@@ -231,7 +235,7 @@ Initialize(int argc, char **argv)
 #endif
 
 #ifdef NETWORK
-    postOffice = new PostOffice(netname, rely, 10);
+    postOffice = new PostOffice(netname, rely, 20);
 #endif
 }
 

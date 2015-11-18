@@ -55,6 +55,12 @@ StartProcess(char *filename)
     processTable->push_back(processEntry);
     DEBUG('X',"Process table now has %d entries\n",processTable->size());
 
+    //TODO dirty - use a lock
+    IntStatus oldLevel = interrupt->SetLevel(IntOff); //Disable interrupts
+    currentThread->threadNum = globalThreads;
+    globalThreads+=1;
+    (void) interrupt->SetLevel(oldLevel); //Reenable interrupts
+
 
     machine->Run();			// jump to the user progam
     ASSERT(FALSE);			// machine->Run never returns;

@@ -74,6 +74,8 @@ extern bool ifFIFO;
 extern int nextPageToEvict;
 extern vector<int>* pagesQ;
 
+extern int globalThreads;
+
 
 #ifdef USER_PROGRAM
 #include "machine.h"

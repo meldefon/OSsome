@@ -445,6 +445,7 @@ void customer() {
 		Uprintf("Customer #%d is leaving the Passport Office.\n", 45, socialSecurityNum, 0, 0, 0);
 	}
 	numCustomersLeft-=1;
+	Uprintf("%d customers left\n", 45, numCustomersLeft, 0, 0, 0);
 	if(numCustomersLeft==0 && bribesEnabled == 0){
 		totalSales = appClerk.cashReceived + picClerk.cashReceived +
 						 passPClerk.cashReceived + cashier.cashReceived;

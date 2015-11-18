@@ -4,42 +4,48 @@
 #include "globalVars.h"
 #define NULL 0
 
-void initialize(struct Monitor *m, char* lockName,int clerkType_, int size) {
-        int i;
+void initialize(struct Monitor *m, char* lockName,int nameLength, int clerkType_, int size) {
+	int i;
 
-        m->lineLock = CreateLock(" ", 1);
-   		m->newClerkId = 0;
-    	m->newClerkIdLock = CreateLock(" ", 1);        
-        /*lineCV = (int*) malloc(size * sizeof(int));
-        clerkLock = (int*) malloc(size * sizeof(int));
-        clerkCV = (int*) malloc(size * sizeof(int));
-        lineCount = (int*) malloc(size * sizeof(int));
-        limboLineCV = CreateCondition(" ", 1);
-        bribeLineCount = (int*) malloc(size * sizeof(int));
-        bribeLineCV = (int*) malloc(size * sizeof(int));
-        senLineCV = (int*) malloc(size * sizeof(int));
-        senLineCount = (int*) malloc(size * sizeof(int));
-        clerkState = (int*) malloc(size * sizeof(int)); 
-        currentCustomer = (int*) malloc(size * sizeof(int));*/
-        m->numOfClerks = size;
-        m->clerkType = clerkType_;
-        m->breakCV = CreateCondition(" ", 1);
-        m->numCustomersInLimbo = 0;
-        m->cashReceived = 0;
+	m->lineLock = CreateLock(lockName, nameLength);
+	m->newClerkId = 0;
+	nameLength--;
+	m->newClerkIdLock = CreateLock(lockName, nameLength);
+	/*lineCV = (int*) malloc(size * sizeof(int));
+    clerkLock = (int*) malloc(size * sizeof(int));
+    clerkCV = (int*) malloc(size * sizeof(int));
+    lineCount = (int*) malloc(size * sizeof(int));
+    limboLineCV = CreateCondition(" ", 1);
+    bribeLineCount = (int*) malloc(size * sizeof(int));
+    bribeLineCV = (int*) malloc(size * sizeof(int));
+    senLineCV = (int*) malloc(size * sizeof(int));
+    senLineCount = (int*) malloc(size * sizeof(int));
+    clerkState = (int*) malloc(size * sizeof(int));
+    currentCustomer = (int*) malloc(size * sizeof(int));*/
+	m->numOfClerks = size;
+	m->clerkType = clerkType_;
+	nameLength--;
+	m->breakCV = CreateCondition(lockName, nameLength);
+	m->numCustomersInLimbo = 0;
+	m->cashReceived = 0;
 
-        for(i = 0; i < size; i++) {
-            m->lineCV[i] = CreateCondition(" ", 1);
-            m->clerkLock[i] = CreateLock(" ", 1); 
-            m->clerkCV[i] = CreateCondition(" ", 1);    
-            m->bribeLineCV[i] = CreateCondition(" ", 1);    
-            m->senLineCV[i] = CreateCondition(" ", 1);    
+	for (i = 0; i < size; i++) {
+		nameLength--;
+		m->lineCV[i] = CreateCondition(lockName, nameLength);
+		m->clerkLock[i] = CreateLock(lockName, nameLength);
+		nameLength--;
+		m->clerkCV[i] = CreateCondition(lockName, nameLength);
+		nameLength--;
+		m->bribeLineCV[i] = CreateCondition(lockName, nameLength);
+		nameLength--;
+		m->senLineCV[i] = CreateCondition(lockName, nameLength);
 
-            m->lineCount[i] = 0;
-            m->bribeLineCount[i] = 0;
-            m->senLineCount[i] = 0;
-            m->clerkState[i] = 0;
-            m->currentCustomer[i] = -1;
-        }
+		m->lineCount[i] = 0;
+		m->bribeLineCount[i] = 0;
+		m->senLineCount[i] = 0;
+		m->clerkState[i] = 0;
+		m->currentCustomer[i] = -1;
+	}
 }
 
 void TestSuite() {
@@ -65,8 +71,8 @@ void TestSuite() {
 		if(userChoice == 1) { /*shortest line*/
 			
 			/*initialize data for clerks, but not the clerk threads*/
-			initialize(&appClerk, "Application Clerk Line Lock",0, 3);
-			initialize(&picClerk, "Picture Clerk Line Lock",1, 3);
+			initialize(&appClerk, "Application Clerk Line Lock",27,0, 3);
+			initialize(&picClerk, "Picture Clerk Line Lock",23,1, 3);
 			
 			/*initialze globals
 			customersWithCompletedApps = new bool[10];
@@ -99,10 +105,10 @@ void TestSuite() {
 		} else if(userChoice == 2) {
 			/*This test sends 5 customers in plus 1 of each type of clerk. Demonstrates that each type of
 			clerk's money is tracked correctly by the manager*/
-			initialize(&cashier,"Cashier Line Lock",3, 1);
-			initialize(&picClerk,"Picture Clerk Line Lock",1, 1);
-			initialize(&passPClerk,"Passport Clerk Line Lock",2, 1);
-			initialize(&appClerk,"Application Clerk Line Lock",0, 1);
+			initialize(&cashier,"Cashier Line Lock",17,3, 1);
+			initialize(&picClerk,"Picture Clerk Line Lock",23,1, 1);
+			initialize(&passPClerk,"Passport Clerk Line Lock",24,2, 1);
+			initialize(&appClerk,"Application Clerk Line Lock",27,0, 1);
 
 			/*initialze globals
 			customersWithCompletedApps = new bool[5];
@@ -151,7 +157,7 @@ void TestSuite() {
 			userChoice = 8;
 		} else if(userChoice == 3) { /*cashier and customer passport test*/
 
-			initialize(&cashier,"Cashier Line Lock",3, 1);
+			initialize(&cashier,"Cashier Line Lock",17,3, 1);
 
 			/*initialze globals
 			customersWithCompletedApps = new bool[5];
@@ -195,10 +201,10 @@ void TestSuite() {
 			userChoice = 8;	
 		} else if(userChoice == 4) { /*clerks go on break when no one is in line*/
 
-			initialize(&appClerk,"Application Clerk Line Lock",0, 1);
-			initialize(&picClerk,"Picture Clerk Line Lock",1, 1);
-			initialize(&passPClerk,"Passport Clerk Line Lock",2, 1);
-			initialize(&cashier,"Cashier Line Lock",3, 1);
+			initialize(&appClerk,"Application Clerk Line Lock",27,0, 1);
+			initialize(&picClerk,"Picture Clerk Line Lock",23,1, 1);
+			initialize(&passPClerk,"Passport Clerk Line Lock",24,2, 1);
+			initialize(&cashier,"Cashier Line Lock",17,3, 1);
 
 			/*isSenator = new bool[1];*/
 			isSenator[0] = 0;
@@ -229,10 +235,10 @@ void TestSuite() {
 			userChoice = 8;
 		} else if(userChoice == 5) { /*manager gets clerk off break*/
 			
-			initialize(&cashier,"Cashier Line Lock",3, 1);
-			initialize(&picClerk,"Picture Clerk Line Lock",1, 1);
-			initialize(&passPClerk,"Passport Clerk Line Lock",2, 1);
-			initialize(&appClerk,"Application Clerk Line Lock",0, 1);
+			initialize(&cashier,"Cashier Line Lock",17,3, 1);
+			initialize(&picClerk,"Picture Clerk Line Lock",23,1, 1);
+			initialize(&passPClerk,"Passport Clerk Line Lock",24,2, 1);
+			initialize(&appClerk,"Application Clerk Line Lock",27,0, 1);
 
 			/*initialze globals
 			customersWithCompletedApps = new bool[5];
@@ -280,10 +286,10 @@ void TestSuite() {
 		} else if(userChoice == 6) {
 			/*This test sends 4 customers in plus 1 senator*/
 			int numCustsForTest; 
-			initialize(&cashier,"Cashier Line Lock",3, 1);
-			initialize(&picClerk,"Picture Clerk Line Lock",1, 1);
-			initialize(&passPClerk,"Passport Clerk Line Lock",2, 1);
-			initialize(&appClerk,"Application Clerk Line Lock",0, 1);
+			initialize(&cashier,"Cashier Line Lock",17,3, 1);
+			initialize(&picClerk,"Picture Clerk Line Lock",23,1, 1);
+			initialize(&passPClerk,"Passport Clerk Line Lock",24,2, 1);
+			initialize(&appClerk,"Application Clerk Line Lock",27,0, 1);
 
 			numCustsForTest = 10;
 			bribesEnabled = 0;
@@ -336,10 +342,10 @@ void TestSuite() {
 
 		} else if(userChoice == 7) {
 			/*This test sends 4 customers in plus 1 senator*/
-			initialize(&cashier,"Cashier Line Lock",3, 1);
-			initialize(&picClerk,"Picture Clerk Line Lock",1, 1);
-			initialize(&passPClerk,"Passport Clerk Line Lock",2, 1);
-			initialize(&appClerk,"Application Clerk Line Lock",0, 1);
+			initialize(&cashier,"Cashier Line Lock",17,3, 1);
+			initialize(&picClerk,"Picture Clerk Line Lock",23,1, 1);
+			initialize(&passPClerk,"Passport Clerk Line Lock",24,2, 1);
+			initialize(&appClerk,"Application Clerk Line Lock",27,0, 1);
 
 			/*initialze globals
 			customersWithCompletedApps = new bool[5];
@@ -413,22 +419,22 @@ int main() {
 		Uprintf("Number of ApplicationClerks = ", 30, 0, 0, 0, 0);
 		size = Scanf();
 
-		initialize(&appClerk, "Application Clerk Line Lock",0, size);
+		initialize(&appClerk, "Application Clerk Line Lock",27,0, size);
 
 		Uprintf("Number of PictureClerks = ", 26, 0, 0, 0, 0);
 		size = Scanf();
 		
-		initialize(&picClerk, "Picture Clerk Line Lock",1, size);
+		initialize(&picClerk, "Picture Clerk Line Lock",23,1, size);
 
 		Uprintf("Number of PassportClerks = ", 27, 0, 0, 0, 0);
 		size = Scanf();
 
-		initialize(&passPClerk, "Passport Clerk Line Lock",2, size);
+		initialize(&passPClerk, "Passport Clerk Line Lock",24,2, size);
 		
 		Uprintf("Number of Cashiers = ", 21, 0, 0, 0, 0);
 		size = Scanf();
 		
-		initialize(&cashier, "Cashier Line Lock",3, size);
+		initialize(&cashier, "Cashier Line Lock",17,3, size);
 		
 		Uprintf("Number of Customers = ", 22, 0, 0, 0, 0);
 		size = Scanf();
@@ -454,7 +460,7 @@ int main() {
 		*/
 		bribesEnabled = 1;
 		newCustomerId = 0;
-		newCustomerIdLock = CreateLock(" ", 1);
+		newCustomerIdLock = CreateLock("ID", 1);
 
 		/*Initialize everything*/
 		for(i = 0;i<size;i++) {
