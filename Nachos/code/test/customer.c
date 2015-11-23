@@ -510,6 +510,7 @@ void customer() {
 				picOrAppClerk = 1;
 				ifCompletedApp = GetMV(customersWithCompletedApps, socialSecurityNum);
 				ifCompletedPic = GetMV(customersWithCompletedPics, socialSecurityNum);
+				ifCompletedPass = GetMV(passportClerkChecked, socialSecurityNum);				
 				continue;
 			}
 
@@ -518,24 +519,23 @@ void customer() {
 				picOrAppClerk = doPicClerkStuff(socialSecurityNum,&cash);
 				ifCompletedApp = GetMV(customersWithCompletedApps, socialSecurityNum);
 				ifCompletedPic = GetMV(customersWithCompletedPics, socialSecurityNum);
+				ifCompletedPass = GetMV(passportClerkChecked, socialSecurityNum);				
 				continue;
 			}
 		}
 		/*Do the passportClerk stuff*/
-		ifCompletedPass = GetMV(passportClerkChecked, socialSecurityNum);
 		else if(ifCompletedPass == 0){
 			doPassportClerkStuff(socialSecurityNum,&cash);
 			ifCompletedPass = GetMV(passportClerkChecked, socialSecurityNum);
+			ifCompletedCash = GetMV(cashierChecked, socialSecurityNum);
 			continue;
 		}
 		/*Do the cashier stuff*/
-		ifCompletedCash = GetMV(cashierChecked, socialSecurityNum);
 		else if(ifCompletedCash == 0){
 			doCashierStuff(socialSecurityNum,&cash);
 			ifCompletedCash = GetMV(cashierChecked, socialSecurityNum);
 			continue;
-		}
-		else{
+		} else{
 			notCompleted = 0;
 		}
 	}
@@ -548,13 +548,12 @@ void customer() {
 		Acquire(senatorLock);
 		Broadcast(senatorCV, senatorLock);
 		Release(senatorLock);
-	}
-	else {
+	} else {
 		Uprintf("Customer #%d is leaving the Passport Office.\n", 45, socialSecurityNum, 0, 0, 0);
 	}
 	/*numCustomersLeft-=1;*/
 	numOfCustsLeft = GetMV(numCustomersLeft, 0);
-	numOfCustsLeft--;
+	numOfCustsLeft-=1;
 	SetMV(numCustomersLeft, 0, numOfCustsLeft);
 
 	Uprintf("%d customers left\n", 45, numOfCustsLeft, 0, 0, 0);

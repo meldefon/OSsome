@@ -44,7 +44,7 @@ void checkForClerkOnBreak(struct Monitor *clerk) {
 			bribeLineCount = GetMV(clerk->bribeLineCount, k);
 			senWorking = GetMV(senatorWorking, 0);
 
-			if(senLineCount[0] > senLineThreshold || (senWorking==NULL && (lineCount > lineThreshold ||
+			if(senLineCount > senLineThreshold || (senWorking==NULL && (lineCount > lineThreshold ||
 					bribeLineCount > lineThreshold))) {
 			
 			for(j = 0; j < numOfClerks; j++) {

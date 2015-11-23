@@ -9,6 +9,7 @@
 #define NULL 0
 
 void createServerMVs(int numCustomers, int numberOfSenators) {
+	int i;
 	/*global shared data between the clerks that are used for filing purposes */
 	numCustomersLeft = CreateMV("numCustomersLeft", 17, 1);
 	bribesEnabled = CreateMV("bribesEnabled", 14, 1);
@@ -32,7 +33,7 @@ void createServerMVs(int numCustomers, int numberOfSenators) {
 	clerksCanWork = CreateMV("clerksCanWork", 14, 1);
 
 	newCustomerId = CreateMV("newCustomerId", 14, 1);
-	newCustomerIdLock = CreateLock("newCustomerIdLock", 18, 1);
+	newCustomerIdLock = CreateLock("newCustomerIdLock", 18);
 
 	/*Initialize everything*/
 		
@@ -235,7 +236,7 @@ int main() {
 	testSuite = Scanf();
 
 	if(testSuite == 1)
-		/*TestSuite();*/
+		testSuite = 0; /*TestSuite();*/
 	else {
 
 		Uprintf("Number of ApplicationClerks = ", 30, 0, 0, 0, 0);
