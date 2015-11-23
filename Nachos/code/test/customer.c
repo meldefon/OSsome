@@ -8,32 +8,6 @@ void Uprintf(char *string, int length, int num_1, int num_2, int num_3, int num_
 
 int punishTime = 100;
 
-struct Monitor appClerk, picClerk, passPClerk, cashier;
-
-/*global shared data between the clerks that are used for filing purposes */
-int customersWithCompletedApps;
-int customersWithCompletedPics;
-int passportClerkChecked;
-int cashierChecked;
-int gottenPassport;
-int cashReceived;
-int bribesEnabled;
-
-int appClerkCurrentCustomer;
-int pictureClerkCurrentCustomer;
-int passportClerkCurrentCustomer;
-int cashierCurrentCustomer;
-
-int senatorLock;
-int senatorCV;
-int isSenator;
-int senatorWorking;
-int clerksCanWork;
-
-int numCustomersLeft;
-int newCustomerId;
-int newCustomerIdLock;
-
 void punish(int time){
 	int i; 
 	for (i = 0; i < time; i++) {
@@ -405,7 +379,7 @@ void senatorClearLines(){
 	Release(cashier.lineLock);			
 }
 
-void customer() {
+int main() {
 
 	/*Customer variables*/
 	int cash;
@@ -544,7 +518,7 @@ void customer() {
 	if(ifSenator == 1){
 		Uprintf("Customer (Senator)#%d is leaving the Passport Office.\n", 54, socialSecurityNum, 0, 0, 0);
 		/*senatorWorking = NULL;*/
-		SetMV(senatorWorking, NULL);
+		SetMV(senatorWorking, 0, NULL);
 		Acquire(senatorLock);
 		Broadcast(senatorCV, senatorLock);
 		Release(senatorLock);
@@ -564,6 +538,6 @@ void customer() {
 		totalSales = GetMV(appClerk.cashReceived, 0) + GetMV(picClerk.cashReceived, 0) + GetMV(passPClerk.cashReceived, 0) + GetMV(cashier.cashReceived, 0);
 		Uprintf("TOTAL SALES: %d\n", 16, totalSales, 0,0,0);
 	}
-
 	Exit(0);
+	return 0;
 }

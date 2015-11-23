@@ -1,12 +1,32 @@
 #include "monitor.h"
 #include "globalVars.h"
-#include "customer.c"
-#include "appClerk.c"
-#include "picClerk.c"
-#include "passPClerk.c"
-#include "cashier.c"
-#include "manager.c"
 #define NULL 0
+
+struct Monitor appClerk, picClerk, passPClerk, cashier;
+
+/*global shared data between the clerks that are used for filing purposes */
+int customersWithCompletedApps;
+int customersWithCompletedPics;
+int passportClerkChecked;
+int cashierChecked;
+int gottenPassport;
+int cashReceived;
+int bribesEnabled;
+
+int appClerkCurrentCustomer;
+int pictureClerkCurrentCustomer;
+int passportClerkCurrentCustomer;
+int cashierCurrentCustomer;
+
+int senatorLock;
+int senatorCV;
+int isSenator;
+int senatorWorking;
+int clerksCanWork;
+
+int numCustomersLeft;
+int newCustomerId;
+int newCustomerIdLock;
 
 void createServerMVs(int numCustomers, int numberOfSenators) {
 	int i;
