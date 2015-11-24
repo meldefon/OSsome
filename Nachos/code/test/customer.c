@@ -1,5 +1,5 @@
 #include "syscall.h"
-#include "globalVars.h"
+#include "setup.h"
 #define NULL 0
 
 void Uprintf(char *string, int length, int num_1, int num_2, int num_3, int num_4) {

@@ -1,6 +1,36 @@
 #include "syscall.h"
-#include "globalVars.h"
+#include "setup.h"
 #define NULL 0
+
+struct Monitor appClerk, picClerk, passPClerk, cashier;
+
+/*global shared data between the clerks that are used for filing purposes */
+int customersWithCompletedApps;
+int customersWithCompletedPics;
+int passportClerkChecked;
+int cashierChecked;
+int gottenPassport;
+int cashReceived;
+int bribesEnabled;
+
+int appClerkCurrentCustomer;
+int pictureClerkCurrentCustomer;
+int passportClerkCurrentCustomer;
+int cashierCurrentCustomer;
+
+int senatorLock;
+int senatorCV;
+int isSenator;
+int senatorWorking;
+int clerksCanWork;
+
+int numCustomersLeft;
+int newCustomerId;
+int newCustomerIdLock;
+
+void Uprintf(char *string, int length, int num_1, int num_2, int num_3, int num_4) {
+    Printf(string, length, (num_1 * 100000) + num_2, (num_3 * 100000) + num_4);
+}
 
 void checkForClerkOnBreak(struct Monitor *clerk) {
 
