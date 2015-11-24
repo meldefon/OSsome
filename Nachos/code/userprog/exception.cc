@@ -254,7 +254,7 @@ void sendAndRecieveSyscallMessage(char* msg,char* inBuffer){
     MailHeader outMailHdr, inMailHdr;
 
     //Set up headers (Packet header does not need the from field set, since it will be set automatically on send).
-    outPktHdr.to = SERVER_M;
+    outPktHdr.to = rand()%NUM_SERVERS;
     outMailHdr.to = 0;
     outMailHdr.from = currentThread->baseStackAddr; //TODO EVEN THIS IS NOT UNIQUE OVER THREADS, Since two threads could
     //TODO have the same base stack address if virtual memory is being used.

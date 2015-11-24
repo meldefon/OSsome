@@ -51,11 +51,29 @@
 #define SC_SetMV			25
 #define SC_GetMV			26
 
+#define SC_Server_Acquire           111
+#define SC_Server_Release		    112
+#define SC_Server_Wait			    113
+#define SC_Server_Signal			114
+#define	SC_Server_Broadcast		    115
+#define SC_Server_CreateLock		116
+#define SC_Server_DestroyLock		117
+#define SC_Server_CreateCondition	118
+#define SC_Server_DestroyCondition	119
+#define SC_Server_Rand              120
+#define SC_Server_Printf            121
+#define SC_Server_Scanf			    122
+#define SC_Server_CreateMV			123
+#define SC_Server_DestroyMV         124
+#define SC_Server_SetMV			    125
+#define SC_Server_GetMV			    126
+
 
 #define MAXFILENAME 256
 
 /*Give the server a special address*/
 #define SERVER_M 0
+#define NUM_SERVERS 1
 
 #ifndef IN_ASM
 
