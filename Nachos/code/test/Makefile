@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt matmult matmultX2 sort lockTests CVTests CVTestsWaiter CVTestsSignaller CVTestsBroadcaster MVTests serverCode testfiles testpart1 testpart2 threadtest
+all: halt matmult matmultX2 sort lockTests CVTests CVTestsWaiter CVTestsSignaller CVTestsBroadcaster MVTests serverCode testfiles testpart1 testpart2 threadtest appClerk cashier clerks customer manager passPClerk picClerk
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -128,7 +128,48 @@ threadtest: threadtest.o start.o
 	$(LD) $(LDFLAGS) start.o threadtest.o -o threadtest.coff
 	../bin/coff2noff threadtest.coff threadtest
 
+appClerk.o: appClerk.c
+	$(CC) $(CFLAGS) -c appClerk.c
+appClerk: appClerk.o start.o
+	$(LD) $(LDFLAGS) start.o appClerk.o -o appClerk.coff
+	../bin/coff2noff appClerk.coff appClerk
 
+cashier.o: cashier.c
+	$(CC) $(CFLAGS) -c cashier.c
+cashier: cashier.o start.o
+	$(LD) $(LDFLAGS) start.o cashier.o -o cashier.coff
+	../bin/coff2noff cashier.coff cashier
+
+customer.o: customer.c
+	$(CC) $(CFLAGS) -c customer.c
+customer: customer.o start.o
+	$(LD) $(LDFLAGS) start.o customer.o -o customer.coff
+	../bin/coff2noff customer.coff customer
+
+clerks.o: clerks.c
+	$(CC) $(CFLAGS) -c clerks.c
+clerks: clerks.o start.o
+	$(LD) $(LDFLAGS) start.o clerks.o -o clerks.coff
+	../bin/coff2noff clerks.coff clerks
+
+manager.o: manager.c
+	$(CC) $(CFLAGS) -c manager.c
+manager: manager.o start.o
+	$(LD) $(LDFLAGS) start.o manager.o -o manager.coff
+	../bin/coff2noff manager.coff manager
+
+passPClerk.o: passPClerk.c
+	$(CC) $(CFLAGS) -c passPClerk.c
+passPClerk: passPClerk.o start.o
+	$(LD) $(LDFLAGS) start.o passPClerk.o -o passPClerk.coff
+	../bin/coff2noff passPClerk.coff passPClerk
+
+picClerk.o: picClerk.c
+	$(CC) $(CFLAGS) -c picClerk.c
+picClerk: picClerk.o start.o
+	$(LD) $(LDFLAGS) start.o picClerk.o -o picClerk.coff
+	../bin/coff2noff picClerk.coff picClerk
 
 clean:
-	rm -f *.o *.coff testpart1 testpart2 threadtest 
+	rm -f *.o *.coff halt matmult matmultX2 sort lockTests CVTests CVTestsWaiter CVTestsSignaller CVTestsBroadcaster MVTests serverCode testfiles testpart1 testpart2 threadtest appClerk cashier clerks customer manager passPClerk picClerk
+	 
