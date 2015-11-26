@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt matmult matmultX2 sort lockTests CVTests CVTestsWaiter CVTestsSignaller CVTestsBroadcaster MVTests serverCode testfiles testpart1 testpart2 threadtest appClerk cashier clerks customer manager passPClerk picClerk setup
+all: halt matmult matmultX2 sort lockTests CVTests CVTestsWaiter CVTestsSignaller CVTestsBroadcaster MVTests serverCode testfiles testpart1 testpart2 threadtest appClerk cashier clerks customer manager passPClerk picClerk
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s
@@ -128,12 +128,6 @@ threadtest: threadtest.o start.o
 	$(LD) $(LDFLAGS) start.o threadtest.o -o threadtest.coff
 	../bin/coff2noff threadtest.coff threadtest
 
-setup.o: setup.c
-	$(CC) $(CFLAGS) -c setup.c
-setup: setup.o start.o
-	$(LD) $(LDFLAGS) start.o setup.o -o setup.coff
-	../bin/coff2noff setup.coff setup
-
 appClerk.o: appClerk.c
 	$(CC) $(CFLAGS) -c appClerk.c
 appClerk: appClerk.o start.o
@@ -177,5 +171,5 @@ picClerk: picClerk.o start.o
 	../bin/coff2noff picClerk.coff picClerk
 
 clean:
-	rm -f *.o *.coff halt matmult matmultX2 sort lockTests CVTests CVTestsWaiter CVTestsSignaller CVTestsBroadcaster MVTests serverCode testfiles testpart1 testpart2 threadtest appClerk cashier clerks customer manager passPClerk picClerk setup
+	rm -f *.o *.coff halt matmult matmultX2 sort lockTests CVTests CVTestsWaiter CVTestsSignaller CVTestsBroadcaster MVTests serverCode testfiles testpart1 testpart2 threadtest appClerk cashier clerks customer manager passPClerk picClerk
 	 
