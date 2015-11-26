@@ -1,4 +1,4 @@
 .idea/*
 .idea
-CMakeLists.txt
+Nachos/CMakeLists.txt
 Nachos/octave-workspace
