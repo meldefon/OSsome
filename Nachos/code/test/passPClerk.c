@@ -179,7 +179,7 @@ int waitForLine(struct Monitor *clerk, int myLineID, int firstTime) {
 	int senWorking;
 
 	Acquire(clerk->lineLock);
-	
+
 	ifBribed = 0;
 	start = 1;
 	clerkType = GetMV(clerk->clerkType, 0);
@@ -261,13 +261,13 @@ int waitForLine(struct Monitor *clerk, int myLineID, int firstTime) {
 				Wait(clerk->breakCV, clerk->lineLock);
 				
 				if(clerkType == 0) {
-					Uprintf("ApplicationClerk #%d is coming on break.\n", 41, myLineID, 0, 0, 0);
+					Uprintf("ApplicationClerk #%d is coming off break.\n", 43, myLineID, 0, 0, 0);
 				} else if(clerkType == 1) {
-					Uprintf("PictureClerk #%d is going on break.\n", 37, myLineID, 0, 0, 0);
+					Uprintf("PictureClerk #%d is coming off break.\n", 38, myLineID, 0, 0, 0);
 				} else if(clerkType == 3) {
-					Uprintf("Cashier #%d is going on break.\n", 32, myLineID, 0, 0, 0);
+					Uprintf("Cashier #%d is coming off break.\n", 33, myLineID, 0, 0, 0);
 				} else if(clerkType == 2) {
-					Uprintf("PassportClerk #%d is going on break.\n", 38, myLineID, 0, 0, 0);
+					Uprintf("PassportClerk #%d is coming off break.\n", 39, myLineID, 0, 0, 0);
 				}			
 			}
 

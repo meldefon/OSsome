@@ -579,7 +579,7 @@ int main() {
 	initialize(&cashier, 3, 1);
 
 	numOfCustsLeft = GetMV(numCustomersLeft, 0);
-	Uprintf("%d customers left\n", 45, numOfCustsLeft, 0, 0, 0);
+	/*Uprintf("%d customers left\n", 45, numOfCustsLeft, 0, 0, 0);*/
 
 
 	/*Write("Here",4,ConsoleOutput);*/
@@ -593,6 +593,7 @@ int main() {
 	Release(newCustomerIdLock);
 
 	ifSenator = GetMV(isSenator, social);
+	/*Uprintf("ifSenator = %d \n", 16, ifSenator, 0, 0, 0);*/
 
 	if (ifSenator == 1) {
 		canStartWorking = 0;
@@ -601,12 +602,16 @@ int main() {
 	while(canStartWorking  == 0) {
 		if (ifSenator == 1) {
 			senatorWaitTime = 3;
+			/*Uprintf("ifSenator = %d \n", 16, ifSenator, 0, 0, 0);*/
 
 			Acquire(senatorLock);
 			senWorking = GetMV(senatorWorking, 0);
+			/*Uprintf("senWorking = %d \n", 17, senWorking, 0, 0, 0);*/
+
 			if (senWorking == NULL) {
 				/*senatorWorking = social;*/
 				SetMV(senatorWorking, 0, social);
+				senWorking = social;
 				canStartWorking = 1;
 			}
 			else {
@@ -634,7 +639,6 @@ int main() {
 
 		/*ERROR CASE: pick the wrong behavior, go ahead and get punished*/
 		mistake = Rand(100,0);
-		mistake = 1;
 
 		if(mistake==0){
 			/*Which behavior will the customer pick*/
@@ -695,6 +699,7 @@ int main() {
 		Uprintf("Customer (Senator)#%d is leaving the Passport Office.\n", 54, socialSecurityNum, 0, 0, 0);
 		/*senatorWorking = NULL;*/
 		SetMV(senatorWorking, 0, NULL);
+		senWorking = NULL;
 		Acquire(senatorLock);
 		Broadcast(senatorCV, senatorLock);
 		Release(senatorLock);
