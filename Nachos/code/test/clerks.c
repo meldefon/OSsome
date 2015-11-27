@@ -1,5 +1,6 @@
 #include "syscall.h"
 #include "globalVars.h"
+#include "monitor.h"
 #define NULL 0
 
 int waitForLine(struct Monitor *clerk,int myLineID, int firstTime){

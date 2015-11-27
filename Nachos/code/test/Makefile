@@ -31,7 +31,7 @@ CPP = $(GCCDIR)cpp
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt matmult matmultX2 sort lockTests CVTests CVTestsWaiter CVTestsSignaller CVTestsBroadcaster MVTests serverCode testfiles testpart1 testpart2 threadtest appClerk cashier clerks customer manager passPClerk picClerk
+all: halt matmult matmultX2 sort lockTests CVTests CVTestsWaiter CVTestsSignaller CVTestsBroadcaster MVTests serverCode testfiles testpart1 testpart2 threadtest appClerk cashier customer manager passPClerk picClerk
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.s > strt.s

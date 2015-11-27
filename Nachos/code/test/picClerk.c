@@ -1,4 +1,5 @@
 #include "syscall.h"
+#include "monitor.h"
 #define NULL 0
 
 struct Monitor appClerk, picClerk, passPClerk, cashier;
@@ -384,6 +385,12 @@ int main() {
 	start = 1;	
 	createServerMVs(1,1);
 	initialize(&picClerk, 1, 1);
+
+	createServerMVs(1,1);
+	initialize(&picClerk, 1, 1);
+	initialize(&appClerk, 0, 1);
+	initialize(&passPClerk, 2, 1);
+	initialize(&cashier, 3, 1);
 
 	Acquire(picClerk.newClerkIdLock);
 	/*

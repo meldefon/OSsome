@@ -1,4 +1,5 @@
 #include "syscall.h"
+#include "monitor.h"
 #define NULL 0
 
 struct Monitor appClerk, picClerk, passPClerk, cashier;
@@ -196,6 +197,7 @@ void initialize(struct Monitor *m, int clerkType_, int size) {
 		m->numCustomersInLimbo = CreateMV("numCustomersInLimbo3", 21, 1);
 		lockName = "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD\0";
 	}
+
 	
 	SetMV(m->newClerkId, 0, 0);
 	SetMV(m->numOfClerks, 0, size);
@@ -380,10 +382,11 @@ int main() {
 	int currentCustomer;
 	int cash;
 
-	Acquire(appClerk.newClerkIdLock);
 
 	createServerMVs(1,1);
-	initialize(&appClerk, 1, 1);
+	initialize(&appClerk, 0, 1);
+
+	Acquire(appClerk.newClerkIdLock);
 
 	/*
 	myLineID = appClerk.newClerkId;

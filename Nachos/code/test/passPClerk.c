@@ -1,4 +1,5 @@
 #include "syscall.h"
+#include "monitor.h"
 #define NULL 0
 
 struct Monitor appClerk, picClerk, passPClerk, cashier;
@@ -254,12 +255,6 @@ int waitForLine(struct Monitor *clerk, int myLineID, int firstTime) {
 	int senWorking;
 
 	Acquire(clerk->lineLock);
-
-	createServerMVs(1,1);
-	initialize(&picClerk, 1, 1);
-	initialize(&appClerk, 1, 1);
-	initialize(&passPClerk, 1, 1);
-	initialize(&cashier, 1, 1);
 	
 	ifBribed = 0;
 	start = 1;
@@ -385,7 +380,15 @@ int main() {
 	int cash;
 	int ifCompletedPic;
 	int ifCompletedApp;	
-	int ifPassportClerkChecked;	
+	int ifPassportClerkChecked;
+
+	start = 1;
+
+	createServerMVs(1,1);
+	initialize(&picClerk, 1, 1);
+	initialize(&appClerk, 0, 1);
+	initialize(&passPClerk, 2, 1);
+	initialize(&cashier, 3, 1);
 
 	Acquire(passPClerk.newClerkIdLock);
 	/*

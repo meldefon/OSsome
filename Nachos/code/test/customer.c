@@ -1,10 +1,38 @@
 #include "syscall.h"
+#include "monitor.h"
 #define NULL 0
+
+struct Monitor appClerk, picClerk, passPClerk, cashier;
+
+/*global shared data between the clerks that are used for filing purposes */
+int customersWithCompletedApps;
+int customersWithCompletedPics;
+int passportClerkChecked;
+int cashierChecked;
+int gottenPassport;
+int cashReceived;
+int bribesEnabled;
+
+int appClerkCurrentCustomer;
+int pictureClerkCurrentCustomer;
+int passportClerkCurrentCustomer;
+int cashierCurrentCustomer;
+
+int senatorLock;
+int senatorCV;
+int isSenator;
+int senatorWorking;
+int clerksCanWork;
+
+int numCustomersLeft;
+int newCustomerId;
+int newCustomerIdLock;
 
 void createServerMVs(int numCustomers, int numberOfSenators) {
 	int i;
 	/*global shared data between the clerks that are used for filing purposes */
 	numCustomersLeft = CreateMV("numCustomersLeft", 17, 1);
+	/*Write("Here\n",5,ConsoleOutput);*/
 	bribesEnabled = CreateMV("bribesEnabled", 14, 1);
 
 	customersWithCompletedApps = CreateMV("customersWithCompletedApps", 27, numCustomers);
@@ -214,31 +242,7 @@ void Uprintf(char *string, int length, int num_1, int num_2, int num_3, int num_
 
 int punishTime = 100;
 
-struct Monitor appClerk, picClerk, passPClerk, cashier;
 
-/*global shared data between the clerks that are used for filing purposes */
-int customersWithCompletedApps;
-int customersWithCompletedPics;
-int passportClerkChecked;
-int cashierChecked;
-int gottenPassport;
-int cashReceived;
-int bribesEnabled;
-
-int appClerkCurrentCustomer;
-int pictureClerkCurrentCustomer;
-int passportClerkCurrentCustomer;
-int cashierCurrentCustomer;
-
-int senatorLock;
-int senatorCV;
-int isSenator;
-int senatorWorking;
-int clerksCanWork;
-
-int numCustomersLeft;
-int newCustomerId;
-int newCustomerIdLock;
 
 void punish(int time){
 	int i; 
@@ -310,6 +314,8 @@ int getInLine(struct Monitor *clerk, int socialSecurityNum, int *cash) {
 	if(clerkType == 3){
 		wantToBribe = 1;
 	}
+
+	wantToBribe = 1;
 	
 	ifBribesEnabled = GetMV(bribesEnabled, 0);
 
@@ -646,6 +652,7 @@ int main() {
 	initialize(&passPClerk, 1, 1);
 	initialize(&cashier, 1, 1);
 
+	/*Write("Here",4,ConsoleOutput);*/
 	Acquire(newCustomerIdLock);
 	/*
 	social = newCustomerId;
