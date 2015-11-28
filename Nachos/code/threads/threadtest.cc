@@ -27,7 +27,27 @@ void sendReply(PacketHeader* outPktHdr,MailHeader* outMailHdr,stringstream& repl
 	}
 
 }
-void NewServerRequest(vector<ServerRequest*>* serverRQs, string name, int requestID, int requestType, int machineID, int mailbox, int arg1, int arg2, int arg3) {
+void sendReplyToServer(PacketHeader* outPktHdr, MailHeader* outMailHdr, int requestType, int requestID, int machineID, int mailbox, int reply) {
+	stringstream replyStream; 
+	replyStream << requestType << requestID << machineID << mailbox << reply;
+	sendReply(outPktHdr, outMailHdr, replyStream);
+}
+
+void sendReplyToClient(int machineID, int mailbox, int reply) {
+	
+	PacketHeader* outPktHdr = new PacketHeader(); 
+	MailHeader* outMailHdr = new MailHeader();
+			
+	outPktHdr->to = machineID; //client machineID
+	outMailHdr->to = mailbox; //client mailbox
+	outMailHdr->from = myMachineID; // server machineID goes here
+
+	stringstream replyStream;
+	replyStream << reply;
+	sendReply(outPktHdr, outMailHdr, replyStream);
+}
+
+void NewServerRequest(vector<ServerRequest*>* serverRQs, string name, int requestType, int machineID, int mailbox, int arg1, int arg2, int arg3) {
 	
 	//Create new serverRequest object and add it to server's data
 	ServerRequest *sr = new ServerRequest;
@@ -62,6 +82,10 @@ void NewServerRequest(vector<ServerRequest*>* serverRQs, string name, int reques
 			
 			if(requestType == SC_Server_CreateCondition || requestType == SC_Server_CreateLock || requestType == SC_Server_CreateMV) {
 				ss << sr->requestType << sr->requestID << sr->machineID << sr->mailbox << sr->name;
+			} else if(requestType == SC_Server_Acquire || requestType == SC_Server_Release || requestType == SC_Server_DestroyLock || requestType == SC_Server_DestroyCondition || requestType == SC_Server_DestroyMV) {
+				ss << sr->requestType << sr->requestID << sr->machineID << sr->mailbox << sr->arg1; 
+			} else if(requestType == SC_Server_Wait || requestType == SC_Server_Signal || requestType == SC_Server_Broadcast) {
+				ss << sr->requestType << sr->requestID << sr->machineID << sr->mailbox << sr->arg1 << sr->arg2;
 			} else {
 				ss << sr->requestType << sr->requestID << sr->machineID << sr->mailbox << sr->arg1 << sr->arg2 << sr->arg3;
 			}
@@ -133,24 +157,9 @@ void Server() {
 						}
 					}
 
-					//If doesn't, make a new lock
+					//If doesn't, check to see if it exists on other servers before making
 					if (existingLockID == -1) {
-						//TODO Check to see if there's already a lock with this name
-						//Create Lock, don't register ownerID or ownerMailbox
-						ServerLock *newLock = new ServerLock;
-						newLock->name = name;
-						newLock->packetWaitQ = new queue<PacketHeader *>();
-						newLock->mailWaitQ = new queue<MailHeader *>();
-						newLock->state = Available;
-						newLock->isToBeDeleted = false;
-						newLock->ownerMachineID = -1;
-						newLock->ownerMailboxNum = -1;
-
-						//Add to vector
-						serverLocks->push_back(newLock);
-
-						//Send reply - copy this template
-						replyStream << serverLocks->size() - 1;
+						NewServerRequest(serverRQs, name, SC_Server_CreateLock, inPktHdr->from, inMailHdr->from, 0, 0, 0);
 					}
 					else { //Lock does exist, so just give its ID
 						replyStream << existingLockID;
@@ -580,14 +589,43 @@ void Server() {
 		}
 		else if(type / 100 == 1) { //Handle a server request
 
+			//Variables used to hold server request data for processing
+			int requestID;
+			int machineID;
+			int mailbox;
+			int arg1;
+			int arg2;
+			int arg3;
+
+			//pull some info right away since these are required by all requests
+			ss >> requestID;
+			ss >> machineID;
+			ss >> mailbox;
+
 			switch (type) {
 				case SC_Server_CreateLock: {
-					DEBUG('S', "Message: Create lock\n");
-					ss.get();
-					getline(ss, name, '@'); //get name of lock
-					DEBUG('T', "SR from %d: Create lock %s for machine %d, mailbox %d\n", name.c_str(), inPktHdr->from,
+					DEBUG('S', "Message: Server Create lock\n");
+					ss >> name; //pull the lock name					
+					DEBUG('T', "SR from %d: Create lock request %s from server %d, mailbox %d\n", name.c_str(), inPktHdr->from,
 						  inMailHdr->from);
 
+					//Check to see if that lock exists already
+					int existingLockID = -1;
+					for (int i = 0; i < serverLocks->size(); i++) {
+						if (name.compare(serverLocks->at(i)->name) == 0) {
+							existingLockID = i;
+							break;
+						}
+					}
+
+					//If doesn't, send a reply of NO to server that made the request
+					if (existingLockID == -1) {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+					}
+					else { //Lock does exist, so just give its ID to the client and reply with yes to server making request
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
+						sendReplyToClient(machineID, mailbox, existingLockID);
+					}
 					break;
 				}
 				case SC_Server_DestroyLock: {
