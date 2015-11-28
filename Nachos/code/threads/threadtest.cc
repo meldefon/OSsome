@@ -588,6 +588,8 @@ void Server() {
 			}
 		}
 		else if(type / 100 == 1) { //Handle a server request
+			//uniqueID generator for shared variables
+			int uniqueID = myMachineID * 100;
 
 			//Variables used to hold server request data for processing
 			int requestID;
@@ -624,7 +626,7 @@ void Server() {
 					}
 					else { //Lock does exist, so just give its ID to the client and reply with yes to server making request
 						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
-						sendReplyToClient(machineID, mailbox, existingLockID);
+						sendReplyToClient(machineID, mailbox, existingLockID + uniqueID);
 					}
 					break;
 				}
@@ -655,12 +657,28 @@ void Server() {
 					break;
 				}
 				case SC_Server_CreateCondition: {
-					DEBUG('S', "Message: Create condition\n");
-					ss.get();
-					getline(ss, name, '@'); //get name of CV
-					DEBUG('T', "SR from %d: Creating CV %s for machine %d, mailbox %d\n", name.c_str(), inPktHdr->from,
-						  inMailHdr->from);
+					DEBUG('S', "Message: Server Create condition\n");
+					ss >> name; //pull the condition name					
+					DEBUG('T', "SR from %d: Create condition request %s for client %d, mailbox %d\n", inPktHdr->from, name.c_str(), machineID,
+						  mailbox);
 
+					//Check to see if that condition exists already
+					int existingCVID = -1;
+					for (int i = 0; i < serverCVs->size(); i++) {
+						if (name.compare(serverCVs->at(i)->name) == 0) {
+							existingCVID = i;
+							break;
+						}
+					}
+
+					//If doesn't, send a reply of NO to server that made the request
+					if (existingCVID == -1) {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+					}
+					else { //Condition does exist, so just give its ID to the client and reply with yes to server making request
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
+						sendReplyToClient(machineID, mailbox, existingCVID + uniqueID);
+					}
 					break;
 				}
 				case SC_Server_DestroyCondition: {
