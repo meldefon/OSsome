@@ -876,7 +876,7 @@ void Server() {
 				case SC_Server_SetMV: {
 					DEBUG('S', "Message: SetMV\n");
 					ss >> mvNum >> mvPos >> mvVal;
-					DEBUG('T', "SR from %d: Set MV %d at postition %d to %d for machine %d, mailbox %d\n", inPktHdr->from, mvNum,
+					DEBUG('T', "SR from %d: SetMV %d at postition %d to %d for machine %d, mailbox %d\n", inPktHdr->from, mvNum,
 						  mvPos, mvVal, machineID, mailbox);
 
 					//If it's not in our indexes, we don't have it, so reply no
@@ -904,12 +904,31 @@ void Server() {
 				}
 				case SC_Server_GetMV: {
 					DEBUG('S', "Message: GetMV\n");
-					ss >> mvNum >> mvPos;
-					DEBUG('T', "SR from %d: Get MV %s at postition %d for machine %d, mailbox %d\n",
-						  serverMVs->at(mvNum)->name.c_str(),
-						  mvPos, inPktHdr->from, inMailHdr->from);
+					ss >> mvNum >> mvPos >> mvVal;
+					DEBUG('T', "SR from %d: GetMV %d at postition %d to %d for machine %d, mailbox %d\n", inPktHdr->from, mvNum,
+						  mvPos, mvVal, machineID, mailbox);
 
-					break;
+					//If it's not in our indexes, we don't have it, so reply no
+					if(mvNum / 100 != myMachineID) {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+					} else {
+						mvNum = mvNum % 100; //grab MV index
+
+						if (mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {
+							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						} else {
+							//Do some more checks before getting value
+							if (serverMVs->at(mvNum) == NULL) {
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							} else if (mvPos >= serverMVs->at(mvNum)->length) {
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							} else {
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);
+								sendReplyToClient(machineID, mailbox, serverMVs->at(mvNum)->vals[mvPos]);
+							}
+						}
+					}
+					break;		
 				}
 				default:
 					cout << "Unkonwn message type. Ignoring.\n";
