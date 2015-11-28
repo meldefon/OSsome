@@ -848,11 +848,29 @@ void Server() {
 					break;
 				}
 				case SC_Server_DestroyMV: {
-					DEBUG('S', "Message: DestroyMV\n");
-					ss >> mvNum;
-					DEBUG('T', "SR from %d: Set destroy MV %s for machine %d, mailbox %d\n", serverMVs->at(mvNum)->name.c_str(),
-						  inPktHdr->from, inMailHdr->from);
+					DEBUG('S', "Message: Destroy monitor variable\n");
+					ss >> mvNum; //get MV ID
+					DEBUG('T', "SR from %d: Set destroy monitor variable %d for machine %d, mailbox %d\n", inPktHdr->from, mvNum, machineID, mailbox);
 
+					//If it's not in our indexes, we don't have it, so reply no
+					if(mvNum / 100 != myMachineID) {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+					} else {
+						mvNum = mvNum % 100; //grab MV index
+
+						if (mvNum < 0 || mvNum >= serverMVs->size()) {
+							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						} else {
+							//Validate whether or not the MV exists
+							if (serverMVs->at(mvNum) == NULL) {
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							} else {
+								serverMVs->at(mvNum)->isToBeDeleted = true;
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);								
+								sendReplyToClient(machineID, mailbox, -2);
+							}
+						}
+					}
 					break;
 				}
 				case SC_Server_SetMV: {
