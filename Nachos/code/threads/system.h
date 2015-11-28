@@ -49,6 +49,9 @@ extern vector<KernelCondition*> conditions;
 // IPT table for assignment 3
 extern IPTEntry *IPT;
 
+// Machine ID
+extern int myMachineID;
+
 //Global process table
 extern vector<ProcessStruct*>* processTable;
 extern Lock* progLock;

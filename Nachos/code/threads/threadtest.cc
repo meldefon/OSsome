@@ -27,6 +27,49 @@ void sendReply(PacketHeader* outPktHdr,MailHeader* outMailHdr,stringstream& repl
 	}
 
 }
+void NewServerRequest(vector<ServerRequest*>* serverRQs, string name, int requestID, int requestType, int machineID, int mailbox, int arg1, int arg2, int arg3) {
+	
+	//Create new serverRequest object and add it to server's data
+	ServerRequest *sr = new ServerRequest;
+	serverRQs->push_back(sr);
+
+	//initialize values
+	sr->requestID = serverRQs->size() - 1;	
+	sr->machineID = machineID;
+	sr->mailbox = mailbox;
+	sr->requestType = requestType;
+	sr->arg1 = arg1;
+	sr->arg2 = arg2;
+	sr->arg3 = arg3;
+	sr->noCount = 0;
+	sr->yes = false;
+	sr->name = name;
+
+	//send serverRequest to all other servers
+	for(int i = 0; i < NUM_SERVERS; i++) {
+		//if not my machineID, send request to this machineID
+		if(i != myMachineID) {
+			//create packets to send to server
+			PacketHeader* outPktHdr = new PacketHeader(); 
+			MailHeader* outMailHdr = new MailHeader();
+			
+			outPktHdr->to = i; //other server machineID goes here
+			outMailHdr->to = 0; //default mailbox is zero
+			outMailHdr->from = myMachineID; //our server machineID goes here
+
+			//create stringstream object to store data, use an if statement to send different data depending on what the syscall is
+			stringstream ss;
+			
+			if(requestType == SC_Server_CreateCondition || requestType == SC_Server_CreateLock || requestType == SC_Server_CreateMV) {
+				ss << sr->requestType << sr->requestID << sr->machineID << sr->mailbox << sr->name;
+			} else {
+				ss << sr->requestType << sr->requestID << sr->machineID << sr->mailbox << sr->arg1 << sr->arg2 << sr->arg3;
+			}
+
+			sendReply(outPktHdr, outMailHdr, ss);
+		}
+	}
+}
 
 void Server() {
 
@@ -34,7 +77,7 @@ void Server() {
 	vector<ServerLock*>* serverLocks = new vector<ServerLock*>;
 	vector<ServerCV*>* serverCVs = new vector<ServerCV*>;
 	vector<ServerMV*>* serverMVs = new vector<ServerMV*>;
-
+	vector<ServerRequest*>* serverRQs = new vector<ServerRequest*>;
 
 	cout << "Running server\n";
 	cout << "Set to handle "<<NUM_SERVERS<<" servers.\n";
@@ -57,7 +100,7 @@ void Server() {
 		// in the message that just arrived
 		outPktHdr->to = inPktHdr->from;
 		outMailHdr->to = inMailHdr->from;
-		outMailHdr->from = 0;
+		outMailHdr->from = myMachineID;
 
 		//Pull out message type
 		int type;
@@ -535,7 +578,7 @@ void Server() {
 					break;
 			}
 		}
-		else { //Handle a server request
+		else if(type / 100 == 1) { //Handle a server request
 
 			switch (type) {
 				case SC_Server_CreateLock: {
@@ -654,6 +697,8 @@ void Server() {
 					break;
 			}
 
+
+		} else { //handle a server reply to one of our requests
 
 		}
 

@@ -43,5 +43,18 @@ struct ServerMV{
 
 };
 
+struct ServerRequest{
+
+    string name; //potential name of a Lock, CV, or MV
+    int requestID; //index in request vector
+    int requestType; //type of case
+    int machineID; //machine ID of client
+    int mailbox; //mailbox of client
+    int noCount; //number of no's received
+    int arg1;
+    int arg2;
+    int arg3;
+    bool yes; //if yes has been received
+};
 
 #endif //OSSOME_SERVERSTRUCTS_H

@@ -32,6 +32,9 @@ vector<KernelCondition*> conditions;
 // IPT table for assignment 3
 IPTEntry *IPT;
 
+// Machine ID
+int myMachineID;
+
 //Process table
 vector<ProcessStruct*>* processTable;
 Lock* progLock;
@@ -172,6 +175,7 @@ Initialize(int argc, char **argv)
 	} else if (!strcmp(*argv, "-m")) {
 	    ASSERT(argc > 1);
 	    netname = atoi(*(argv + 1));
+        myMachineID = netname;
 	    machineIDCopy = atoi(*(argv + 1));
 	    argCount = 2;
 	}
