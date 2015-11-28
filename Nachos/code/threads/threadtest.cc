@@ -606,8 +606,8 @@ void Server() {
 				case SC_Server_CreateLock: {
 					DEBUG('S', "Message: Server Create lock\n");
 					ss >> name; //pull the lock name					
-					DEBUG('T', "SR from %d: Create lock request %s from server %d, mailbox %d\n", name.c_str(), inPktHdr->from,
-						  inMailHdr->from);
+					DEBUG('T', "SR from %d: Create lock request %s for client %d, mailbox %d\n", inPktHdr->from, name.c_str(), machineID,
+						  mailbox);
 
 					//Check to see if that lock exists already
 					int existingLockID = -1;
@@ -631,9 +631,27 @@ void Server() {
 				case SC_Server_DestroyLock: {
 					DEBUG('S', "Message: Destroy lock\n");
 					ss >> lockNum; //get lock ID
-					DEBUG('T', "SR from %d: Set destroy lock %s for machine %d, mailbox %d\n",
-						  serverLocks->at(lockNum)->name.c_str(), inPktHdr->from, inMailHdr->from);
+					DEBUG('T', "SR from %d: Set destroy lock %d for machine %d, mailbox %d\n", inPktHdr->from, lockNum, machineID, mailbox);
 
+					//If it's not in our indexes, we don't have it, so reply no
+					if(lockNum / 100 != myMachineID) {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+					} else {
+						lockNum = lockNum % 100; //grab lock index
+
+						if (lockNum < 0 || lockNum >= serverLocks->size()) {
+							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						} else {
+							//Validate whether or not the lock exists
+							if (serverLocks->at(lockNum) == NULL) {
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							} else {
+								serverLocks->at(lockNum)->isToBeDeleted = true;
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);								
+								sendReplyToClient(machineID, mailbox, -2);
+							}
+						}
+					}
 					break;
 				}
 				case SC_Server_CreateCondition: {
