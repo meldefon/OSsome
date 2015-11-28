@@ -682,11 +682,29 @@ void Server() {
 					break;
 				}
 				case SC_Server_DestroyCondition: {
-					DEBUG('S', "Message: Destroy Condition\n");
-					ss >> cvNum; //get lock ID
-					DEBUG('T', "SR from %d: Set destroy CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
-						  inPktHdr->from, inMailHdr->from);
+					DEBUG('S', "Message: Destroy condition\n");
+					ss >> cvNum; //get CV ID
+					DEBUG('T', "SR from %d: Set destroy condition %d for machine %d, mailbox %d\n", inPktHdr->from, lockNum, machineID, mailbox);
 
+					//If it's not in our indexes, we don't have it, so reply no
+					if(cvNum / 100 != myMachineID) {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+					} else {
+						cvNum = cvNum % 100; //grab CV index
+
+						if (cvNum < 0 || cvNum >= serverCVs->size()) {
+							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						} else {
+							//Validate whether or not the CV exists
+							if (serverCVs->at(cvNum) == NULL) {
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							} else {
+								serverCVs->at(cvNum)->isToBeDeleted = true;
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);								
+								sendReplyToClient(machineID, mailbox, -2);
+							}
+						}
+					}
 					break;
 				}
 				case SC_Server_Acquire: {
