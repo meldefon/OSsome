@@ -761,9 +761,41 @@ void Server() {
 				case SC_Server_Release: {
 					DEBUG('S', "Message: Release\n");
 					ss >> lockNum; //get lock ID
-					DEBUG('T', "SR from %d: Release lock %s for machine %d, mailbox %d\n", serverLocks->at(lockNum)->name.c_str(),
-						  inPktHdr->from, inMailHdr->from);
+					DEBUG('T', "SR from %d: Release lock %d for machine %d, mailbox %d\n", inPktHdr->from, lockNum, machineID, mailbox);
 
+					//If it's not in our indexes, we don't have it, so reply no
+					if(lockNum / 100 != myMachineID) {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+					} else {
+						//Check whether or not we can release it
+						if (serverLocks->at(lockNum) == NULL) {
+							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						} else if (serverLocks->at(lockNum)->state == Available ||
+								   serverLocks->at(lockNum)->ownerMachineID != machineID ||
+								   serverLocks->at(lockNum)->ownerMailboxNum != mailbox) {
+							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);
+							sendReplyToClient(machineID, mailbox, -1);							
+						} else {
+							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);							
+							sendReplyToClient(machineID, mailbox, -2);							
+							//Check if anyone is waiting so they must be woken up
+							if (serverLocks->at(lockNum)->packetWaitQ->empty()) {
+								serverLocks->at(lockNum)->state = Available;
+								serverLocks->at(lockNum)->ownerMachineID = -1;
+								serverLocks->at(lockNum)->ownerMailboxNum = -1;
+							} else {
+								//Change ownership and send message to waiting client
+								PacketHeader *tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
+								serverLocks->at(lockNum)->packetWaitQ->pop();
+								MailHeader *tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
+								serverLocks->at(lockNum)->mailWaitQ->pop();
+								serverLocks->at(lockNum)->ownerMachineID = machineID;
+								serverLocks->at(lockNum)->ownerMailboxNum = mailbox;
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);							
+								sendReplyToClient(machineID, mailbox, -2);							
+							}
+						}
+					}
 					break;
 				}
 				case SC_Server_Signal: {
