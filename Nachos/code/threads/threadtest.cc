@@ -710,9 +710,52 @@ void Server() {
 				case SC_Server_Acquire: {
 					DEBUG('S', "Message: Acquire\n");
 					ss >> lockNum; //get lock ID
-					DEBUG('T', "SR from %d: Acquire lock %s for machine %d, mailbox %d\n", serverLocks->at(lockNum)->name.c_str(),
-						  inPktHdr->from, inMailHdr->from);
+					DEBUG('T', "SR from %d: Acquire lock %d for machine %d, mailbox %d\n", inPktHdr->from, lockNum,
+						  machineID, mailbox);
+					
+					//If it's not in our indexes, we don't have it, so reply no
+					if(lockNum / 100 != myMachineID) {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+					} else {
+						lockNum = lockNum % 100;
 
+						//Validate user input: send 0 if bad
+						if (lockNum < 0 || lockNum >= serverLocks->size()) {
+							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						} else {
+							//Check whether or not we can acquire it
+							if (serverLocks->at(lockNum) == NULL) {
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							} else if (serverLocks->at(lockNum)->ownerMachineID == machineID &&
+									   serverLocks->at(lockNum)->ownerMailboxNum == mailbox &&
+									   serverLocks->at(lockNum)->state == Busy) {
+								//TODO add check int he else if above to make sure not just ownerMachineID, but some kind of
+								//TODO thread-specific id matches
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);
+								sendReplyToClient(machineID, mailbox, -1);
+							} else if (serverLocks->at(lockNum)->state == Busy) {
+								//Go on the wait queue
+								//Must create packets to store on queue for client
+								PacketHeader* temp_outPktHdr = new PacketHeader(); 
+								MailHeader* temp_outMailHdr = new MailHeader();
+			
+								temp_outPktHdr->to = machineID; //client machineID goes here
+								temp_outMailHdr->to = mailbox; //client mailbox goes here
+								temp_outMailHdr->from = myMachineID; //our server machineID goes here
+
+								serverLocks->at(lockNum)->packetWaitQ->push(temp_outPktHdr);
+								serverLocks->at(lockNum)->mailWaitQ->push(temp_outMailHdr);
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);								
+							} else {
+								//Assign ownership of the lock and change state
+								serverLocks->at(lockNum)->ownerMachineID = machineID;
+								serverLocks->at(lockNum)->ownerMailboxNum = mailbox;
+								serverLocks->at(lockNum)->state = Busy;
+								sendReplyToClient(machineID, mailbox, -2);
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);								
+							}
+						}
+					}
 					break;
 				}
 				case SC_Server_Release: {
