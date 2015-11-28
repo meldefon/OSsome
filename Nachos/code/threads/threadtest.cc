@@ -823,13 +823,28 @@ void Server() {
 					break;
 				}
 				case SC_Server_CreateMV: {
-					DEBUG('S', "Message: CreateMV\n");
-					ss.get();
-					getline(ss, name, '@'); //get name of lock
-					ss >> mvSiz;
-					DEBUG('T', "SR from %d: Creating MV %s for machine %d, mailbox %d\n", name.c_str(), inPktHdr->from,
-						  inMailHdr->from);
+					DEBUG('S', "Message: Server Create monitor variable\n");
+					ss >> name; //pull the mv name					
+					DEBUG('T', "SR from %d: Create monitor variable request %s for client %d, mailbox %d\n", inPktHdr->from, name.c_str(), machineID,
+						  mailbox);
 
+					//Check to see if that mv exists already
+					int existingMVID = -1;
+					for (int i = 0; i < serverMVs->size(); i++) {
+						if (name.compare(serverMVs->at(i)->name) == 0) {
+							existingMVID = i;
+							break;
+						}
+					}
+
+					//If doesn't, send a reply of NO to server that made the request
+					if (existingMVID == -1) {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+					}
+					else { //Monitor variable does exist, so just give its ID to the client and reply with yes to server making request
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
+						sendReplyToClient(machineID, mailbox, existingMVID + uniqueID);
+					}
 					break;
 				}
 				case SC_Server_DestroyMV: {
