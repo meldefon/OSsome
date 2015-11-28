@@ -876,11 +876,31 @@ void Server() {
 				case SC_Server_SetMV: {
 					DEBUG('S', "Message: SetMV\n");
 					ss >> mvNum >> mvPos >> mvVal;
-					DEBUG('T', "SR from %d: Set MV %s at postition %d to %d for machine %d, mailbox %d\n",
-						  serverMVs->at(mvNum)->name.c_str(),
-						  mvPos, mvVal, inPktHdr->from, inMailHdr->from);
+					DEBUG('T', "SR from %d: Set MV %d at postition %d to %d for machine %d, mailbox %d\n", inPktHdr->from, mvNum,
+						  mvPos, mvVal, machineID, mailbox);
 
-					break;
+					//If it's not in our indexes, we don't have it, so reply no
+					if(mvNum / 100 != myMachineID) {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+					} else {
+						mvNum = mvNum % 100; //grab MV index
+
+						if (mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {
+							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						} else {
+							//Do some more checks before setting value
+							if (serverMVs->at(mvNum) == NULL) {
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							} else if (mvPos >= serverMVs->at(mvNum)->length) {
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							} else {
+								serverMVs->at(mvNum)->vals[mvPos] = mvVal;
+								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);
+								sendReplyToClient(machineID, mailbox, -2);
+							}
+						}
+					}
+					break;				
 				}
 				case SC_Server_GetMV: {
 					DEBUG('S', "Message: GetMV\n");
