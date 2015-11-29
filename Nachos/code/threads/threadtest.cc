@@ -81,7 +81,7 @@ void NewServerRequest(vector<ServerRequest*>* serverRQs, string name, int reques
 			stringstream ss;
 			
 			if(requestType == SC_Server_CreateCondition || requestType == SC_Server_CreateLock || requestType == SC_Server_CreateMV) {
-				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->name;
+				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->name << "@";
 			} else if(requestType == SC_Server_Acquire || requestType == SC_Server_Release || requestType == SC_Server_DestroyLock || requestType == SC_Server_DestroyCondition || requestType == SC_Server_DestroyMV) {
 				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->arg1; 
 			} else if(requestType == SC_Server_Wait || requestType == SC_Server_Signal || requestType == SC_Server_Broadcast) {
@@ -638,7 +638,8 @@ void Server() {
 			switch (type) {
 				case SC_Server_CreateLock: {
 					DEBUG('S', "Message: Server Create lock\n");
-					ss >> name; //pull the lock name					
+					ss.get();
+					getline(ss, name, '@'); //get name of lock
 					DEBUG('T', "SR from %d: Create lock request %s for client %d, mailbox %d\n", inPktHdr->from, name.c_str(), machineID,
 						  mailbox);
 
@@ -689,7 +690,8 @@ void Server() {
 				}
 				case SC_Server_CreateCondition: {
 					DEBUG('S', "Message: Server Create condition\n");
-					ss >> name; //pull the condition name					
+					ss.get();
+					getline(ss, name, '@'); //get name of condition
 					DEBUG('T', "SR from %d: Create condition request %s for client %d, mailbox %d\n", inPktHdr->from, name.c_str(), machineID,
 						  mailbox);
 
@@ -853,7 +855,8 @@ void Server() {
 				}
 				case SC_Server_CreateMV: {
 					DEBUG('S', "Message: Server Create monitor variable\n");
-					ss >> name; //pull the mv name					
+					ss.get();
+					getline(ss, name, '@'); //get name of mv
 					DEBUG('T', "SR from %d: Create monitor variable request %s for client %d, mailbox %d\n", inPktHdr->from, name.c_str(), machineID,
 						  mailbox);
 
