@@ -81,13 +81,13 @@ void NewServerRequest(vector<ServerRequest*>* serverRQs, string name, int reques
 			stringstream ss;
 			
 			if(requestType == SC_Server_CreateCondition || requestType == SC_Server_CreateLock || requestType == SC_Server_CreateMV) {
-				ss << sr->requestType << sr->requestID << sr->machineID << sr->mailbox << sr->name;
+				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->name;
 			} else if(requestType == SC_Server_Acquire || requestType == SC_Server_Release || requestType == SC_Server_DestroyLock || requestType == SC_Server_DestroyCondition || requestType == SC_Server_DestroyMV) {
-				ss << sr->requestType << sr->requestID << sr->machineID << sr->mailbox << sr->arg1; 
+				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->arg1; 
 			} else if(requestType == SC_Server_Wait || requestType == SC_Server_Signal || requestType == SC_Server_Broadcast) {
-				ss << sr->requestType << sr->requestID << sr->machineID << sr->mailbox << sr->arg1 << sr->arg2;
+				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->arg1 << " " << sr->arg2;
 			} else {
-				ss << sr->requestType << sr->requestID << sr->machineID << sr->mailbox << sr->arg1 << sr->arg2 << sr->arg3;
+				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->arg1 << " " << sr->arg2 << " " << sr->arg3;
 			}
 
 			sendReply(outPktHdr, outMailHdr, ss);
