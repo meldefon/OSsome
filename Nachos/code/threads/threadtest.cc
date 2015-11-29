@@ -1054,6 +1054,28 @@ void Server() {
 					}
 					break;
 				}
+				case SC_ServerReply_DestroyCondition: {
+					DEBUG('S', "Message: Server Reply Destroy condition\n");
+					DEBUG('T', "SR from %d: Set destroy condition reply for machine %d, mailbox %d\n", inPktHdr->from, machineID, mailbox);
+
+					if(!yes) {
+						//if we got NO
+						if(reply == 0) {
+							noCount++;
+							//if we got all our NO replies, perform action
+							if(noCount == NUM_SERVERS - 1) {
+								//Send reply
+								currentRequest->yes = true;
+								sendReplyToClient(machineID, mailbox, -1);
+							} else {
+								currentRequest->noCount++;
+							}
+						} else {
+							currentRequest->yes = true;
+						}
+					}
+					break;
+				}
 				default:
 					cout << "Unkonwn message type. Ignoring.\n";
 					continue;
