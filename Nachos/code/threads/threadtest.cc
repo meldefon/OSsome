@@ -494,23 +494,6 @@ void Server() {
 					//If MV doesn't exist, create one
 					if (existingMVID == -1) {
 						NewServerRequest(serverRQs, name, SC_Server_CreateMV, inPktHdr->from, inMailHdr->from, 0, 0, 0);
-						/*
-						//Create MV
-						ServerMV *newMV = new ServerMV;
-						newMV->name = name;
-						newMV->vals = new int[mvSiz];
-						newMV->length = mvSiz;
-						for (int i = 0; i < mvSiz; i++) {
-							newMV->vals[i] = 0;
-						}
-						newMV->isToBeDeleted = false;
-
-						//Add to vector
-						serverMVs->push_back(newMV);
-
-						//Send reply - copy this template
-						replyStream << serverMVs->size() - 1;
-						*/
 					}
 					else {//MV Does exist, so return ID
 						replyStream << existingMVID + uniqueID;
@@ -1190,7 +1173,43 @@ void Server() {
 						}
 					}
 					break;
-				}				
+				}
+				case SC_ServerReply_CreateMV: {
+					DEBUG('S', "Message: Server Reply Create monitor variable\n");
+					DEBUG('T', "SR from %d: Create monitor variable reply %s for client %d, mailbox %d\n", inPktHdr->from, currentRequest->name.c_str(), machineID,
+						  mailbox);
+
+					if(!yes) {
+						//if we got NO
+						if(reply == 0) {
+							noCount++;
+							//if we got all our NO replies, perform action
+							if(noCount == NUM_SERVERS - 1) {
+								//Create MV
+								ServerMV *newMV = new ServerMV;
+								newMV->name = currentRequest->name;
+								newMV->vals = new int[mvSiz];
+								newMV->length = mvSiz;
+								for (int i = 0; i < mvSiz; i++) {
+									newMV->vals[i] = 0;
+								}
+								newMV->isToBeDeleted = false;
+
+								//Add to vector
+								serverMVs->push_back(newMV);
+
+								//Send reply
+								currentRequest->yes = true;
+								sendReplyToClient(machineID, mailbox, (serverMVs->size() - 1) + uniqueID);
+							} else {
+								currentRequest->noCount++;
+							}
+						} else {
+							currentRequest->yes = true;
+						}
+					}
+					break;
+				}								
 				default:
 					cout << "Unkonwn message type. Ignoring.\n";
 					continue;
