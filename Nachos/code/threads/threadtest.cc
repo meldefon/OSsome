@@ -1017,7 +1017,6 @@ void Server() {
 				case SC_ServerReply_DestroyLock: {
 					DEBUG('S', "Message: Server Reply Destroy lock\n");
 					DEBUG('T', "SR from %d: Set destroy lock reply for machine %d, mailbox %d\n", inPktHdr->from, machineID, mailbox);
-						  mailbox);
 
 					if(!yes) {
 						//if we got NO
