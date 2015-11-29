@@ -217,21 +217,6 @@ void Server() {
 					//If CV doesn't exist, make a new one
 					if (existingCVID == -1) {
 						NewServerRequest(serverRQs, name, SC_Server_CreateCondition, inPktHdr->from, inMailHdr->from, 0, 0, 0);
-						/*
-						//Create Condition
-						ServerCV *newCV = new ServerCV;
-						newCV->name = name;
-						newCV->packetWaitQ = new queue<PacketHeader *>();
-						newCV->mailWaitQ = new queue<MailHeader *>();
-						newCV->isToBeDeleted = false;
-						newCV->lockID = -1;
-
-						//Add to vector
-						serverCVs->push_back(newCV);
-
-						//Send reply - copy this template
-						replyStream << serverCVs->size() - 1;
-						*/
 					}
 					else { //CV does exist, so give its ID
 						replyStream << existingCVID + uniqueID;
@@ -1027,6 +1012,39 @@ void Server() {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
+							} else {
+								currentRequest->noCount++;
+							}
+						} else {
+							currentRequest->yes = true;
+						}
+					}
+					break;
+				}
+				case SC_Server_CreateCondition: {
+					DEBUG('S', "Message: Server Reply Create condition\n");
+					DEBUG('T', "SR from %d: Create condition reply %s for client %d, mailbox %d\n", inPktHdr->from, currentRequest->name.c_str(), machineID,
+						  mailbox);
+
+					if(!yes) {
+						//if we got NO
+						if(reply == 0) {
+							noCount++;
+							//if we got all our NO replies, perform action
+							if(noCount == NUM_SERVERS - 1) {
+								//Create Condition
+								ServerCV *newCV = new ServerCV;
+								newCV->name = currentRequest->name;
+								newCV->packetWaitQ = new queue<PacketHeader *>();
+								newCV->mailWaitQ = new queue<MailHeader *>();
+								newCV->isToBeDeleted = false;
+								newCV->lockID = -1;
+
+								//Add to vector
+								serverCVs->push_back(newCV);
+
+								//Send reply - copy this template
+								sendReplyToClient(machineID, mailbox, (serverCVs->size() - 1) + uniqueID);
 							} else {
 								currentRequest->noCount++;
 							}
