@@ -1021,7 +1021,7 @@ void Server() {
 					}
 					break;
 				}
-				case SC_Server_CreateCondition: {
+				case SC_ServerReply_CreateCondition: {
 					DEBUG('S', "Message: Server Reply Create condition\n");
 					DEBUG('T', "SR from %d: Create condition reply %s for client %d, mailbox %d\n", inPktHdr->from, currentRequest->name.c_str(), machineID,
 						  mailbox);
@@ -1057,6 +1057,29 @@ void Server() {
 				case SC_ServerReply_DestroyCondition: {
 					DEBUG('S', "Message: Server Reply Destroy condition\n");
 					DEBUG('T', "SR from %d: Set destroy condition reply for machine %d, mailbox %d\n", inPktHdr->from, machineID, mailbox);
+
+					if(!yes) {
+						//if we got NO
+						if(reply == 0) {
+							noCount++;
+							//if we got all our NO replies, perform action
+							if(noCount == NUM_SERVERS - 1) {
+								//Send reply
+								currentRequest->yes = true;
+								sendReplyToClient(machineID, mailbox, -1);
+							} else {
+								currentRequest->noCount++;
+							}
+						} else {
+							currentRequest->yes = true;
+						}
+					}
+					break;
+				}
+				case SC_ServerReply_Acquire: {
+					DEBUG('S', "Message: Reply Acquire\n");
+					DEBUG('T', "SR from %d: Acquire lock reply %d for machine %d, mailbox %d\n", inPktHdr->from, currentRequest->arg1,
+						  machineID, mailbox);
 
 					if(!yes) {
 						//if we got NO
