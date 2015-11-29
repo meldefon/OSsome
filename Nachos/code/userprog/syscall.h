@@ -53,9 +53,9 @@
 
 #define SC_Server_Acquire           111
 #define SC_Server_Release		    112
-#define SC_Server_Wait			    113
-#define SC_Server_Signal			114
-#define	SC_Server_Broadcast		    115
+#define SC_Server_Wait1			    113
+#define SC_Server_Signal1			114
+#define	SC_Server_Broadcast1		115
 #define SC_Server_CreateLock		116
 #define SC_Server_DestroyLock		117
 #define SC_Server_CreateCondition	118
@@ -67,12 +67,18 @@
 #define SC_Server_DestroyMV         124
 #define SC_Server_SetMV			    125
 #define SC_Server_GetMV			    126
+#define SC_Server_Signal2			127
+#define SC_Server_Signal3			128
+#define SC_Server_Wait2				129
+#define SC_Server_Wait3				130
+#define SC_Server_Broadcast2		131
+#define SC_Server_Broadcast3		132
 
 #define SC_ServerReply_Acquire           	211
 #define SC_ServerReply_Release		    	212
-#define SC_ServerReply_Wait			    	213
-#define SC_ServerReply_Signal				214
-#define	SC_ServerReply_Broadcast		    215
+#define SC_ServerReply_Wait1			    213
+#define SC_ServerReply_Signal1				214
+#define	SC_ServerReply_Broadcast1		    215
 #define SC_ServerReply_CreateLock			216
 #define SC_ServerReply_DestroyLock			217
 #define SC_ServerReply_CreateCondition		218
@@ -84,13 +90,19 @@
 #define SC_ServerReply_DestroyMV         	224
 #define SC_ServerReply_SetMV			    225
 #define SC_ServerReply_GetMV			    226
+#define SC_ServerReply_Signal2				227
+#define SC_ServerReply_Signal3				228
+#define SC_ServerReply_Wait2				229
+#define SC_ServerReply_Wait3				230
+#define SC_ServerReply_Broadcast2			231
+#define SC_ServerReply_Broadcast3			232
 
 
 #define MAXFILENAME 256
 
 /*Give the server a special address*/
 #define SERVER_M 0
-#define NUM_SERVERS 1
+#define NUM_SERVERS 2
 
 #ifndef IN_ASM
 

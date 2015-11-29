@@ -47,6 +47,28 @@ void sendReplyToClient(int machineID, int mailbox, int reply) {
 	sendReply(outPktHdr, outMailHdr, replyStream);
 }
 
+bool checkIfEnter(int cvNum, int lockNum, int machineID, int mailbox, int requestType, int offset) {
+	
+	bool ifEnter = true;
+
+	//check which cases we may be dealing with in regard to finding locks or CVs on diff servers
+	if(lockNum % 100 != myMachineID || cvNum % 100 != myMachineID) {
+
+		ifEnter = false;
+
+		//check what is missing
+		if(lockNum % 100 != myMachineID && cvNum % 100 != myMachineID) {
+			NewServerRequest(serverRQs, NULL, requestType + offset + 1, machineID, mailbox, cvNum, lockNum, 0);
+		} else if(lockNum % 100 != myMachineID) {
+			NewServerRequest(serverRQs, NULL, requestType + offset, machineID, mailbox, cvNum, lockNum, 0);
+		} else if(cvNum % 100 != myMachineID) {
+			NewServerRequest(serverRQs, NULL, requestType, machineID, mailbox, cvNum, lockNum, 0);
+		}
+	}
+
+	return ifEnter;
+}
+
 void NewServerRequest(vector<ServerRequest*>* serverRQs, string name, int requestType, int machineID, int mailbox, int arg1, int arg2, int arg3) {
 	
 	//Create new serverRequest object and add it to server's data
@@ -84,7 +106,7 @@ void NewServerRequest(vector<ServerRequest*>* serverRQs, string name, int reques
 				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->name << "@";
 			} else if(requestType == SC_Server_Acquire || requestType == SC_Server_Release || requestType == SC_Server_DestroyLock || requestType == SC_Server_DestroyCondition || requestType == SC_Server_DestroyMV) {
 				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->arg1; 
-			} else if(requestType == SC_Server_Wait || requestType == SC_Server_Signal || requestType == SC_Server_Broadcast) {
+			} else if(requestType == SC_Server_Wait1 || requestType == SC_Server_Wait2 || requestType == SC_Server_Wait3 || requestType == SC_Server_Signal1 || requestType == SC_Server_Signal2 || requestType == SC_Server_Signal3 || requestType == SC_Server_Broadcast1 || requestType == SC_Server_Broadcast2 || requestType == SC_Server_Broadcast3) {
 				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->arg1 << " " << sr->arg2;
 			} else {
 				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->arg1 << " " << sr->arg2 << " " << sr->arg3;
@@ -345,38 +367,44 @@ void Server() {
 					ss >> cvNum >> lockNum; //get lock and CV num
 					DEBUG('T', "Signal CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
 						  inPktHdr->from, inMailHdr->from);
+					
+					bool ifEnter = checkIfEnter(cvNum, lockNum, inPktHdr->from, inMailHdr->from, SC_Server_Signal1, 13);
 
-					//Validate user input: send -1 if bad
-					if (lockNum < 0 || lockNum >= serverLocks->size() || cvNum < 0 || cvNum >= serverCVs->size()) {
-						replyStream << -1;
-					} else {
-						//Do some more checks to ensure we can signal, like checking if the lock owner matches and the lock id matches the CV lock id
-						if (serverLocks->at(lockNum) == NULL || serverCVs->at(cvNum) == NULL) {
-							replyStream << -1;
-						} else if (serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to ||
-								   serverLocks->at(lockNum)->ownerMailboxNum != outMailHdr->to ||
-								   serverCVs->at(cvNum)->lockID != lockNum) {
+					if(ifEnter) {
+						lockNum = lockNum % 100;
+						cvNum = cvNum % 100;
+						//Validate user input: send -1 if bad
+						if (lockNum < 0 || lockNum >= serverLocks->size() || cvNum < 0 || cvNum >= serverCVs->size()) {
 							replyStream << -1;
 						} else {
-							//If there is a waiting client, send reply so they can wake and go on to acquire
-							if (serverCVs->at(cvNum)->packetWaitQ->empty()) {
+							//Do some more checks to ensure we can signal, like checking if the lock owner matches and the lock id matches the CV lock id
+							if (serverLocks->at(lockNum) == NULL || serverCVs->at(cvNum) == NULL) {
+								replyStream << -1;
+							} else if (serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to ||
+									   serverLocks->at(lockNum)->ownerMailboxNum != outMailHdr->to ||
+									   serverCVs->at(cvNum)->lockID != lockNum) {
 								replyStream << -1;
 							} else {
-								//Send message to waiting client
-								replyStream << -2;
-								PacketHeader *tempOutPktHdr = serverCVs->at(cvNum)->packetWaitQ->front();
-								serverCVs->at(cvNum)->packetWaitQ->pop();
-								MailHeader *tempOutMailHdr = serverCVs->at(cvNum)->mailWaitQ->front();
-								serverCVs->at(cvNum)->mailWaitQ->pop();
-								sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
-
+								//If there is a waiting client, send reply so they can wake and go on to acquire
 								if (serverCVs->at(cvNum)->packetWaitQ->empty()) {
-									serverCVs->at(cvNum)->lockID = -1;
+									replyStream << -1;
+								} else {
+									//Send message to waiting client
+									replyStream << -2;
+									PacketHeader *tempOutPktHdr = serverCVs->at(cvNum)->packetWaitQ->front();
+									serverCVs->at(cvNum)->packetWaitQ->pop();
+									MailHeader *tempOutMailHdr = serverCVs->at(cvNum)->mailWaitQ->front();
+									serverCVs->at(cvNum)->mailWaitQ->pop();
+									sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+
+									if (serverCVs->at(cvNum)->packetWaitQ->empty()) {
+										serverCVs->at(cvNum)->lockID = -1;
+									}
 								}
 							}
 						}
+						sendReply(outPktHdr, outMailHdr, replyStream);
 					}
-					sendReply(outPktHdr, outMailHdr, replyStream);
 					break;
 				}
 				case SC_Wait: {
@@ -385,50 +413,56 @@ void Server() {
 					DEBUG('T', "Wait on CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
 						  inPktHdr->from, inMailHdr->from);
 
-					bool ifReply = true;
+					bool ifEnter = checkIfEnter(cvNum, lockNum, inPktHdr->from, inMailHdr->from, SC_Server_Wait1, 16);
 
-					//Validate user input: send -1 if bad
-					if (lockNum < 0 || lockNum >= serverLocks->size() || cvNum < 0 || cvNum >= serverCVs->size()) {
-						replyStream << -1;
-					} else {
-						//Do some more checks to ensure we can wait
-						if (serverLocks->at(lockNum) == NULL || serverCVs->at(cvNum) == NULL) {
-							replyStream << -1;
-						} else if (serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to ||
-								   serverLocks->at(lockNum)->ownerMailboxNum != outMailHdr->to ||
-								   (serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
-							//Enters this condition block if the lock owner does not match machine ID
-							//And if the CV lock does not match lock ID and the lock is assigned
-							//Which means it doesnt have index value of -1
+					if(ifEnter) {
+						lockNum = lockNum % 100;
+						cvNum = cvNum % 100;
+						bool ifReply = true;
+
+						//Validate user input: send -1 if bad
+						if (lockNum < 0 || lockNum >= serverLocks->size() || cvNum < 0 || cvNum >= serverCVs->size()) {
 							replyStream << -1;
 						} else {
-							ifReply = false;
-							//If CV is unused, assign new lock
-							if (serverCVs->at(cvNum)->lockID == -1) {
-								serverCVs->at(cvNum)->lockID = lockNum;
-							}
-							serverCVs->at(cvNum)->packetWaitQ->push(outPktHdr);
-							serverCVs->at(cvNum)->mailWaitQ->push(outMailHdr);
+							//Do some more checks to ensure we can wait
+							if (serverLocks->at(lockNum) == NULL || serverCVs->at(cvNum) == NULL) {
+								replyStream << -1;
+							} else if (serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to ||
+									   serverLocks->at(lockNum)->ownerMailboxNum != outMailHdr->to ||
+									   (serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
+								//Enters this condition block if the lock owner does not match machine ID
+								//And if the CV lock does not match lock ID and the lock is assigned
+								//Which means it doesnt have index value of -1
+								replyStream << -1;
+							} else {
+								ifReply = false;
+								//If CV is unused, assign new lock
+								if (serverCVs->at(cvNum)->lockID == -1) {
+									serverCVs->at(cvNum)->lockID = lockNum;
+								}
+								serverCVs->at(cvNum)->packetWaitQ->push(outPktHdr);
+								serverCVs->at(cvNum)->mailWaitQ->push(outMailHdr);
 
-							//Change ownership and send message to waiting client
-							PacketHeader *tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
-							MailHeader *tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
-							if (!(serverLocks->at(lockNum)->packetWaitQ->empty())) {
-								serverLocks->at(lockNum)->packetWaitQ->pop();
-								serverLocks->at(lockNum)->mailWaitQ->pop();
-								serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
-								serverLocks->at(lockNum)->ownerMailboxNum = tempOutMailHdr->to;
-								replyStream << -2;
-								sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
-							}
-							else {
-								serverLocks->at(lockNum)->state = Available;
+								//Change ownership and send message to waiting client
+								PacketHeader *tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
+								MailHeader *tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
+								if (!(serverLocks->at(lockNum)->packetWaitQ->empty())) {
+									serverLocks->at(lockNum)->packetWaitQ->pop();
+									serverLocks->at(lockNum)->mailWaitQ->pop();
+									serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
+									serverLocks->at(lockNum)->ownerMailboxNum = tempOutMailHdr->to;
+									replyStream << -2;
+									sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+								}
+								else {
+									serverLocks->at(lockNum)->state = Available;
+								}
 							}
 						}
-					}
 
-					if (ifReply) {
-						sendReply(outPktHdr, outMailHdr, replyStream);
+						if (ifReply) {
+							sendReply(outPktHdr, outMailHdr, replyStream);
+						}
 					}
 					break;
 				}
@@ -437,38 +471,44 @@ void Server() {
 					ss >> cvNum >> lockNum; //get lock and CV num
 					DEBUG('T', "Broadcast CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
 						  inPktHdr->from, inMailHdr->from);
+					
+					bool ifEnter = checkIfEnter(cvNum, lockNum, inPktHdr->from, inMailHdr->from, SC_Server_Broadcast1, 16);
 
-					//Validate user input: send -1 if bad
-					if (lockNum < 0 || lockNum >= serverLocks->size() || cvNum < 0 || cvNum >= serverCVs->size()) {
-						replyStream << -1;
-					} else {
-						//Do some more checks to ensure we can broadcast
-						if (serverLocks->at(lockNum) == NULL || serverCVs->at(cvNum) == NULL) {
-							replyStream << -1;
-						} else if (serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to ||
-								   serverLocks->at(lockNum)->ownerMailboxNum != outMailHdr->to ||
-								   (serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
+					if(ifEnter) {
+						lockNum = lockNum % 100;
+						cvNum = cvNum % 100;
+						//Validate user input: send -1 if bad
+						if (lockNum < 0 || lockNum >= serverLocks->size() || cvNum < 0 || cvNum >= serverCVs->size()) {
 							replyStream << -1;
 						} else {
-							//If there is a waiting client, send reply so they can wake and go on to acquire
-							if (serverCVs->at(cvNum)->packetWaitQ->empty()) {
+							//Do some more checks to ensure we can broadcast
+							if (serverLocks->at(lockNum) == NULL || serverCVs->at(cvNum) == NULL) {
+								replyStream << -1;
+							} else if (serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to ||
+									   serverLocks->at(lockNum)->ownerMailboxNum != outMailHdr->to ||
+									   (serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
 								replyStream << -1;
 							} else {
-								//do a simple loop and wake everybody up by message
-								while (!serverCVs->at(cvNum)->packetWaitQ->empty()) {
-									replyStream << -2;
-									PacketHeader *tempOutPktHdr = serverCVs->at(cvNum)->packetWaitQ->front();
-									serverCVs->at(cvNum)->packetWaitQ->pop();
-									MailHeader *tempOutMailHdr = serverCVs->at(cvNum)->mailWaitQ->front();
-									serverCVs->at(cvNum)->mailWaitQ->pop();
-									sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+								//If there is a waiting client, send reply so they can wake and go on to acquire
+								if (serverCVs->at(cvNum)->packetWaitQ->empty()) {
+									replyStream << -1;
+								} else {
+									//do a simple loop and wake everybody up by message
+									while (!serverCVs->at(cvNum)->packetWaitQ->empty()) {
+										replyStream << -2;
+										PacketHeader *tempOutPktHdr = serverCVs->at(cvNum)->packetWaitQ->front();
+										serverCVs->at(cvNum)->packetWaitQ->pop();
+										MailHeader *tempOutMailHdr = serverCVs->at(cvNum)->mailWaitQ->front();
+										serverCVs->at(cvNum)->mailWaitQ->pop();
+										sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+									}
+									serverCVs->at(
+											cvNum)->lockID = -1; //since we've woken everyone up, no one is waiting on the lock anymore
 								}
-								serverCVs->at(
-										cvNum)->lockID = -1; //since we've woken everyone up, no one is waiting on the lock anymore
 							}
 						}
+						sendReply(outPktHdr, outMailHdr, replyStream);
 					}
-					sendReply(outPktHdr, outMailHdr, replyStream);
 					break;
 				}
 				case SC_CreateMV: {
@@ -790,7 +830,7 @@ void Server() {
 					}
 					break;
 				}
-				case SC_Server_Signal: {
+				case SC_Server_Signal1: {
 					DEBUG('S', "Message: Signal\n");
 					ss >> cvNum >> lockNum; //get lock and CV num
 					DEBUG('T', "SR from %d: Signal CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
@@ -798,7 +838,23 @@ void Server() {
 
 					break;
 				}
-				case SC_Server_Wait: {
+				case SC_Server_Signal2: {
+					DEBUG('S', "Message: Signal\n");
+					ss >> cvNum >> lockNum; //get lock and CV num
+					DEBUG('T', "SR from %d: Signal CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
+						  inPktHdr->from, inMailHdr->from);
+
+					break;
+				}
+				case SC_Server_Signal3: {
+					DEBUG('S', "Message: Signal\n");
+					ss >> cvNum >> lockNum; //get lock and CV num
+					DEBUG('T', "SR from %d: Signal CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
+						  inPktHdr->from, inMailHdr->from);
+
+					break;
+				}								
+				case SC_Server_Wait1: {
 					DEBUG('S', "Message: Wait\n");
 					ss >> cvNum >> lockNum; //get lock and CV num
 					DEBUG('T', "SR from %d: Wait on CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
@@ -806,7 +862,23 @@ void Server() {
 
 					break;
 				}
-				case SC_Server_Broadcast: {
+				case SC_Server_Wait2: {
+					DEBUG('S', "Message: Wait\n");
+					ss >> cvNum >> lockNum; //get lock and CV num
+					DEBUG('T', "SR from %d: Wait on CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
+						  inPktHdr->from, inMailHdr->from);
+
+					break;
+				}
+				case SC_Server_Wait3: {
+					DEBUG('S', "Message: Wait\n");
+					ss >> cvNum >> lockNum; //get lock and CV num
+					DEBUG('T', "SR from %d: Wait on CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
+						  inPktHdr->from, inMailHdr->from);
+
+					break;
+				}								
+				case SC_Server_Broadcast1: {
 					DEBUG('S', "Message: Broadcast\n");
 					ss >> cvNum >> lockNum; //get lock and CV num
 					DEBUG('T', "SR from %d: Broadcast CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
@@ -814,6 +886,22 @@ void Server() {
 
 					break;
 				}
+				case SC_Server_Broadcast2: {
+					DEBUG('S', "Message: Broadcast\n");
+					ss >> cvNum >> lockNum; //get lock and CV num
+					DEBUG('T', "SR from %d: Broadcast CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
+						  inPktHdr->from, inMailHdr->from);
+
+					break;
+				}
+				case SC_Server_Broadcast3: {
+					DEBUG('S', "Message: Broadcast\n");
+					ss >> cvNum >> lockNum; //get lock and CV num
+					DEBUG('T', "SR from %d: Broadcast CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
+						  inPktHdr->from, inMailHdr->from);
+
+					break;
+				}								
 				case SC_Server_CreateMV: {
 					DEBUG('S', "Message: Server Create monitor variable\n");
 					ss.get();
