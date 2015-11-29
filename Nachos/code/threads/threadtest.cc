@@ -654,10 +654,10 @@ void Server() {
 
 					//If doesn't, send a reply of NO to server that made the request
 					if (existingLockID == -1) {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_CreateLock, requestID, machineID, mailbox, 0);
 					}
 					else { //Lock does exist, so just give its ID to the client and reply with yes to server making request
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_CreateLock, requestID, machineID, mailbox, 1);						
 						sendReplyToClient(machineID, mailbox, existingLockID + uniqueID);
 					}
 					break;
@@ -669,9 +669,9 @@ void Server() {
 
 					//If it's not in our indexes, we don't have it, so reply no
 					if(lockNum / 100 != myMachineID) {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_DestroyLock, requestID, machineID, mailbox, 0);
 					} else {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);							
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_DestroyLock, requestID, machineID, mailbox, 1);							
 						lockNum = lockNum % 100; //grab lock index
 
 						if (lockNum < 0 || lockNum >= serverLocks->size()) {
@@ -706,10 +706,10 @@ void Server() {
 
 					//If doesn't, send a reply of NO to server that made the request
 					if (existingCVID == -1) {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_CreateCondition, requestID, machineID, mailbox, 0);
 					}
 					else { //Condition does exist, so just give its ID to the client and reply with yes to server making request
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_CreateCondition, requestID, machineID, mailbox, 1);						
 						sendReplyToClient(machineID, mailbox, existingCVID + uniqueID);
 					}
 					break;
@@ -721,9 +721,9 @@ void Server() {
 
 					//If it's not in our indexes, we don't have it, so reply no
 					if(cvNum / 100 != myMachineID) {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_DestroyCondition, requestID, machineID, mailbox, 0);
 					} else {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_DestroyCondition, requestID, machineID, mailbox, 1);
 						cvNum = cvNum % 100; //grab CV index
 
 						if (cvNum < 0 || cvNum >= serverCVs->size()) {
@@ -748,9 +748,9 @@ void Server() {
 					
 					//If it's not in our indexes, we don't have it, so reply no
 					if(lockNum / 100 != myMachineID) {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Acquire, requestID, machineID, mailbox, 0);
 					} else {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Acquire, requestID, machineID, mailbox, 1);						
 						lockNum = lockNum % 100;
 
 						//Validate user input: send 0 if bad
@@ -871,10 +871,10 @@ void Server() {
 
 					//If doesn't, send a reply of NO to server that made the request
 					if (existingMVID == -1) {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_CreateMV, requestID, machineID, mailbox, 0);
 					}
 					else { //Monitor variable does exist, so just give its ID to the client and reply with yes to server making request
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_CreateMV, requestID, machineID, mailbox, 1);						
 						sendReplyToClient(machineID, mailbox, existingMVID + uniqueID);
 					}
 					break;
@@ -886,9 +886,9 @@ void Server() {
 
 					//If it's not in our indexes, we don't have it, so reply no
 					if(mvNum / 100 != myMachineID) {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_DestroyMV, requestID, machineID, mailbox, 0);
 					} else {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_DestroyMV, requestID, machineID, mailbox, 1);						
 						mvNum = mvNum % 100; //grab MV index
 
 						if (mvNum < 0 || mvNum >= serverMVs->size()) {
@@ -913,9 +913,9 @@ void Server() {
 
 					//If it's not in our indexes, we don't have it, so reply no
 					if(mvNum / 100 != myMachineID) {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_SetMV, requestID, machineID, mailbox, 0);
 					} else {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_SetMV, requestID, machineID, mailbox, 1);						
 						mvNum = mvNum % 100; //grab MV index
 
 						if (mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {
@@ -942,9 +942,9 @@ void Server() {
 
 					//If it's not in our indexes, we don't have it, so reply no
 					if(mvNum / 100 != myMachineID) {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_GetMV, requestID, machineID, mailbox, 0);
 					} else {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_GetMV, requestID, machineID, mailbox, 1);						
 						mvNum = mvNum % 100; //grab MV index
 
 						if (mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {

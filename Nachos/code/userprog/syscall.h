@@ -68,22 +68,22 @@
 #define SC_Server_SetMV			    125
 #define SC_Server_GetMV			    126
 
-#define SC_Server_Reply_Acquire           	211
-#define SC_Server_Reply_Release		    	212
-#define SC_Server_Reply_Wait			    213
-#define SC_Server_Reply_Signal				214
-#define	SC_Server_Reply_Broadcast		    215
-#define SC_Server_Reply_CreateLock			216
-#define SC_Server_Reply_DestroyLock			217
-#define SC_Server_Reply_CreateCondition		218
-#define SC_Server_Reply_DestroyCondition	219
-#define SC_Server_Reply_Rand              	220
-#define SC_Server_Reply_Printf            	221
-#define SC_Server_Reply_Scanf			    222
-#define SC_Server_Reply_CreateMV			223
-#define SC_Server_Reply_DestroyMV         	224
-#define SC_Server_Reply_SetMV			    225
-#define SC_Server_Reply_GetMV			    226
+#define SC_ServerReply_Acquire           	211
+#define SC_ServerReply_Release		    	212
+#define SC_ServerReply_Wait			    	213
+#define SC_ServerReply_Signal				214
+#define	SC_ServerReply_Broadcast		    215
+#define SC_ServerReply_CreateLock			216
+#define SC_ServerReply_DestroyLock			217
+#define SC_ServerReply_CreateCondition		218
+#define SC_ServerReply_DestroyCondition		219
+#define SC_ServerReply_Rand              	220
+#define SC_ServerReply_Printf            	221
+#define SC_ServerReply_Scanf			    222
+#define SC_ServerReply_CreateMV				223
+#define SC_ServerReply_DestroyMV         	224
+#define SC_ServerReply_SetMV			    225
+#define SC_ServerReply_GetMV			    226
 
 
 #define MAXFILENAME 256
