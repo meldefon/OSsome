@@ -96,7 +96,7 @@
 #define SC_ServerReply_Wait3				230
 #define SC_ServerReply_Broadcast2			231
 #define SC_ServerReply_Broadcast3			232
-
+#define SC_ServerReply_Signal4				233
 
 #define MAXFILENAME 256
 
