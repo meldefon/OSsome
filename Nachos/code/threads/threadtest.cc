@@ -981,7 +981,7 @@ void Server() {
 			switch(type) {
 				case SC_ServerReply_CreateLock: {
 					DEBUG('S', "Message: Server Reply Create lock\n");
-					DEBUG('T', "SR from %d: Create lock request %s for client %d, mailbox %d\n", inPktHdr->from, currentRequest->name.c_str(), machineID,
+					DEBUG('T', "SR from %d: Create lock reply %s for client %d, mailbox %d\n", inPktHdr->from, currentRequest->name.c_str(), machineID,
 						  mailbox);
 
 					if(!yes) {
@@ -1005,6 +1005,29 @@ void Server() {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, (serverLocks->size() - 1) + uniqueID);
+							} else {
+								currentRequest->noCount++;
+							}
+						} else {
+							currentRequest->yes = true;
+						}
+					}
+					break;
+				}
+				case SC_ServerReply_DestroyLock: {
+					DEBUG('S', "Message: Server Reply Destroy lock\n");
+					DEBUG('T', "SR from %d: Set destroy lock reply for machine %d, mailbox %d\n", inPktHdr->from, machineID, mailbox);
+						  mailbox);
+
+					if(!yes) {
+						//if we got NO
+						if(reply == 0) {
+							noCount++;
+							//if we got all our NO replies, perform action
+							if(noCount == NUM_SERVERS - 1) {
+								//Send reply
+								currentRequest->yes = true;
+								sendReplyToClient(machineID, mailbox, -1);
 							} else {
 								currentRequest->noCount++;
 							}
