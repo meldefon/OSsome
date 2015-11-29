@@ -105,7 +105,9 @@ void Server() {
 
 	cout << "Running server\n";
 	cout << "Set to handle "<<NUM_SERVERS<<" servers.\n";
-
+			
+	//uniqueID generator for shared variables
+	int uniqueID = myMachineID * 100;
 
 	while (true) {
 
@@ -160,12 +162,10 @@ void Server() {
 					//If doesn't, check to see if it exists on other servers before making
 					if (existingLockID == -1) {
 						NewServerRequest(serverRQs, name, SC_Server_CreateLock, inPktHdr->from, inMailHdr->from, 0, 0, 0);
+					} else { //Lock does exist, so just give its ID
+						replyStream << existingLockID + uniqueID;
+						sendReply(outPktHdr, outMailHdr, replyStream);
 					}
-					else { //Lock does exist, so just give its ID
-						replyStream << existingLockID;
-					}
-
-					sendReply(outPktHdr, outMailHdr, replyStream);
 					break;
 				}
 				case SC_DestroyLock: {
@@ -174,20 +174,24 @@ void Server() {
 					DEBUG('T', "Set destroy lock %s for machine %d, mailbox %d\n",
 						  serverLocks->at(lockNum)->name.c_str(), inPktHdr->from, inMailHdr->from);
 
-
-					//Validate user input: send -1 if bad
-					if (lockNum < 0 || lockNum >= serverLocks->size()) {
-						replyStream << -1;
+					if(lockNum / 100 != myMachineID) {
+						NewServerRequest(serverRQs, NULL, SC_Server_DestroyLock, inPktHdr->from, inMailHdr->from, lockNum, 0, 0);
 					} else {
-						//Validate whether or not the lock exists
-						if (serverLocks->at(lockNum) == NULL) {
+						lockNum = lockNum % 100;
+						//Validate user input: send -1 if bad
+						if (lockNum < 0 || lockNum >= serverLocks->size()) {
 							replyStream << -1;
 						} else {
-							serverLocks->at(lockNum)->isToBeDeleted = true;
-							replyStream << -2;
+							//Validate whether or not the lock exists
+							if (serverLocks->at(lockNum) == NULL) {
+								replyStream << -1;
+							} else {
+								serverLocks->at(lockNum)->isToBeDeleted = true;
+								replyStream << -2;
+							}
 						}
+						sendReply(outPktHdr, outMailHdr, replyStream);
 					}
-					sendReply(outPktHdr, outMailHdr, replyStream);
 					break;
 				}
 				case SC_CreateCondition: {
@@ -211,6 +215,8 @@ void Server() {
 
 					//If CV doesn't exist, make a new one
 					if (existingCVID == -1) {
+						NewServerRequest(serverRQs, name, SC_Server_CreateCondition, inPktHdr->from, inMailHdr->from, 0, 0, 0);
+						/*
 						//Create Condition
 						ServerCV *newCV = new ServerCV;
 						newCV->name = name;
@@ -224,11 +230,12 @@ void Server() {
 
 						//Send reply - copy this template
 						replyStream << serverCVs->size() - 1;
+						*/
 					}
 					else { //CV does exist, so give its ID
-						replyStream << existingCVID;
+						replyStream << existingCVID + uniqueID;
+						sendReply(outPktHdr, outMailHdr, replyStream);
 					}
-					sendReply(outPktHdr, outMailHdr, replyStream);
 					break;
 				}
 				case SC_DestroyCondition: {
@@ -237,19 +244,24 @@ void Server() {
 					DEBUG('T', "Set destroy CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
 						  inPktHdr->from, inMailHdr->from);
 
-					//Validate user input: send -1 if bad
-					if (cvNum < 0 || cvNum >= serverCVs->size()) {
-						replyStream << -1;
+					if(cvNum / 100 != myMachineID) {
+						NewServerRequest(serverRQs, NULL, SC_Server_DestroyCondition, inPktHdr->from, inMailHdr->from, cvNum, 0, 0);
 					} else {
-						//Validate whether or not the CV exists
-						if (serverCVs->at(cvNum) == NULL) {
+						cvNum = cvNum % 100;					
+						//Validate user input: send -1 if bad
+						if (cvNum < 0 || cvNum >= serverCVs->size()) {
 							replyStream << -1;
 						} else {
-							serverCVs->at(cvNum)->isToBeDeleted = true;
-							replyStream << -2;
+							//Validate whether or not the CV exists
+							if (serverCVs->at(cvNum) == NULL) {
+								replyStream << -1;
+							} else {
+								serverCVs->at(cvNum)->isToBeDeleted = true;
+								replyStream << -2;
+							}
 						}
+						sendReply(outPktHdr, outMailHdr, replyStream);
 					}
-					sendReply(outPktHdr, outMailHdr, replyStream);
 					break;
 				}
 				case SC_Acquire: {
@@ -258,39 +270,43 @@ void Server() {
 					DEBUG('T', "Acquire lock %s for machine %d, mailbox %d\n", serverLocks->at(lockNum)->name.c_str(),
 						  inPktHdr->from, inMailHdr->from);
 
-
-					bool ifReply = true;
-
-					//Validate user input: send -1 if bad
-					if (lockNum < 0 || lockNum >= serverLocks->size()) {
-						replyStream << -1;
+					if(lockNum / 100 != myMachineID) {
+						NewServerRequest(serverRQs, NULL, SC_Server_Acquire, inPktHdr->from, inMailHdr->from, lockNum, 0, 0);
 					} else {
-						//Check whether or not we can acquire it
-						if (serverLocks->at(lockNum) == NULL) {
-							replyStream << -1;
-						} else if (serverLocks->at(lockNum)->ownerMachineID == outPktHdr->to &&
-								   serverLocks->at(lockNum)->ownerMailboxNum == outMailHdr->to &&
-								   serverLocks->at(lockNum)->state == Busy) {
-							//TODO add check int he else if above to make sure not just ownerMachineID, but some kind of
-							//TODO thread-specific id matches
-							replyStream << -1;
-						} else if (serverLocks->at(lockNum)->state == Busy) {
-							//Go on the wait queue
-							ifReply = false;
-							serverLocks->at(lockNum)->packetWaitQ->push(outPktHdr);
-							serverLocks->at(lockNum)->mailWaitQ->push(outMailHdr);
-						} else {
-							//Assign ownership of the lock and change state
-							serverLocks->at(lockNum)->ownerMachineID = outPktHdr->to;
-							serverLocks->at(lockNum)->ownerMailboxNum = outMailHdr->to;
-							serverLocks->at(lockNum)->state = Busy;
-							replyStream << -2;
-						}
-					}
+						lockNum = lockNum % 100;
+						bool ifReply = true;
 
-					//Only sends a reply if we were able to acquire OR there was an error
-					if (ifReply) {
-						sendReply(outPktHdr, outMailHdr, replyStream);
+						//Validate user input: send -1 if bad
+						if (lockNum < 0 || lockNum >= serverLocks->size()) {
+							replyStream << -1;
+						} else {
+							//Check whether or not we can acquire it
+							if (serverLocks->at(lockNum) == NULL) {
+								replyStream << -1;
+							} else if (serverLocks->at(lockNum)->ownerMachineID == outPktHdr->to &&
+									   serverLocks->at(lockNum)->ownerMailboxNum == outMailHdr->to &&
+									   serverLocks->at(lockNum)->state == Busy) {
+								//TODO add check int he else if above to make sure not just ownerMachineID, but some kind of
+								//TODO thread-specific id matches
+								replyStream << -1;
+							} else if (serverLocks->at(lockNum)->state == Busy) {
+								//Go on the wait queue
+								ifReply = false;
+								serverLocks->at(lockNum)->packetWaitQ->push(outPktHdr);
+								serverLocks->at(lockNum)->mailWaitQ->push(outMailHdr);
+							} else {
+								//Assign ownership of the lock and change state
+								serverLocks->at(lockNum)->ownerMachineID = outPktHdr->to;
+								serverLocks->at(lockNum)->ownerMailboxNum = outMailHdr->to;
+								serverLocks->at(lockNum)->state = Busy;
+								replyStream << -2;
+							}
+						}
+
+						//Only sends a reply if we were able to acquire OR there was an error
+						if (ifReply) {
+							sendReply(outPktHdr, outMailHdr, replyStream);
+						}
 					}
 					break;
 				}
@@ -300,38 +316,42 @@ void Server() {
 					DEBUG('T', "Release lock %s for machine %d, mailbox %d\n", serverLocks->at(lockNum)->name.c_str(),
 						  inPktHdr->from, inMailHdr->from);
 
-
-					//Validate user input: send -1 if bad
-					if (lockNum < 0 || lockNum >= serverLocks->size()) {
-						replyStream << -1;
+					if(lockNum / 100 != myMachineID) {
+						NewServerRequest(serverRQs, NULL, SC_Server_Acquire, inPktHdr->from, inMailHdr->from, lockNum, 0, 0);
 					} else {
-						//Check whether or not we can release it
-						if (serverLocks->at(lockNum) == NULL) {
-							replyStream << -1;
-						} else if (serverLocks->at(lockNum)->state == Available ||
-								   serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to ||
-								   serverLocks->at(lockNum)->ownerMailboxNum != outMailHdr->to) {
+						lockNum = lockNum % 100;
+						//Validate user input: send -1 if bad
+						if (lockNum < 0 || lockNum >= serverLocks->size()) {
 							replyStream << -1;
 						} else {
-							replyStream << -2;
-							//Check if anyone is waiting so they must be woken up
-							if (serverLocks->at(lockNum)->packetWaitQ->empty()) {
-								serverLocks->at(lockNum)->state = Available;
-								serverLocks->at(lockNum)->ownerMachineID = -1;
-								serverLocks->at(lockNum)->ownerMailboxNum = -1;
+							//Check whether or not we can release it
+							if (serverLocks->at(lockNum) == NULL) {
+								replyStream << -1;
+							} else if (serverLocks->at(lockNum)->state == Available ||
+									   serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to ||
+									   serverLocks->at(lockNum)->ownerMailboxNum != outMailHdr->to) {
+								replyStream << -1;
 							} else {
-								//Change ownership and send message to waiting client
-								PacketHeader *tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
-								serverLocks->at(lockNum)->packetWaitQ->pop();
-								MailHeader *tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
-								serverLocks->at(lockNum)->mailWaitQ->pop();
-								serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
-								serverLocks->at(lockNum)->ownerMailboxNum = tempOutMailHdr->to;
-								sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+								replyStream << -2;
+								//Check if anyone is waiting so they must be woken up
+								if (serverLocks->at(lockNum)->packetWaitQ->empty()) {
+									serverLocks->at(lockNum)->state = Available;
+									serverLocks->at(lockNum)->ownerMachineID = -1;
+									serverLocks->at(lockNum)->ownerMailboxNum = -1;
+								} else {
+									//Change ownership and send message to waiting client
+									PacketHeader *tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
+									serverLocks->at(lockNum)->packetWaitQ->pop();
+									MailHeader *tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
+									serverLocks->at(lockNum)->mailWaitQ->pop();
+									serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
+									serverLocks->at(lockNum)->ownerMailboxNum = tempOutMailHdr->to;
+									sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+								}
 							}
 						}
+						sendReply(outPktHdr, outMailHdr, replyStream);
 					}
-					sendReply(outPktHdr, outMailHdr, replyStream);
 					break;
 				}
 				case SC_Signal: {
@@ -487,7 +507,8 @@ void Server() {
 
 					//If MV doesn't exist, create one
 					if (existingMVID == -1) {
-
+						NewServerRequest(serverRQs, name, SC_Server_CreateMV, inPktHdr->from, inMailHdr->from, 0, 0, 0);
+						/*
 						//Create MV
 						ServerMV *newMV = new ServerMV;
 						newMV->name = name;
@@ -503,12 +524,12 @@ void Server() {
 
 						//Send reply - copy this template
 						replyStream << serverMVs->size() - 1;
+						*/
 					}
 					else {//MV Does exist, so return ID
-						replyStream << existingMVID;
+						replyStream << existingMVID + uniqueID;
+						sendReply(outPktHdr, outMailHdr, replyStream);
 					}
-
-					sendReply(outPktHdr, outMailHdr, replyStream);
 					break;
 				}
 				case SC_DestroyMV: {
@@ -517,20 +538,24 @@ void Server() {
 					DEBUG('T', "Set destroy MV %s for machine %d, mailbox %d\n", serverMVs->at(mvNum)->name.c_str(),
 						  inPktHdr->from, inMailHdr->from);
 
-
-					//Validate user input: send -1 if bad
-					if (mvNum < 0 || mvNum >= serverMVs->size()) {
-						replyStream << -1;
+					if(mvNum / 100 != myMachineID) {
+						NewServerRequest(serverRQs, NULL, SC_Server_DestroyMV, inPktHdr->from, inMailHdr->from, mvNum, 0, 0);
 					} else {
-						//Do one more check before destroying
-						if (serverMVs->at(mvNum) == NULL) {
+						mvNum = mvNum % 100;
+						//Validate user input: send -1 if bad
+						if (mvNum < 0 || mvNum >= serverMVs->size()) {
 							replyStream << -1;
 						} else {
-							serverMVs->at(mvNum)->isToBeDeleted = true;
-							replyStream << -2;
+							//Do one more check before destroying
+							if (serverMVs->at(mvNum) == NULL) {
+								replyStream << -1;
+							} else {
+								serverMVs->at(mvNum)->isToBeDeleted = true;
+								replyStream << -2;
+							}
 						}
+						sendReply(outPktHdr, outMailHdr, replyStream);
 					}
-					sendReply(outPktHdr, outMailHdr, replyStream);
 					break;
 				}
 				case SC_SetMV: {
@@ -540,22 +565,26 @@ void Server() {
 						  serverMVs->at(mvNum)->name.c_str(),
 						  mvPos, mvVal, inPktHdr->from, inMailHdr->from);
 
-
-					//Validate user input: send -1 if bad
-					if (mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {
-						replyStream << -1;
+					if(mvNum / 100 != myMachineID) {
+						NewServerRequest(serverRQs, NULL, SC_Server_SetMV, inPktHdr->from, inMailHdr->from, mvNum, mvPos, mvVal);
 					} else {
-						//Do some more checks before setting value
-						if (serverMVs->at(mvNum) == NULL) {
-							replyStream << -1;
-						} else if (mvPos >= serverMVs->at(mvNum)->length) {
+						mvNum = mvNum % 100;					
+						//Validate user input: send -1 if bad
+						if (mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {
 							replyStream << -1;
 						} else {
-							serverMVs->at(mvNum)->vals[mvPos] = mvVal;
-							replyStream << -2;
+							//Do some more checks before setting value
+							if (serverMVs->at(mvNum) == NULL) {
+								replyStream << -1;
+							} else if (mvPos >= serverMVs->at(mvNum)->length) {
+								replyStream << -1;
+							} else {
+								serverMVs->at(mvNum)->vals[mvPos] = mvVal;
+								replyStream << -2;
+							}
 						}
+						sendReply(outPktHdr, outMailHdr, replyStream);
 					}
-					sendReply(outPktHdr, outMailHdr, replyStream);
 					break;
 				}
 				case SC_GetMV: {
@@ -565,20 +594,25 @@ void Server() {
 						  serverMVs->at(mvNum)->name.c_str(),
 						  mvPos, inPktHdr->from, inMailHdr->from);
 
-					//Validate user input: send -1 if bad
-					if (mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {
-						replyStream << -1;
+					if(mvNum / 100 != myMachineID) {
+						NewServerRequest(serverRQs, NULL, SC_Server_GetMV, inPktHdr->from, inMailHdr->from, mvNum, mvPos, 0);
 					} else {
-						//Do some more checks before setting value
-						if (serverMVs->at(mvNum) == NULL) {
-							replyStream << -1;
-						} else if (mvPos >= serverMVs->at(mvNum)->length) {
+						mvNum = mvNum % 100;	
+						//Validate user input: send -1 if bad
+						if (mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {
 							replyStream << -1;
 						} else {
-							replyStream << serverMVs->at(mvNum)->vals[mvPos];
+							//Do some more checks before setting value
+							if (serverMVs->at(mvNum) == NULL) {
+								replyStream << -1;
+							} else if (mvPos >= serverMVs->at(mvNum)->length) {
+								replyStream << -1;
+							} else {
+								replyStream << serverMVs->at(mvNum)->vals[mvPos];
+							}
 						}
+						sendReply(outPktHdr, outMailHdr, replyStream);
 					}
-					sendReply(outPktHdr, outMailHdr, replyStream);
 					break;
 				}
 				default:
@@ -588,9 +622,6 @@ void Server() {
 			}
 		}
 		else if(type / 100 == 1) { //Handle a server request
-			//uniqueID generator for shared variables
-			int uniqueID = myMachineID * 100;
-
 			//Variables used to hold server request data for processing
 			int requestID;
 			int machineID;
@@ -639,17 +670,17 @@ void Server() {
 					if(lockNum / 100 != myMachineID) {
 						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
 					} else {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);							
 						lockNum = lockNum % 100; //grab lock index
 
 						if (lockNum < 0 || lockNum >= serverLocks->size()) {
-							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							sendReplyToClient(machineID, mailbox, -1);
 						} else {
 							//Validate whether or not the lock exists
 							if (serverLocks->at(lockNum) == NULL) {
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+								sendReplyToClient(machineID, mailbox, -1);
 							} else {
 								serverLocks->at(lockNum)->isToBeDeleted = true;
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);								
 								sendReplyToClient(machineID, mailbox, -2);
 							}
 						}
@@ -690,17 +721,17 @@ void Server() {
 					if(cvNum / 100 != myMachineID) {
 						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
 					} else {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);
 						cvNum = cvNum % 100; //grab CV index
 
 						if (cvNum < 0 || cvNum >= serverCVs->size()) {
-							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							sendReplyToClient(machineID, mailbox, -1);
 						} else {
 							//Validate whether or not the CV exists
 							if (serverCVs->at(cvNum) == NULL) {
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+								sendReplyToClient(machineID, mailbox, -1);
 							} else {
 								serverCVs->at(cvNum)->isToBeDeleted = true;
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);								
 								sendReplyToClient(machineID, mailbox, -2);
 							}
 						}
@@ -717,21 +748,21 @@ void Server() {
 					if(lockNum / 100 != myMachineID) {
 						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
 					} else {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
 						lockNum = lockNum % 100;
 
 						//Validate user input: send 0 if bad
 						if (lockNum < 0 || lockNum >= serverLocks->size()) {
-							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							sendReplyToClient(machineID, mailbox, -1);
 						} else {
 							//Check whether or not we can acquire it
 							if (serverLocks->at(lockNum) == NULL) {
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+								sendReplyToClient(machineID, mailbox, -1);
 							} else if (serverLocks->at(lockNum)->ownerMachineID == machineID &&
 									   serverLocks->at(lockNum)->ownerMailboxNum == mailbox &&
 									   serverLocks->at(lockNum)->state == Busy) {
 								//TODO add check int he else if above to make sure not just ownerMachineID, but some kind of
 								//TODO thread-specific id matches
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);
 								sendReplyToClient(machineID, mailbox, -1);
 							} else if (serverLocks->at(lockNum)->state == Busy) {
 								//Go on the wait queue
@@ -745,14 +776,12 @@ void Server() {
 
 								serverLocks->at(lockNum)->packetWaitQ->push(temp_outPktHdr);
 								serverLocks->at(lockNum)->mailWaitQ->push(temp_outMailHdr);
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);								
 							} else {
 								//Assign ownership of the lock and change state
 								serverLocks->at(lockNum)->ownerMachineID = machineID;
 								serverLocks->at(lockNum)->ownerMailboxNum = mailbox;
 								serverLocks->at(lockNum)->state = Busy;
 								sendReplyToClient(machineID, mailbox, -2);
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);								
 							}
 						}
 					}
@@ -767,17 +796,17 @@ void Server() {
 					if(lockNum / 100 != myMachineID) {
 						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
 					} else {
+						lockNum = lockNum % 100;							
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);
+
 						//Check whether or not we can release it
 						if (serverLocks->at(lockNum) == NULL) {
-							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							sendReplyToClient(machineID, mailbox, -1);
 						} else if (serverLocks->at(lockNum)->state == Available ||
 								   serverLocks->at(lockNum)->ownerMachineID != machineID ||
 								   serverLocks->at(lockNum)->ownerMailboxNum != mailbox) {
-							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);
 							sendReplyToClient(machineID, mailbox, -1);							
 						} else {
-							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);							
-							sendReplyToClient(machineID, mailbox, -2);							
 							//Check if anyone is waiting so they must be woken up
 							if (serverLocks->at(lockNum)->packetWaitQ->empty()) {
 								serverLocks->at(lockNum)->state = Available;
@@ -789,11 +818,11 @@ void Server() {
 								serverLocks->at(lockNum)->packetWaitQ->pop();
 								MailHeader *tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
 								serverLocks->at(lockNum)->mailWaitQ->pop();
-								serverLocks->at(lockNum)->ownerMachineID = machineID;
-								serverLocks->at(lockNum)->ownerMailboxNum = mailbox;
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);							
-								sendReplyToClient(machineID, mailbox, -2);							
+								serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
+								serverLocks->at(lockNum)->ownerMailboxNum = tempOutMailHdr->to;
+								sendReplyToClient(tempOutPktHdr->to, tempOutMailHdr->to, -2);							
 							}
+							sendReplyToClient(machineID, mailbox, -2);							
 						}
 					}
 					break;
@@ -856,17 +885,17 @@ void Server() {
 					if(mvNum / 100 != myMachineID) {
 						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
 					} else {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
 						mvNum = mvNum % 100; //grab MV index
 
 						if (mvNum < 0 || mvNum >= serverMVs->size()) {
-							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							sendReplyToClient(machineID, mailbox, -1);
 						} else {
 							//Validate whether or not the MV exists
 							if (serverMVs->at(mvNum) == NULL) {
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+								sendReplyToClient(machineID, mailbox, -1);
 							} else {
 								serverMVs->at(mvNum)->isToBeDeleted = true;
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);								
 								sendReplyToClient(machineID, mailbox, -2);
 							}
 						}
@@ -883,19 +912,19 @@ void Server() {
 					if(mvNum / 100 != myMachineID) {
 						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
 					} else {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
 						mvNum = mvNum % 100; //grab MV index
 
 						if (mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {
-							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							sendReplyToClient(machineID, mailbox, -1);
 						} else {
 							//Do some more checks before setting value
 							if (serverMVs->at(mvNum) == NULL) {
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+								sendReplyToClient(machineID, mailbox, -1);
 							} else if (mvPos >= serverMVs->at(mvNum)->length) {
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+								sendReplyToClient(machineID, mailbox, -1);
 							} else {
 								serverMVs->at(mvNum)->vals[mvPos] = mvVal;
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);
 								sendReplyToClient(machineID, mailbox, -2);
 							}
 						}
@@ -912,18 +941,18 @@ void Server() {
 					if(mvNum / 100 != myMachineID) {
 						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
 					} else {
+						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);						
 						mvNum = mvNum % 100; //grab MV index
 
 						if (mvNum < 0 || mvNum >= serverMVs->size() || mvPos < 0) {
-							sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+							sendReplyToClient(machineID, mailbox, -1);
 						} else {
 							//Do some more checks before getting value
 							if (serverMVs->at(mvNum) == NULL) {
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+								sendReplyToClient(machineID, mailbox, -1);
 							} else if (mvPos >= serverMVs->at(mvNum)->length) {
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+								sendReplyToClient(machineID, mailbox, -1);
 							} else {
-								sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);
 								sendReplyToClient(machineID, mailbox, serverMVs->at(mvNum)->vals[mvPos]);
 							}
 						}
@@ -936,14 +965,17 @@ void Server() {
 					break;
 			}
 
-
 		} else { //handle a server reply to one of our requests
+			switch(type) {
+				case SC_Server_Reply_Acquire: {
 
+				}
+				default:
+					cout << "Unkonwn message type. Ignoring.\n";
+					continue;
+					break;
+			}
 		}
-
-
-
-
 
 		//cout<<serverLocks->at(0)->packetWaitQ->size()<<"\n";
 
