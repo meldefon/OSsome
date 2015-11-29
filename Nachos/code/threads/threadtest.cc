@@ -29,7 +29,7 @@ void sendReply(PacketHeader* outPktHdr,MailHeader* outMailHdr,stringstream& repl
 }
 void sendReplyToServer(PacketHeader* outPktHdr, MailHeader* outMailHdr, int requestType, int requestID, int machineID, int mailbox, int reply) {
 	stringstream replyStream; 
-	replyStream << requestType << requestID << machineID << mailbox << reply;
+	replyStream << requestType << " " << requestID << " " << machineID <<  " " << mailbox << " " << reply;
 	sendReply(outPktHdr, outMailHdr, replyStream);
 }
 
@@ -137,6 +137,7 @@ void Server() {
 		//Decide what to do based on message type
 		string name;
 		int lockNum, cvNum, mvSiz, mvNum, mvPos, mvVal;
+		int requestID, machineID, mailbox, arg1, arg2, arg3, reply;
 		stringstream replyStream;
 		//First if statement does server vs. client request code
 		if(type%100==type) {
@@ -622,14 +623,6 @@ void Server() {
 			}
 		}
 		else if(type / 100 == 1) { //Handle a server request
-			//Variables used to hold server request data for processing
-			int requestID;
-			int machineID;
-			int mailbox;
-			int arg1;
-			int arg2;
-			int arg3;
-
 			//pull some info right away since these are required by all requests
 			ss >> requestID;
 			ss >> machineID;
@@ -969,9 +962,57 @@ void Server() {
 			}
 
 		} else { //handle a server reply to one of our requests
-			switch(type) {
-				case SC_Server_Reply_Acquire: {
+			//pull some info right away since these are required by all replies
+			ss >> requestID;
+			ss >> machineID;
+			ss >> mailbox;
+			ss >> reply;
 
+			//will hold data about the current request
+			ServerRequest* currentRequest;
+			int noCount;
+			bool yes;
+
+			//populate data regarding current server request
+			currentRequest = serverRQs->at(requestID);
+			noCount = currentRequest->noCount;
+			yes = currentRequest->yes;
+
+			switch(type) {
+				case SC_ServerReply_CreateLock: {
+					DEBUG('S', "Message: Server Reply Create lock\n");
+					DEBUG('T', "SR from %d: Create lock request %s for client %d, mailbox %d\n", inPktHdr->from, currentRequest->name.c_str(), machineID,
+						  mailbox);
+
+					if(!yes) {
+						//if we got NO
+						if(reply == 0) {
+							noCount++;
+							//if we got all our NO replies, perform action
+							if(noCount == NUM_SERVERS - 1) {
+								ServerLock *newLock = new ServerLock;
+								newLock->name = currentRequest->name;
+								newLock->packetWaitQ = new queue<PacketHeader *>();
+								newLock->mailWaitQ = new queue<MailHeader *>();
+								newLock->state = Available;
+								newLock->isToBeDeleted = false;
+								newLock->ownerMachineID = -1;
+								newLock->ownerMailboxNum = -1;
+
+								//Add to vector
+								serverLocks->push_back(newLock);
+
+								//Send reply
+								currentRequest->yes = true;
+								sendReplyToClient(machineID, mailbox, (serverLocks->size() - 1) + uniqueID);
+							} else {
+								currentRequest->noCount++;
+							}
+						} else {
+							currentRequest->yes = true;
+						}
+					}
+					break;
 				}
 				default:
 					cout << "Unkonwn message type. Ignoring.\n";
