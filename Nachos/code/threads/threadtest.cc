@@ -1122,6 +1122,75 @@ void Server() {
 					}
 					break;
 				}
+				case SC_ServerReply_Signal: {
+					DEBUG('S', "Message: Reply Release\n");
+					DEBUG('T', "SR from %d: Release lock reply %d for machine %d, mailbox %d\n", inPktHdr->from, currentRequest->arg1,
+						  machineID, mailbox);
+
+					if(!yes) {
+						//if we got NO
+						if(reply == 0) {
+							noCount++;
+							//if we got all our NO replies, perform action
+							if(noCount == NUM_SERVERS - 1) {
+								//Send reply
+								currentRequest->yes = true;
+								sendReplyToClient(machineID, mailbox, -1);
+							} else {
+								currentRequest->noCount++;
+							}
+						} else {
+							currentRequest->yes = true;
+						}
+					}
+					break;
+				}
+				case SC_ServerReply_Wait: {
+					DEBUG('S', "Message: Reply Release\n");
+					DEBUG('T', "SR from %d: Release lock reply %d for machine %d, mailbox %d\n", inPktHdr->from, currentRequest->arg1,
+						  machineID, mailbox);
+
+					if(!yes) {
+						//if we got NO
+						if(reply == 0) {
+							noCount++;
+							//if we got all our NO replies, perform action
+							if(noCount == NUM_SERVERS - 1) {
+								//Send reply
+								currentRequest->yes = true;
+								sendReplyToClient(machineID, mailbox, -1);
+							} else {
+								currentRequest->noCount++;
+							}
+						} else {
+							currentRequest->yes = true;
+						}
+					}
+					break;
+				}
+				case SC_ServerReply_Broadcast: {
+					DEBUG('S', "Message: Reply Release\n");
+					DEBUG('T', "SR from %d: Release lock reply %d for machine %d, mailbox %d\n", inPktHdr->from, currentRequest->arg1,
+						  machineID, mailbox);
+
+					if(!yes) {
+						//if we got NO
+						if(reply == 0) {
+							noCount++;
+							//if we got all our NO replies, perform action
+							if(noCount == NUM_SERVERS - 1) {
+								//Send reply
+								currentRequest->yes = true;
+								sendReplyToClient(machineID, mailbox, -1);
+							} else {
+								currentRequest->noCount++;
+							}
+						} else {
+							currentRequest->yes = true;
+						}
+					}
+					break;
+				}				
 				default:
 					cout << "Unkonwn message type. Ignoring.\n";
 					continue;
