@@ -118,7 +118,7 @@ bool checkIfEnter(vector<ServerRequest*>* serverRQs, vector<ServerLock*>* server
 				sendReplyToClient(machineID, mailbox, -1);
 			} else if(serverCVs->at(cvNum) == NULL) {
 				sendReplyToClient(machineID, mailbox, -1);
-			} else if(serverCVs->at(cvNum)->lockID != lockNum) {
+			} else if(serverCVs->at(cvNum)->lockID != lockNum || (requestType == SC_Server_Wait1 && serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
 				sendReplyToClient(machineID, mailbox, -1);
 			} else {
 				NewServerRequest(serverRQs, NULL, requestType + offset, machineID, mailbox, cvNum, lockNum, 0);
@@ -1053,25 +1053,23 @@ void Server() {
 					//Case where lock is on server, but CV is on another server					
 					//If it's not in our indexes, we don't have it, so reply no
 					if(cvNum / 100 != myMachineID) {
-						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, 0);
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait1, requestID, machineID, mailbox, 0);
 					} else {
 						//Validate user input: send -1 if bad
 						if (cvNum < 0 || cvNum >= serverCVs->size()) {
 							sendReplyToClient(machineID, mailbox, -1);
-							sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, -1);												
+							sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait1, requestID, machineID, mailbox, -1);												
 						} else {
 							//Do some more checks to ensure we can wait
 							if (serverCVs->at(cvNum) == NULL) {
 								sendReplyToClient(machineID, mailbox, -1);
-								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, -1);												
-							} else if (serverLocks->at(lockNum)->ownerMachineID != machineID ||
-									   serverLocks->at(lockNum)->ownerMailboxNum != mailbox ||
-									   (serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
+								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait1, requestID, machineID, mailbox, -1);												
+							} else if (serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1) {
 								//Enters this condition block if the lock owner does not match machine ID
 								//And if the CV lock does not match lock ID and the lock is assigned
 								//Which means it doesnt have index value of -1
 								sendReplyToClient(machineID, mailbox, -1);
-								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, -1);																				
+								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait1, requestID, machineID, mailbox, -1);																				
 							} else {
 								//If CV is unused, assign new lock
 								if (serverCVs->at(cvNum)->lockID == -1) {
@@ -1091,18 +1089,64 @@ void Server() {
 								serverCVs->at(cvNum)->mailWaitQ->push(temp_outMailHdr);
 								
 								//send reply to server where ownership of the lock will be changed
-								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, 1);												
+								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait1, requestID, machineID, mailbox, 1);												
 							}
 						}
 					}
 					break;
 				}
 				case SC_Server_Wait2: {
-					DEBUG('S', "Message: Wait\n");
+					DEBUG('S', "Message: Wait1\n");
 					ss >> cvNum >> lockNum; //get lock and CV num
-					DEBUG('T', "SR from %d: Wait on CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
+					DEBUG('T', "SR from %d: Wait1 CV %d for machine %d, mailbox %d\n", cvNum,
 						  inPktHdr->from, inMailHdr->from);
+					
+					//Replies: -1 we stop looking since lock is bad, 1 is we have the lock, 0 is we do not have the lock.
+					//Case where CV is on server, but lock is on another server					
+					//If it's not in our indexes, we don't have it, so reply no
+					if(lockNum / 100 != myMachineID) {
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait2, requestID, machineID, mailbox, 0);
+					} else {
+						int lockID = lockNum;
+						lockNum = lockNum % 100;
+						//Validate user input: send -1 if bad
+						if (lockNum < 0 || lockNum >= serverLocks->size()) {
+							sendReplyToClient(machineID, mailbox, -1);
+							sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait2, requestID, machineID, mailbox, -1);												
+						} else {
+							//Do some more checks to ensure we can wait
+							if (serverLocks->at(lockNum) == NULL) {
+								sendReplyToClient(machineID, mailbox, -1);
+								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait2, requestID, machineID, mailbox, -1);												
+							} else if (serverLocks->at(lockNum)->ownerMachineID != machineID ||
+									   serverLocks->at(lockNum)->ownerMailboxNum != mailbox) {
+								//Enters this condition block if the lock owner does not match machine ID
+								//Which means it doesnt have index value of -1
+								sendReplyToClient(machineID, mailbox, -1);
+								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait2, requestID, machineID, mailbox, -1);																				
+							} else {
+								
+								//Change ownership of lock and send message to waiting client
+								PacketHeader *tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
+								MailHeader *tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
 
+								if (!(serverLocks->at(lockNum)->packetWaitQ->empty())) {
+									serverLocks->at(lockNum)->packetWaitQ->pop();
+									serverLocks->at(lockNum)->mailWaitQ->pop();
+									serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
+									serverLocks->at(lockNum)->ownerMailboxNum = tempOutMailHdr->to;
+									replyStream << -2;
+									sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+								}
+								else {
+									serverLocks->at(lockNum)->state = Available;
+								}
+								
+								//send reply to server where CV will change lockID and push client onto wait queue
+								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait2, requestID, machineID, mailbox, 1);												
+							}
+						}
+					}
 					break;
 				}
 				case SC_Server_Wait3: {
@@ -1597,6 +1641,7 @@ void Server() {
 					DEBUG('S', "Message: Reply Wait1\n");
 					DEBUG('T', "SR from %d: Wait1 reply %d for machine %d, mailbox %d\n", inPktHdr->from, reply,
 						  machineID, mailbox);
+					//case where lock is on server, but CV is on another server
 
 					if(!yes) {
 						//if we got NO
@@ -1634,6 +1679,48 @@ void Server() {
 					}
 					break;
 				}
+				case SC_ServerReply_Wait2: {
+					DEBUG('S', "Message: Reply Wait2\n");
+					DEBUG('T', "SR from %d: Wait2 reply %d for machine %d, mailbox %d\n", inPktHdr->from, reply,
+						  machineID, mailbox);
+					//case where CV is on server, but lock is on another server
+
+					if(!yes) {
+						//if we got NO
+						if(reply == 0) {
+							currentRequest->noCount++;
+							//if we got all our NO replies, perform action
+							if(noCount == NUM_SERVERS - 1) {
+								//Send reply
+								currentRequest->yes = true;
+								sendReplyToClient(machineID, mailbox, -1);
+							} else {
+								currentRequest->noCount++;
+							}
+						} else if(reply == -1) {
+							currentRequest->yes = true;
+						} else if(reply == 1) {
+							cvNum = currentRequest->arg1 % 100; //grab CV index
+
+							//If CV is unused, assign new lock
+							if (serverCVs->at(cvNum)->lockID == -1) {
+								serverCVs->at(cvNum)->lockID = currentRequest->arg2;
+							}
+
+							//Create headers for pushing client on waitqueue for CV
+							PacketHeader* temp_outPktHdr = new PacketHeader(); 
+							MailHeader* temp_outMailHdr = new MailHeader();
+				
+							temp_outPktHdr->to = machineID; //client machineID goes here
+							temp_outMailHdr->to = mailbox; //client mailbox
+							temp_outMailHdr->from = myMachineID; //our server machineID goes here
+								
+							//Push client info onto wait queue and change lock ownership on server
+							serverCVs->at(cvNum)->packetWaitQ->push(temp_outPktHdr);
+							serverCVs->at(cvNum)->mailWaitQ->push(temp_outMailHdr);						}
+					}
+					break;
+				}				
 				case SC_ServerReply_Broadcast1: {
 					DEBUG('S', "Message: Reply Release\n");
 					DEBUG('T', "SR from %d: Release lock reply %d for machine %d, mailbox %d\n", inPktHdr->from, currentRequest->arg1,
