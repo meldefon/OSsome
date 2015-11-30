@@ -88,7 +88,7 @@ void NewServerRequest(vector<ServerRequest*>* serverRQs, string name, int reques
 				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->name << "@";
 			} else if(requestType == SC_Server_Acquire || requestType == SC_Server_Release || requestType == SC_Server_DestroyLock || requestType == SC_Server_DestroyCondition || requestType == SC_Server_DestroyMV) {
 				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->arg1; 
-			} else if(requestType == SC_Server_Wait1 || requestType == SC_Server_Wait2 || requestType == SC_Server_Wait3 || requestType == SC_Server_Signal1 || requestType == SC_Server_Signal2 || requestType == SC_Server_Signal3 || requestType == SC_Server_Broadcast1 || requestType == SC_Server_Broadcast2 || requestType == SC_Server_Broadcast3) {
+			} else if(requestType == SC_Server_GetMV || requestType == SC_Server_Wait1 || requestType == SC_Server_Wait2 || requestType == SC_Server_Wait3 || requestType == SC_Server_Signal1 || requestType == SC_Server_Signal2 || requestType == SC_Server_Signal3 || requestType == SC_Server_Broadcast1 || requestType == SC_Server_Broadcast2 || requestType == SC_Server_Broadcast3) {
 				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->arg1 << " " << sr->arg2;
 			} else {
 				ss << sr->requestType << " " << sr->requestID << " " << sr->machineID << " " << sr->mailbox << " " << sr->arg1 << " " << sr->arg2 << " " << sr->arg3;
@@ -565,7 +565,7 @@ void Server() {
 
 					//If MV doesn't exist, create one
 					if (existingMVID == -1) {
-						NewServerRequest(serverRQs, name, SC_Server_CreateMV, inPktHdr->from, inMailHdr->from, 0, 0, 0);
+						NewServerRequest(serverRQs, name, SC_Server_CreateMV, inPktHdr->from, inMailHdr->from, mvSiz, 0, 0);
 					}
 					else {//MV Does exist, so return ID
 						replyStream << existingMVID + uniqueID;
@@ -1383,7 +1383,7 @@ void Server() {
 				}
 				case SC_Server_GetMV: {
 					DEBUG('S', "Message: GetMV\n");
-					ss >> mvNum >> mvPos >> mvVal;
+					ss >> mvNum >> mvPos;
 					DEBUG('T', "SR from %d: GetMV %d at postition %d to %d for machine %d, mailbox %d\n", inPktHdr->from, mvNum,
 						  mvPos, mvVal, machineID, mailbox);
 
@@ -1444,7 +1444,7 @@ void Server() {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(currentRequest->noCount == NUM_SERVERS - 1) {
-								DEBUG('S', "Creating lock\n");
+								cout<<"Creating Lock\n";
 								ServerLock *newLock = new ServerLock;
 								newLock->name = currentRequest->name;
 								newLock->packetWaitQ = new queue<PacketHeader *>();
@@ -1465,7 +1465,7 @@ void Server() {
 							}
 						} else {
 							currentRequest->yes = true;
-							DEBUG('T', "Other server %d already has lock.\n", inPktHdr->from);
+							cout<<"Other server %d already has lock.\n";
 						}
 					}
 					break;
@@ -1483,12 +1483,12 @@ void Server() {
 								//Send reply								
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
-								DEBUG('S', "Lock doesn't exist to destroy it\n");
+								cout<<"Lock doesn't exist to destroy it\n";
 							} else {
 								currentRequest->noCount++;
 							}
 						} else {
-							DEBUG('T', "Other server destroyed lock\n");
+							cout<<"Other server destroyed lock\n";
 							currentRequest->yes = true;
 						}
 					}
@@ -1567,13 +1567,13 @@ void Server() {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
-								DEBUG('S', "Lock doesn't exist to acquire it\n");								
+								cout<<"Lock doesn't exist to acquire it\n";								
 							} else {
 								currentRequest->noCount++;
 							}
 						} else {
 							currentRequest->yes = true;
-							DEBUG('T', "Other server %d acquired lock\n", inPktHdr->from);																					
+							cout<<"Other server %d acquired lock\n";																					
 						}
 					}
 					break;
@@ -1592,13 +1592,13 @@ void Server() {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
-								DEBUG('S', "Lock doesn't exist to release it\n");																
+								cout<<"Lock doesn't exist to release it\n";																
 							} else {
 								currentRequest->noCount++;
 							}
 						} else {
 							currentRequest->yes = true;
-							DEBUG('T', "Other server %d released lock\n", inPktHdr->from);																												
+							cout<<"Other server %d released lock\n";																												
 						}
 					}
 					break;
@@ -1617,13 +1617,13 @@ void Server() {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
-								DEBUG('S', "Condition doesn't exist to signal it\n");																								
+								cout<<"Condition doesn't exist to signal it\n";																								
 							} else {
 								currentRequest->noCount++;
 							}
 						} else {
 							currentRequest->yes = true;
-							DEBUG('T', "Other server %d signaled condition\n", inPktHdr->from);																																			
+							cout<<"Other server %d signaled condition\n";																																			
 						}
 					}
 					break;
@@ -1642,14 +1642,14 @@ void Server() {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
-								DEBUG('S', "Condition doesn't exist to signal it\n");																																
+								cout<<"Condition doesn't exist to signal it\n";																																
 							} else {
 								currentRequest->noCount++;
 							}
 						} else if(reply == -1) {
 							currentRequest->yes = true;
 							sendReplyToClient(machineID, mailbox, -1);
-							DEBUG('S', "Condition is bad, can't signal it\n");																																														
+							cout<<"Condition is bad, can't signal it\n";																																														
 						} else if(reply == 1) {
 							currentRequest->yes = true;
 							cvNum = currentRequest->arg1 % 100;
@@ -1672,7 +1672,7 @@ void Server() {
 								}
 								sendReplyToClient(machineID, mailbox, -2);
 							}
-							DEBUG('S', "Condition was signaled by us since lock exists\n");																																
+							cout<<"Condition was signaled by us since lock exists\n";																																
 						}
 					}
 					break;
@@ -1702,14 +1702,14 @@ void Server() {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
-								DEBUG('S', "Lock or CV is missing or neither of them exist\n");
+								cout<<"Lock or CV is missing or neither of them exist\n";
 							} else {
 								currentRequest->noCount++;
 							}
 						} else if(reply == -1) {
 							currentRequest->yes = true;
 							sendReplyToClient(machineID, mailbox, -1);
-							DEBUG('S', "Bad lock or CV\n");														
+							cout<<"Bad lock or CV\n";														
 						} else if(reply == 2) {
 							currentRequest->lockFound = true;
 
@@ -1717,11 +1717,11 @@ void Server() {
 							if(currentRequest->cvFound) {
 								sendReplyToServer(currentRequest->replyServerMachineID, currentRequest->replyServerMailbox, SC_ServerReply_Signal4, -1, machineID, mailbox, currentRequest->arg1);
 								currentRequest->yes = true;	
-								DEBUG('S', "Lock found and CV found\n");																																																							
+								cout<<"Lock found and CV found\n";																																																							
 							} else if(currentRequest->noCount == NUM_SERVERS - 2) {
 								sendReplyToClient(machineID, mailbox, -1);
 								currentRequest->yes = true;
-								DEBUG('S', "CV does not exist\n");																										
+								cout<<"CV does not exist\n";																										
 							}
 						} else if(reply == 3) {
 							currentRequest->cvFound = true;
@@ -1740,15 +1740,15 @@ void Server() {
 							if(currentRequest->lockFound) {
 								sendReplyToServer(currentRequest->replyServerMachineID, currentRequest->replyServerMailbox, SC_ServerReply_Signal4, -1, machineID, mailbox, currentRequest->arg1);
 								currentRequest->yes = true;		
-								DEBUG('S', "Lock found and CV found\n");																																																																																		
+								cout<<"Lock found and CV found\n";																																																																																		
 							} else if(currentRequest->noCount == NUM_SERVERS - 2) {
 								sendReplyToClient(machineID, mailbox, -1);
 								currentRequest->yes = true;
-								DEBUG('S', "Lock does not exist\n");																																		
+								cout<<"Lock does not exist\n";																																		
 							}
 						} else if(reply == 1) {
 							currentRequest->yes = true;	
-							DEBUG('S', "Wait completed on another server since both lock and cv were there\n");						
+							cout<<"Wait completed on another server since both lock and cv were there\n";						
 						}
 					}
 					break;
@@ -1795,13 +1795,13 @@ void Server() {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
-								DEBUG('S', "CV does not exist\n");
+								cout<<"CV does not exist\n";
 							} else {
 								currentRequest->noCount++;
 							}
 						} else if(reply == -1) {
 							currentRequest->yes = true;
-							DEBUG('S', "CV info is bad\n");
+							cout<<"CV info is bad\n";
 						} else if(reply == 1) {
 							lockNum = currentRequest->arg2 % 100; //grab lock index
 
@@ -1820,7 +1820,7 @@ void Server() {
 							else {
 								serverLocks->at(lockNum)->state = Available;
 							}
-							DEBUG('S', "CV and Lock exist, we are now waiting\n");
+							cout<<"CV and Lock exist, we are now waiting\n";
 						}
 					}
 					break;
@@ -1840,13 +1840,13 @@ void Server() {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
-								DEBUG('S', "Lock does not exist\n");
+								cout<<"Lock does not exist\n";
 							} else {
 								currentRequest->noCount++;
 							}
 						} else if(reply == -1) {
 							currentRequest->yes = true;
-							DEBUG('S', "Lock info is bad\n");
+							cout<<"Lock info is bad\n";
 						} else if(reply == 1) {
 							cvNum = currentRequest->arg1 % 100; //grab CV index
 
@@ -1866,7 +1866,7 @@ void Server() {
 							//Push client info onto wait queue and change lock ownership on server
 							serverCVs->at(cvNum)->packetWaitQ->push(temp_outPktHdr);
 							serverCVs->at(cvNum)->mailWaitQ->push(temp_outMailHdr);
-							DEBUG('S', "Lock and CV exist, lock ownership changed, we are now waiting\n");						}
+							cout<<"Lock and CV exist, lock ownership changed, we are now waiting\n";						}
 					}
 					break;
 				}
@@ -1895,14 +1895,14 @@ void Server() {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
-								DEBUG('S', "Lock or CV is missing or neither of them exist\n");
+								cout<<"Lock or CV is missing or neither of them exist\n";
 							} else {
 								currentRequest->noCount++;
 							}
 						} else if(reply == -1) {
 							currentRequest->yes = true;
 							sendReplyToClient(machineID, mailbox, -1);
-							DEBUG('S', "Bad lock or CV\n");																												
+							cout<<"Bad lock or CV\n";																												
 						} else if(reply == 2) {
 							currentRequest->lockFound = true;
 
@@ -1920,11 +1920,11 @@ void Server() {
 							//if the CV has been found, let server with CV handle it
 							if(currentRequest->cvFound) {
 								sendReplyToServer(currentRequest->replyServerMachineID, currentRequest->replyServerMailbox, SC_ServerReply_Wait4, -1, machineID, mailbox, currentRequest->arg1 * 1000000 + currentRequest->arg2);
-								DEBUG('S', "Lock found and CV found\n");																																																																																									
+								cout<<"Lock found and CV found\n";																																																																																									
 							} else if(currentRequest->noCount == NUM_SERVERS - 2) {
 								sendReplyToClient(machineID, mailbox, -1);
 								currentRequest->yes = true;	
-								DEBUG('S', "CV not found\n");																						
+								cout<<"CV not found\n";																						
 							}
 						} else if(reply == 3) {
 							currentRequest->cvFound = true;
@@ -1943,20 +1943,20 @@ void Server() {
 							//if the lock has been found, let server with CV handle it
 							if(currentRequest->lockFound) {
 								sendReplyToServer(currentRequest->replyServerMachineID, currentRequest->replyServerMailbox, SC_ServerReply_Wait4, -1, machineID, mailbox, currentRequest->arg1 * 1000000 + currentRequest->arg2);
-								DEBUG('S', "Lock found and CV found\n");																																																																																									
+								cout<<"Lock found and CV found\n";																																																																																									
 							} else if(currentRequest->noCount == NUM_SERVERS - 2) {
 								sendReplyToClient(machineID, mailbox, -1);
 								currentRequest->yes = true;
-								DEBUG('S', "Lock not found\n");
+								cout<<"Lock not found\n";
 							}
 						} else if(reply == 1) {
 							currentRequest->yes = true;	
-							DEBUG('S', "Wait completed on another server since both lock and cv were there\n");																			
+							cout<<"Wait completed on another server since both lock and cv were there\n";																			
 						} else if(reply == 4) {
 							//Send lock and change ownership, thereby releasing it
 							sendReplyToServer(currentRequest->replyServerMachineID, currentRequest->replyServerMailbox, SC_ServerReply_Wait5, -1, machineID, mailbox, currentRequest->arg2);
 							currentRequest->yes = true;
-							DEBUG('S', "Change lock ownership then we are done\n");
+							cout<<"Change lock ownership then we are done\n";
 						}
 					}
 					break;
@@ -2049,6 +2049,8 @@ void Server() {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(currentRequest->noCount == NUM_SERVERS - 1) {
+								mvSiz = currentRequest->arg1;
+
 								//Create MV
 								ServerMV *newMV = new ServerMV;
 								newMV->name = currentRequest->name;
@@ -2065,6 +2067,7 @@ void Server() {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, (serverMVs->size() - 1) + uniqueID);
+								cout<<"Creating MV\n";
 							} else {
 								currentRequest->noCount++;
 							}
@@ -2109,11 +2112,13 @@ void Server() {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
+								cout<<"MV not found\n";
 							} else {
 								currentRequest->noCount++;
 							}
 						} else {
 							currentRequest->yes = true;
+							cout<<"MV found\n";
 						}
 					}
 					break;
@@ -2131,11 +2136,13 @@ void Server() {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
+								cout<<"MV not found\n";
 							} else {
 								currentRequest->noCount++;
 							}
 						} else {
 							currentRequest->yes = true;
+							cout<<"MV found\n";
 						}
 					}
 					break;
