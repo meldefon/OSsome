@@ -105,26 +105,28 @@ bool checkIfEnter(vector<ServerRequest*>* serverRQs, vector<ServerLock*>* server
 	bool ifEnter = true;
 
 	//check which cases we may be dealing with in regard to finding locks or CVs on diff servers
-	if(lockNum % 100 != myMachineID || cvNum % 100 != myMachineID) {
+	if(lockNum / 100 != myMachineID || cvNum / 100 != myMachineID) {
 		ifEnter = false;
 		//check what is missing
-		if(lockNum % 100 != myMachineID && cvNum % 100 != myMachineID) {
+		if(lockNum / 100 != myMachineID && cvNum / 100 != myMachineID) {
 			NewServerRequest(serverRQs, NULL, requestType + offset + 1, machineID, mailbox, cvNum, lockNum, 0);
-		} else if(lockNum % 100 != myMachineID) {
+		} else if(lockNum / 100 != myMachineID) {
 			//Lock doesn't exist but CV does, so let's check to make sure CV info is valid
+			int cvID = cvNum;
 			cvNum = cvNum % 100;
 			
 			if (cvNum < 0 || cvNum >= serverCVs->size()) {
 				sendReplyToClient(machineID, mailbox, -1);
 			} else if(serverCVs->at(cvNum) == NULL) {
 				sendReplyToClient(machineID, mailbox, -1);
-			} else if(serverCVs->at(cvNum)->lockID != lockNum || (requestType == SC_Server_Wait1 && serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
+			} else if((requestType == SC_Server_Signal1 && serverCVs->at(cvNum)->lockID != lockNum) || (requestType == SC_Server_Wait1 && serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
 				sendReplyToClient(machineID, mailbox, -1);
 			} else {
-				NewServerRequest(serverRQs, NULL, requestType + offset, machineID, mailbox, cvNum, lockNum, 0);
+				NewServerRequest(serverRQs, NULL, requestType + offset, machineID, mailbox, cvID, lockNum, 0);
 			}
-		} else if(cvNum % 100 != myMachineID) {
+		} else if(cvNum / 100 != myMachineID) {
 			//CV doesn't exist but lock does, so let's check to make sure lock info is valid
+			int lockID = lockNum;
 			lockNum = lockNum % 100;
 
 			if (lockNum < 0 || lockNum >= serverLocks->size()) {
@@ -134,7 +136,7 @@ bool checkIfEnter(vector<ServerRequest*>* serverRQs, vector<ServerLock*>* server
 			} else if(serverLocks->at(lockNum)->ownerMachineID != machineID || serverLocks->at(lockNum)->ownerMailboxNum != mailbox) {
 				sendReplyToClient(machineID, mailbox, -1);
 			} else {
-				NewServerRequest(serverRQs, NULL, requestType, machineID, mailbox, cvNum, lockNum, 0);
+				NewServerRequest(serverRQs, NULL, requestType, machineID, mailbox, cvNum, lockID, 0);
 			}
 		}
 	}
@@ -444,6 +446,7 @@ void Server() {
 					bool ifEnter = checkIfEnter(serverRQs, serverLocks, serverCVs, cvNum, lockNum, inPktHdr->from, inMailHdr->from, SC_Server_Wait1, 16);
 
 					if(ifEnter) {
+						int lockID = lockNum;
 						lockNum = lockNum % 100;
 						cvNum = cvNum % 100;
 						bool ifReply = true;
@@ -457,7 +460,7 @@ void Server() {
 								replyStream << -1;
 							} else if (serverLocks->at(lockNum)->ownerMachineID != outPktHdr->to ||
 									   serverLocks->at(lockNum)->ownerMailboxNum != outMailHdr->to ||
-									   (serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
+									   (serverCVs->at(cvNum)->lockID != lockID && serverCVs->at(cvNum)->lockID != -1)) {
 								//Enters this condition block if the lock owner does not match machine ID
 								//And if the CV lock does not match lock ID and the lock is assigned
 								//Which means it doesnt have index value of -1
@@ -466,7 +469,7 @@ void Server() {
 								ifReply = false;
 								//If CV is unused, assign new lock
 								if (serverCVs->at(cvNum)->lockID == -1) {
-									serverCVs->at(cvNum)->lockID = lockNum;
+									serverCVs->at(cvNum)->lockID = lockID;
 								}
 								serverCVs->at(cvNum)->packetWaitQ->push(outPktHdr);
 								serverCVs->at(cvNum)->mailWaitQ->push(outMailHdr);
@@ -474,6 +477,7 @@ void Server() {
 								//Change ownership and send message to waiting client
 								PacketHeader *tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
 								MailHeader *tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
+								
 								if (!(serverLocks->at(lockNum)->packetWaitQ->empty())) {
 									serverLocks->at(lockNum)->packetWaitQ->pop();
 									serverLocks->at(lockNum)->mailWaitQ->pop();
@@ -861,8 +865,8 @@ void Server() {
 				case SC_Server_Signal1: {
 					DEBUG('S', "Message: Signal1\n");
 					ss >> cvNum >> lockNum; //get lock and CV num
-					DEBUG('T', "SR from %d: Signal1 CV %d for machine %d, mailbox %d\n", cvNum,
-						  inPktHdr->from, inMailHdr->from);
+					DEBUG('T', "SR from %d: Signal1 lock %d and CV %d for machine %d, mailbox %d\n", lockNum, cvNum, inPktHdr->from, inMailHdr->from);
+
 					//Case where lock is on server, but CV is on another server					
 					//If it's not in our indexes, we don't have it, so reply no
 					if(cvNum / 100 != myMachineID) {
@@ -903,8 +907,8 @@ void Server() {
 				case SC_Server_Signal2: {
 					DEBUG('S', "Message: Signal2\n");
 					ss >> cvNum >> lockNum; //get lock and CV num
-					DEBUG('T', "SR from %d: Signal2 lock %d for machine %d, mailbox %d\n", lockNum,
-						  inPktHdr->from, inMailHdr->from);
+					DEBUG('T', "SR from %d: Signal2 lock %d and CV %d for machine %d, mailbox %d\n", lockNum, cvNum, inPktHdr->from, inMailHdr->from);
+
 					//Case where CV is on server, but lock is on another server
 					//If it's not in our indexes, we don't have it, so reply no
 					//Replies: -1 (we don't do anything since lock is BAD), 0 is lock not found, 1 is lock found and GOOD
@@ -1048,13 +1052,14 @@ void Server() {
 					ss >> cvNum >> lockNum; //get lock and CV num
 					DEBUG('T', "SR from %d: Wait1 CV %d for machine %d, mailbox %d\n", cvNum,
 						  inPktHdr->from, inMailHdr->from);
-					
+
+					//Case where lock is on server, but CV is on another server										
 					//Replies: -1 we stop looking since CV is bad, 1 is we have the CV, 0 is we do not have the CV.
-					//Case where lock is on server, but CV is on another server					
 					//If it's not in our indexes, we don't have it, so reply no
 					if(cvNum / 100 != myMachineID) {
 						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait1, requestID, machineID, mailbox, 0);
 					} else {
+						cvNum = cvNum % 100;
 						//Validate user input: send -1 if bad
 						if (cvNum < 0 || cvNum >= serverCVs->size()) {
 							sendReplyToClient(machineID, mailbox, -1);
@@ -1096,13 +1101,13 @@ void Server() {
 					break;
 				}
 				case SC_Server_Wait2: {
-					DEBUG('S', "Message: Wait1\n");
+					DEBUG('S', "Message: Wait2\n");
 					ss >> cvNum >> lockNum; //get lock and CV num
-					DEBUG('T', "SR from %d: Wait1 CV %d for machine %d, mailbox %d\n", cvNum,
+					DEBUG('T', "SR from %d: Wait2 CV %d for machine %d, mailbox %d\n", cvNum,
 						  inPktHdr->from, inMailHdr->from);
-					
+
+					//Case where CV is on server, but lock is on another server										
 					//Replies: -1 we stop looking since lock is bad, 1 is we have the lock, 0 is we do not have the lock.
-					//Case where CV is on server, but lock is on another server					
 					//If it's not in our indexes, we don't have it, so reply no
 					if(lockNum / 100 != myMachineID) {
 						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait2, requestID, machineID, mailbox, 0);
@@ -1150,11 +1155,125 @@ void Server() {
 					break;
 				}
 				case SC_Server_Wait3: {
-					DEBUG('S', "Message: Wait\n");
+					DEBUG('S', "Message: Wait3\n");
 					ss >> cvNum >> lockNum; //get lock and CV num
-					DEBUG('T', "SR from %d: Wait on CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
+					DEBUG('T', "SR from %d: Wait3 CV %d for machine %d, mailbox %d\n", cvNum,
 						  inPktHdr->from, inMailHdr->from);
 
+					//bools check lock state
+					bool foundLock = false;					
+					bool badLock = false;
+
+					//may be used for later in CV checking for matching lockID
+					int lockID = lockNum;
+
+					//If it's not in our indexes, we don't have it, so reply no
+					if(lockNum / 100 != myMachineID) {
+						foundLock = false;
+					} else { //we found the lock, so lets check if it's good
+						lockNum = lockNum % 100; //grab lock index
+						foundLock = true;
+						
+						if (lockNum < 0 || lockNum >= serverLocks->size()) {
+							sendReplyToClient(machineID, mailbox, -1);
+							badLock = true; 
+							//-1 is a special type of YES, in that we don't do anything
+							//sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, -1);						
+						} else {
+							//Validate whether or not the lock exists
+							if (serverLocks->at(lockNum) == NULL) {
+								sendReplyToClient(machineID, mailbox, -1);
+								badLock = true;
+								//sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, -1);						
+							} else if(serverLocks->at(lockNum)->ownerMachineID != machineID || serverLocks->at(lockNum)->ownerMailboxNum != mailbox) {
+								//check if client actually owns the lock
+								sendReplyToClient(machineID, mailbox, -1);
+								badLock = true;
+								//sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, -1);														
+							} else {
+								//badLock = false; lock is good!
+								//Send YES to server, but have the server also perform action to avoid race conditions
+								//sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, 1);														
+							}						
+						}
+					}
+					//reply cases: -1 (bad lock or bad CV so stop searching), 0 (no lock nor cv), 1 (both lock and CV), 2(lock no CV), 3 (CV no lock)
+					//if we found the lock and it was bad, send -1 as a special YES case (meaning to stop searching such the lock is already invalid)
+					if(foundLock && badLock) {
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal3, requestID, machineID, mailbox, -1);																				
+					} else { //if we did not have to stop searching (lock may or may not exist but not a BAD lock), check if the CV exists on the server as well
+						
+						//If it's not in our indexes, we don't have it, so reply no
+						if(cvNum / 100 != myMachineID) {
+							if(foundLock && !badLock) { //if we found the lock but not the CV, reply with 2
+								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal3, requestID, machineID, mailbox, 2);																					
+							} else if(!foundLock) { //if we didn't find the lock or CV, reply with 0
+								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal3, requestID, machineID, mailbox, 0);																					
+							}
+						} else {
+							//we found the CV, so lets check lock ID
+							cvNum = cvNum % 100; //grab CV index
+
+							if (cvNum < 0 || cvNum >= serverCVs->size()) {
+								sendReplyToClient(machineID, mailbox, -1);
+							} else {
+								//Validate whether or not the CV exists
+								if (serverCVs->at(cvNum) == NULL) {
+									//reply server with -1 to stop searching since CV is bad
+									sendReplyToClient(machineID, mailbox, -1);
+									sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal3, requestID, machineID, mailbox, -1);
+								} else if(serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1) {
+									sendReplyToClient(machineID, mailbox, -1);
+									sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal3, requestID, machineID, mailbox, -1);
+								} else { //if CV exists, check to see if lock is on the server
+									
+									if(lockID / 100 == myMachineID) { //if the lock exists on the server, go ahead and do everything
+										
+										//If CV is unused, assign new lock
+										if (serverCVs->at(cvNum)->lockID == -1) {
+											serverCVs->at(cvNum)->lockID = lockID;
+										}
+
+										//Create headers for pushing client on waitqueue for CV
+										PacketHeader* temp_outPktHdr = new PacketHeader(); 
+										MailHeader* temp_outMailHdr = new MailHeader();
+						
+										temp_outPktHdr->to = machineID; //client machineID goes here
+										temp_outMailHdr->to = mailbox; //client mailbox
+										temp_outMailHdr->from = myMachineID; //our server machineID goes here
+										
+										//Push client info onto wait queue and change lock ownership on server
+										serverCVs->at(cvNum)->packetWaitQ->push(temp_outPktHdr);
+										serverCVs->at(cvNum)->mailWaitQ->push(temp_outMailHdr);
+
+										//Change ownership and send message to waiting client
+										PacketHeader *tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
+										MailHeader *tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
+										
+										if (!(serverLocks->at(lockNum)->packetWaitQ->empty())) {
+											serverLocks->at(lockNum)->packetWaitQ->pop();
+											serverLocks->at(lockNum)->mailWaitQ->pop();
+											serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
+											serverLocks->at(lockNum)->ownerMailboxNum = tempOutMailHdr->to;
+											replyStream << -2;
+											sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+										}
+										else {
+											serverLocks->at(lockNum)->state = Available;
+										}
+
+										//send reply to server and confirm everything has been done already
+										sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait1, requestID, machineID, mailbox, 1);												
+									} else {
+										//if the lock doesn't exist on the server
+										//we need to ping server and see whether or not the ownerMachineId matches our lock's owner
+										//at this point, we know that the CV and lock match, just need to verify owner of the lock
+										sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal3, requestID, machineID, mailbox, 3);
+									}
+								}
+							}
+						}
+					}						
 					break;
 				}								
 				case SC_Server_Broadcast1: {
@@ -1305,13 +1424,11 @@ void Server() {
 
 			//will hold data about the current request
 			ServerRequest* currentRequest;
-			int noCount;
 			bool yes;
 
 			//populate data regarding current server request
 			if(requestID != -1) {
 				currentRequest = serverRQs->at(requestID);
-				noCount = currentRequest->noCount;
 				yes = currentRequest->yes;
 			}
 
@@ -1326,7 +1443,8 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
+								DEBUG('S', "Creating lock\n");
 								ServerLock *newLock = new ServerLock;
 								newLock->name = currentRequest->name;
 								newLock->packetWaitQ = new queue<PacketHeader *>();
@@ -1347,6 +1465,7 @@ void Server() {
 							}
 						} else {
 							currentRequest->yes = true;
+							DEBUG('T', "Other server %d already has lock.\n", inPktHdr->from);
 						}
 					}
 					break;
@@ -1360,14 +1479,16 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
-								//Send reply
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
+								//Send reply								
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
+								DEBUG('S', "Lock doesn't exist to destroy it\n");
 							} else {
 								currentRequest->noCount++;
 							}
 						} else {
+							DEBUG('T', "Other server destroyed lock\n");
 							currentRequest->yes = true;
 						}
 					}
@@ -1383,7 +1504,8 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
+								DEBUG('S', "Creating Condition\n");
 								//Create Condition
 								ServerCV *newCV = new ServerCV;
 								newCV->name = currentRequest->name;
@@ -1402,6 +1524,7 @@ void Server() {
 							}
 						} else {
 							currentRequest->yes = true;
+							DEBUG('T', "Other server %d already has condition.\n", inPktHdr->from);														
 						}
 					}
 					break;
@@ -1415,15 +1538,17 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
+								DEBUG('S', "Condition doesn't exist to destroy it\n");								
 							} else {
 								currentRequest->noCount++;
 							}
 						} else {
 							currentRequest->yes = true;
+							DEBUG('T', "Other server destroyed condition\n");							
 						}
 					}
 					break;
@@ -1438,15 +1563,17 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
+								DEBUG('S', "Lock doesn't exist to acquire it\n");								
 							} else {
 								currentRequest->noCount++;
 							}
 						} else {
 							currentRequest->yes = true;
+							DEBUG('T', "Other server %d acquired lock\n", inPktHdr->from);																					
 						}
 					}
 					break;
@@ -1461,15 +1588,17 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
+								DEBUG('S', "Lock doesn't exist to release it\n");																
 							} else {
 								currentRequest->noCount++;
 							}
 						} else {
 							currentRequest->yes = true;
+							DEBUG('T', "Other server %d released lock\n", inPktHdr->from);																												
 						}
 					}
 					break;
@@ -1484,15 +1613,17 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
+								DEBUG('S', "Condition doesn't exist to signal it\n");																								
 							} else {
 								currentRequest->noCount++;
 							}
 						} else {
 							currentRequest->yes = true;
+							DEBUG('T', "Other server %d signaled condition\n", inPktHdr->from);																																			
 						}
 					}
 					break;
@@ -1507,16 +1638,18 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
+								DEBUG('S', "Condition doesn't exist to signal it\n");																																
 							} else {
 								currentRequest->noCount++;
 							}
 						} else if(reply == -1) {
 							currentRequest->yes = true;
-							sendReplyToClient(machineID, mailbox, -1);							
+							sendReplyToClient(machineID, mailbox, -1);
+							DEBUG('S', "Condition is bad, can't signal it\n");																																														
 						} else if(reply == 1) {
 							currentRequest->yes = true;
 							cvNum = currentRequest->arg1 % 100;
@@ -1539,6 +1672,7 @@ void Server() {
 								}
 								sendReplyToClient(machineID, mailbox, -2);
 							}
+							DEBUG('S', "Condition was signaled by us since lock exists\n");																																
 						}
 					}
 					break;
@@ -1564,25 +1698,30 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1 || (currentRequest->cvFound && currentRequest->lockFound && noCount == NUM_SERVERS - 3) || (currentRequest->cvFound && noCount == NUM_SERVERS - 2) || (currentRequest->lockFound && noCount == NUM_SERVERS - 2)) {
+							if(currentRequest->noCount == NUM_SERVERS - 1 || (currentRequest->cvFound && currentRequest->noCount == NUM_SERVERS - 2) || (currentRequest->lockFound && currentRequest->noCount == NUM_SERVERS - 2)) {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
+								DEBUG('S', "Lock or CV is missing or neither of them exist\n");
 							} else {
 								currentRequest->noCount++;
 							}
 						} else if(reply == -1) {
 							currentRequest->yes = true;
-							sendReplyToClient(machineID, mailbox, -1);							
+							sendReplyToClient(machineID, mailbox, -1);
+							DEBUG('S', "Bad lock or CV\n");														
 						} else if(reply == 2) {
 							currentRequest->lockFound = true;
 
 							//if the CV has been found, let server with CV handle it
 							if(currentRequest->cvFound) {
 								sendReplyToServer(currentRequest->replyServerMachineID, currentRequest->replyServerMailbox, SC_ServerReply_Signal4, -1, machineID, mailbox, currentRequest->arg1);
-							} else if((currentRequest->cvFound && currentRequest->lockFound && noCount == NUM_SERVERS - 3) || (currentRequest->cvFound && noCount == NUM_SERVERS - 2) || (currentRequest->lockFound && noCount == NUM_SERVERS - 2)) {
+								currentRequest->yes = true;	
+								DEBUG('S', "Lock found and CV found\n");																																																							
+							} else if(currentRequest->noCount == NUM_SERVERS - 2) {
 								sendReplyToClient(machineID, mailbox, -1);
-								currentRequest->yes = true;															
+								currentRequest->yes = true;
+								DEBUG('S', "CV does not exist\n");																										
 							}
 						} else if(reply == 3) {
 							currentRequest->cvFound = true;
@@ -1600,12 +1739,16 @@ void Server() {
 							//if the lock has been found, let server with CV handle it
 							if(currentRequest->lockFound) {
 								sendReplyToServer(currentRequest->replyServerMachineID, currentRequest->replyServerMailbox, SC_ServerReply_Signal4, -1, machineID, mailbox, currentRequest->arg1);
-							} else if((currentRequest->cvFound && currentRequest->lockFound && noCount == NUM_SERVERS - 3) || (currentRequest->cvFound && noCount == NUM_SERVERS - 2) || (currentRequest->lockFound && noCount == NUM_SERVERS - 2)) {
+								currentRequest->yes = true;		
+								DEBUG('S', "Lock found and CV found\n");																																																																																		
+							} else if(currentRequest->noCount == NUM_SERVERS - 2) {
 								sendReplyToClient(machineID, mailbox, -1);
 								currentRequest->yes = true;
+								DEBUG('S', "Lock does not exist\n");																																		
 							}
 						} else if(reply == 1) {
-							currentRequest->yes = true;							
+							currentRequest->yes = true;	
+							DEBUG('S', "Wait completed on another server since both lock and cv were there\n");						
 						}
 					}
 					break;
@@ -1648,15 +1791,17 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
+								DEBUG('S', "CV does not exist\n");
 							} else {
 								currentRequest->noCount++;
 							}
 						} else if(reply == -1) {
 							currentRequest->yes = true;
+							DEBUG('S', "CV info is bad\n");
 						} else if(reply == 1) {
 							lockNum = currentRequest->arg2 % 100; //grab lock index
 
@@ -1675,6 +1820,7 @@ void Server() {
 							else {
 								serverLocks->at(lockNum)->state = Available;
 							}
+							DEBUG('S', "CV and Lock exist, we are now waiting\n");
 						}
 					}
 					break;
@@ -1690,15 +1836,17 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
+								DEBUG('S', "Lock does not exist\n");
 							} else {
 								currentRequest->noCount++;
 							}
 						} else if(reply == -1) {
 							currentRequest->yes = true;
+							DEBUG('S', "Lock info is bad\n");
 						} else if(reply == 1) {
 							cvNum = currentRequest->arg1 % 100; //grab CV index
 
@@ -1717,10 +1865,156 @@ void Server() {
 								
 							//Push client info onto wait queue and change lock ownership on server
 							serverCVs->at(cvNum)->packetWaitQ->push(temp_outPktHdr);
-							serverCVs->at(cvNum)->mailWaitQ->push(temp_outMailHdr);						}
+							serverCVs->at(cvNum)->mailWaitQ->push(temp_outMailHdr);
+							DEBUG('S', "Lock and CV exist, lock ownership changed, we are now waiting\n");						}
 					}
 					break;
-				}				
+				}
+				case SC_ServerReply_Wait3: {
+					DEBUG('S', "Message: Reply Wait3\n");
+					DEBUG('T', "SR from %d: Wait3 reply of %d for machine %d, mailbox %d\n", inPktHdr->from, reply,
+						  machineID, mailbox);
+					
+					//reply cases:
+					//-1 (bad lock or bad CV so stop searching) 
+					//0 (no lock nor cv) 
+					//1 (both lock and CV)
+					//2 (lock no CV) --> Lock info is good: 
+					//							1) 3 is there, get server info and send request to handle action
+					//							2) 3 is not there, just wait
+					//3 (CV no lock) --> CV info is good:
+					//							1) 2 is there, send request type to signal (no more validation needed)
+					//							2) 2 is not there, store other server info and send request to handle
+
+					if(!yes) {
+						//if we got NO
+						if(reply == 0) {
+							currentRequest->noCount++;
+							//if we got all our NO replies, perform action
+							if(currentRequest->noCount == NUM_SERVERS - 1 || (currentRequest->cvFound && currentRequest->noCount == NUM_SERVERS - 2) || (currentRequest->lockFound && currentRequest->noCount == NUM_SERVERS - 2)) {
+								//Send reply
+								currentRequest->yes = true;
+								sendReplyToClient(machineID, mailbox, -1);
+								DEBUG('S', "Lock or CV is missing or neither of them exist\n");
+							} else {
+								currentRequest->noCount++;
+							}
+						} else if(reply == -1) {
+							currentRequest->yes = true;
+							sendReplyToClient(machineID, mailbox, -1);
+							DEBUG('S', "Bad lock or CV\n");																												
+						} else if(reply == 2) {
+							currentRequest->lockFound = true;
+
+							//store server info of lock
+							PacketHeader* temp_outPktHdr = new PacketHeader(); 
+							MailHeader* temp_outMailHdr = new MailHeader();
+			
+							temp_outPktHdr->to = inPktHdr->from; //other server machineID goes here
+							temp_outMailHdr->to = inMailHdr->from; //default mailbox is zero
+							temp_outMailHdr->from = myMachineID; //our server machineID goes here
+
+							currentRequest->replyServerMachineID_two = temp_outPktHdr;
+							currentRequest->replyServerMailbox_two = temp_outMailHdr;	
+
+							//if the CV has been found, let server with CV handle it
+							if(currentRequest->cvFound) {
+								sendReplyToServer(currentRequest->replyServerMachineID, currentRequest->replyServerMailbox, SC_ServerReply_Wait4, -1, machineID, mailbox, currentRequest->arg1 * 1000000 + currentRequest->arg2);
+								DEBUG('S', "Lock found and CV found\n");																																																																																									
+							} else if(currentRequest->noCount == NUM_SERVERS - 2) {
+								sendReplyToClient(machineID, mailbox, -1);
+								currentRequest->yes = true;	
+								DEBUG('S', "CV not found\n");																						
+							}
+						} else if(reply == 3) {
+							currentRequest->cvFound = true;
+							
+							//store server info of CV
+							PacketHeader* temp_outPktHdr = new PacketHeader(); 
+							MailHeader* temp_outMailHdr = new MailHeader();
+			
+							temp_outPktHdr->to = inPktHdr->from; //other server machineID goes here
+							temp_outMailHdr->to = inMailHdr->from; //default mailbox is zero
+							temp_outMailHdr->from = myMachineID; //our server machineID goes here
+
+							currentRequest->replyServerMachineID = temp_outPktHdr;
+							currentRequest->replyServerMailbox = temp_outMailHdr;								
+							
+							//if the lock has been found, let server with CV handle it
+							if(currentRequest->lockFound) {
+								sendReplyToServer(currentRequest->replyServerMachineID, currentRequest->replyServerMailbox, SC_ServerReply_Wait4, -1, machineID, mailbox, currentRequest->arg1 * 1000000 + currentRequest->arg2);
+								DEBUG('S', "Lock found and CV found\n");																																																																																									
+							} else if(currentRequest->noCount == NUM_SERVERS - 2) {
+								sendReplyToClient(machineID, mailbox, -1);
+								currentRequest->yes = true;
+								DEBUG('S', "Lock not found\n");
+							}
+						} else if(reply == 1) {
+							currentRequest->yes = true;	
+							DEBUG('S', "Wait completed on another server since both lock and cv were there\n");																			
+						} else if(reply == 4) {
+							//Send lock and change ownership, thereby releasing it
+							sendReplyToServer(currentRequest->replyServerMachineID, currentRequest->replyServerMailbox, SC_ServerReply_Wait5, -1, machineID, mailbox, currentRequest->arg2);
+							currentRequest->yes = true;
+							DEBUG('S', "Change lock ownership then we are done\n");
+						}
+					}
+					break;
+				}
+				case SC_ServerReply_Wait4: {
+					DEBUG('S', "Message: Reply Wait4\n");
+					DEBUG('T', "SR from %d: Wait4 reply of %d for machine %d, mailbox %d\n", inPktHdr->from, reply,
+						  machineID, mailbox);
+
+					cvNum = (reply / 100000000) % 100;
+					lockNum = reply % 1000000;
+
+					//If CV is unused, assign new lock
+					if (serverCVs->at(cvNum)->lockID == -1) {
+						serverCVs->at(cvNum)->lockID = lockNum;
+					}
+
+					//Create headers for pushing client on waitqueue for CV
+					PacketHeader* temp_outPktHdr = new PacketHeader(); 
+					MailHeader* temp_outMailHdr = new MailHeader();
+				
+					temp_outPktHdr->to = machineID; //client machineID goes here
+					temp_outMailHdr->to = mailbox; //client mailbox
+					temp_outMailHdr->from = myMachineID; //our server machineID goes here
+								
+					//Push client info onto wait queue and change lock ownership on server
+					serverCVs->at(cvNum)->packetWaitQ->push(temp_outPktHdr);
+					serverCVs->at(cvNum)->mailWaitQ->push(temp_outMailHdr);
+								
+					//send reply to server where ownership of the lock will be changed
+					sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Wait3, requestID, machineID, mailbox, 4);												
+				
+					break;
+				}
+				case SC_ServerReply_Wait5: {
+					DEBUG('S', "Message: Reply Wait5\n");
+					DEBUG('T', "SR from %d: Wait5 reply of %d for machine %d, mailbox %d\n", inPktHdr->from, reply, machineID, mailbox);
+
+					lockNum = reply % 100; //grab lock index
+
+					//Change ownership of lock and send message to waiting client
+					PacketHeader *tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
+					MailHeader *tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
+
+					if (!(serverLocks->at(lockNum)->packetWaitQ->empty())) {
+						serverLocks->at(lockNum)->packetWaitQ->pop();
+						serverLocks->at(lockNum)->mailWaitQ->pop();
+						serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
+						serverLocks->at(lockNum)->ownerMailboxNum = tempOutMailHdr->to;
+						replyStream << -2;
+						sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+					} else {
+						serverLocks->at(lockNum)->state = Available;
+					}
+
+					sendReplyToClient(machineID, mailbox, -2);
+					break;
+				}																
 				case SC_ServerReply_Broadcast1: {
 					DEBUG('S', "Message: Reply Release\n");
 					DEBUG('T', "SR from %d: Release lock reply %d for machine %d, mailbox %d\n", inPktHdr->from, currentRequest->arg1,
@@ -1731,7 +2025,7 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
@@ -1754,7 +2048,7 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
 								//Create MV
 								ServerMV *newMV = new ServerMV;
 								newMV->name = currentRequest->name;
@@ -1789,7 +2083,7 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
@@ -1811,7 +2105,7 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);
@@ -1833,7 +2127,7 @@ void Server() {
 						if(reply == 0) {
 							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
-							if(noCount == NUM_SERVERS - 1) {
+							if(currentRequest->noCount == NUM_SERVERS - 1) {
 								//Send reply
 								currentRequest->yes = true;
 								sendReplyToClient(machineID, mailbox, -1);

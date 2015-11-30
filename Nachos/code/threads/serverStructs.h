@@ -65,6 +65,8 @@ struct ServerRequest{
     int cvCount;
     PacketHeader* replyServerMachineID;
     MailHeader* replyServerMailbox;
+    PacketHeader* replyServerMachineID_two;
+    MailHeader* replyServerMailbox_two;
 };
 
 #endif //OSSOME_SERVERSTRUCTS_H
