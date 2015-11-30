@@ -1044,11 +1044,57 @@ void Server() {
 					break;				
 				}								
 				case SC_Server_Wait1: {
-					DEBUG('S', "Message: Wait\n");
+					DEBUG('S', "Message: Wait1\n");
 					ss >> cvNum >> lockNum; //get lock and CV num
-					DEBUG('T', "SR from %d: Wait on CV %s for machine %d, mailbox %d\n", serverCVs->at(cvNum)->name.c_str(),
+					DEBUG('T', "SR from %d: Wait1 CV %d for machine %d, mailbox %d\n", cvNum,
 						  inPktHdr->from, inMailHdr->from);
+					
+					//Replies: -1 we stop looking since CV is bad, 1 is we have the CV, 0 is we do not have the CV.
+					//Case where lock is on server, but CV is on another server					
+					//If it's not in our indexes, we don't have it, so reply no
+					if(cvNum / 100 != myMachineID) {
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, 0);
+					} else {
+						//Validate user input: send -1 if bad
+						if (cvNum < 0 || cvNum >= serverCVs->size()) {
+							sendReplyToClient(machineID, mailbox, -1);
+							sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, -1);												
+						} else {
+							//Do some more checks to ensure we can wait
+							if (serverCVs->at(cvNum) == NULL) {
+								sendReplyToClient(machineID, mailbox, -1);
+								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, -1);												
+							} else if (serverLocks->at(lockNum)->ownerMachineID != machineID ||
+									   serverLocks->at(lockNum)->ownerMailboxNum != mailbox ||
+									   (serverCVs->at(cvNum)->lockID != lockNum && serverCVs->at(cvNum)->lockID != -1)) {
+								//Enters this condition block if the lock owner does not match machine ID
+								//And if the CV lock does not match lock ID and the lock is assigned
+								//Which means it doesnt have index value of -1
+								sendReplyToClient(machineID, mailbox, -1);
+								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, -1);																				
+							} else {
+								//If CV is unused, assign new lock
+								if (serverCVs->at(cvNum)->lockID == -1) {
+									serverCVs->at(cvNum)->lockID = lockNum;
+								}
 
+								//Create headers for pushing client on waitqueue for CV
+								PacketHeader* temp_outPktHdr = new PacketHeader(); 
+								MailHeader* temp_outMailHdr = new MailHeader();
+				
+								temp_outPktHdr->to = machineID; //client machineID goes here
+								temp_outMailHdr->to = mailbox; //client mailbox
+								temp_outMailHdr->from = myMachineID; //our server machineID goes here
+								
+								//Push client info onto wait queue and change lock ownership on server
+								serverCVs->at(cvNum)->packetWaitQ->push(temp_outPktHdr);
+								serverCVs->at(cvNum)->mailWaitQ->push(temp_outMailHdr);
+								
+								//send reply to server where ownership of the lock will be changed
+								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, 1);												
+							}
+						}
+					}
 					break;
 				}
 				case SC_Server_Wait2: {
@@ -1234,7 +1280,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								ServerLock *newLock = new ServerLock;
@@ -1268,7 +1314,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								//Send reply
@@ -1291,7 +1337,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								//Create Condition
@@ -1323,7 +1369,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								//Send reply
@@ -1346,7 +1392,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								//Send reply
@@ -1369,7 +1415,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								//Send reply
@@ -1392,7 +1438,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								//Send reply
@@ -1415,7 +1461,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								//Send reply
@@ -1472,7 +1518,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1 || (currentRequest->cvFound && currentRequest->lockFound && noCount == NUM_SERVERS - 3) || (currentRequest->cvFound && noCount == NUM_SERVERS - 2) || (currentRequest->lockFound && noCount == NUM_SERVERS - 2)) {
 								//Send reply
@@ -1548,14 +1594,14 @@ void Server() {
 					break;
 				}												
 				case SC_ServerReply_Wait1: {
-					DEBUG('S', "Message: Reply Release\n");
-					DEBUG('T', "SR from %d: Release lock reply %d for machine %d, mailbox %d\n", inPktHdr->from, currentRequest->arg1,
+					DEBUG('S', "Message: Reply Wait1\n");
+					DEBUG('T', "SR from %d: Wait1 reply %d for machine %d, mailbox %d\n", inPktHdr->from, reply,
 						  machineID, mailbox);
 
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								//Send reply
@@ -1564,8 +1610,26 @@ void Server() {
 							} else {
 								currentRequest->noCount++;
 							}
-						} else {
+						} else if(reply == -1) {
 							currentRequest->yes = true;
+						} else if(reply == 1) {
+							lockNum = currentRequest->arg2 % 100; //grab lock index
+
+							//Change ownership of lock and send message to waiting client
+							PacketHeader *tempOutPktHdr = serverLocks->at(lockNum)->packetWaitQ->front();
+							MailHeader *tempOutMailHdr = serverLocks->at(lockNum)->mailWaitQ->front();
+
+							if (!(serverLocks->at(lockNum)->packetWaitQ->empty())) {
+								serverLocks->at(lockNum)->packetWaitQ->pop();
+								serverLocks->at(lockNum)->mailWaitQ->pop();
+								serverLocks->at(lockNum)->ownerMachineID = tempOutPktHdr->to;
+								serverLocks->at(lockNum)->ownerMailboxNum = tempOutMailHdr->to;
+								replyStream << -2;
+								sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+							}
+							else {
+								serverLocks->at(lockNum)->state = Available;
+							}
 						}
 					}
 					break;
@@ -1578,7 +1642,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								//Send reply
@@ -1601,7 +1665,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								//Create MV
@@ -1636,7 +1700,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								//Send reply
@@ -1658,7 +1722,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								//Send reply
@@ -1680,7 +1744,7 @@ void Server() {
 					if(!yes) {
 						//if we got NO
 						if(reply == 0) {
-							noCount++;
+							currentRequest->noCount++;
 							//if we got all our NO replies, perform action
 							if(noCount == NUM_SERVERS - 1) {
 								//Send reply
