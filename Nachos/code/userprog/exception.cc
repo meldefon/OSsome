@@ -256,6 +256,7 @@ void sendAndRecieveSyscallMessage(char* msg,char* inBuffer){
     //Set up headers (Packet header does not need the from field set, since it will be set automatically on send).
     outPktHdr.to = rand()%NUM_SERVERS;
     outMailHdr.to = 0;
+    //outMailHdr.to = outPktHdr.to;
     outMailHdr.from = currentThread->baseStackAddr; //TODO EVEN THIS IS NOT UNIQUE OVER THREADS, Since two threads could
     //TODO have the same base stack address if virtual memory is being used.
     outMailHdr.from = currentThread->threadNum;
@@ -289,6 +290,11 @@ int Acquire_Syscall(int id) {
 
     //Convert the message to int
     val = convertMessageToInt(inBuffer);
+
+    if(val==-1){
+        cout<<"Acquire ERROR---------------\n";
+    }
+
     return val;
 
     /*
@@ -325,6 +331,10 @@ int Release_Syscall(int id) {
 
     //Convert the message to int
     val = convertMessageToInt(inBuffer);
+
+    if(val==-1){
+        cout<<"Release ERROR---------------\n";
+    }
     return val;
 
     /*
@@ -367,6 +377,10 @@ int Wait_Syscall(int c, int l) {
         val = Acquire_Syscall(l);
     }
 
+    if(val==-1){
+        cout<<"Wait ERROR---------------\n";
+    }
+
     return val;
 
     /*
@@ -406,6 +420,10 @@ int Signal_Syscall(int c, int l) {
     
     //Convert the message to int
     val = convertMessageToInt(inBuffer);
+
+    if(val==-1){
+        cout<<"Signal ERROR---------------\n";
+    }
     return val;
 
     /*
@@ -444,6 +462,10 @@ int Broadcast_Syscall(int c, int l) {
 
     //Convert the message to int
     val = convertMessageToInt(inBuffer);
+
+    if(val==-1){
+        cout<<"Broadcast ERROR---------------\n";
+    }
     return val;
 
     /*
@@ -495,6 +517,10 @@ int CreateLock_Syscall(unsigned int name, int len) {
 
     //Convert the message to int, which will contain either an error code or our new index
     int val = convertMessageToInt(inBuffer);
+
+    if(val==-1){
+        cout<<"CreateLack ERROR---------------\n";
+    }
     return val;
 
     /*
@@ -524,6 +550,10 @@ int DestroyLock_Syscall(int id) {
 
     //Convert the message to int
     val = convertMessageToInt(inBuffer);
+
+    if(val==-1){
+        cout<<"DestroyLock ERROR---------------\n";
+    }
     return val;
 
     /*
@@ -574,6 +604,10 @@ int CreateCondition_Syscall(unsigned int name, int len) {
 
     //Convert the message to int, which will contain either an error code or our new index
     int val = convertMessageToInt(inBuffer);
+
+    if(val==-1){
+        cout<<"CreateCV ERROR---------------\n";
+    }
     return val;
 
     /*
@@ -603,6 +637,10 @@ int DestroyCondition_Syscall(int id) {
    
     //Convert the message to int
     val = convertMessageToInt(inBuffer);
+
+    if(val==-1){
+        cout<<"DestroyCV ERROR---------------\n";
+    }
     return val;
 
     /*
@@ -662,7 +700,7 @@ void Printf_syscall(unsigned int vaddr, int length, int Num_1, int Num_2) {
         }
     }
 
-    cout<<"m"<<machineIDCopy<<": ";
+    cout<<"m/p:"<<machineIDCopy<<"/"<<currentThread->space->processID<<": ";
     if(check == 0) {
         printf(string);
     } else if(check == 1) {
@@ -1113,6 +1151,10 @@ int CreateMV_Syscall(unsigned int name, int nameLen, int size){
     
     //Convert the message to int
     int val = convertMessageToInt(inBuffer);
+
+    if(val==-1){
+        cout<<"CreateMV ERROR---------------\n";
+    }
     return val;
 }
 
@@ -1126,6 +1168,10 @@ int DestroyMV_Syscall(int id){
 
     //Convert the message to int
     int val = convertMessageToInt(inBuffer);
+
+    if(val==-1){
+        cout<<"DestroyMV ERROR---------------\n";
+    }
     return val;
 }
 
@@ -1139,6 +1185,10 @@ int SetMV_Syscall(int MVid, int index, int value){
 
     //Convert the message to int
     int val = convertMessageToInt(inBuffer);
+
+    if(val==-1){
+        cout<<"Set ERROR---------------\n";
+    }
     return val;
 }
 
@@ -1152,6 +1202,10 @@ int GetMV_Syscall(int MVid, int index){
 
     //Convert the message to int
     int val = convertMessageToInt(inBuffer);
+
+    if(val==-1){
+        cout<<"Set ERROR---------------\n";
+    }
     return val;
 }
 

@@ -595,6 +595,8 @@ int main() {
 	ifSenator = GetMV(isSenator, social);
 	/*Uprintf("ifSenator = %d \n", 16, ifSenator, 0, 0, 0);*/
 
+	Uprintf("I am customer %d\n",17,social,0,0,0);
+
 	if (ifSenator == 1) {
 		canStartWorking = 0;
 	}
