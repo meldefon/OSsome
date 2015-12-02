@@ -20,6 +20,9 @@ void sendReply(PacketHeader* outPktHdr,MailHeader* outMailHdr,stringstream& repl
 	outMailHdr->length = msgLength;
 	char replyMsg[msgLength];
 	strcpy(replyMsg,replyStream.str().c_str());
+	/*if(outPktHdr->to<NUM_SERVERS){
+		outMailHdr->to = 0;
+	}*/
 	bool success = postOffice->Send(*outPktHdr, *outMailHdr, replyMsg);
 	if ( !success ) {
 		printf("The postOffice Send failed. You must not have the other Nachos running. Terminating Nachos.\n");
@@ -882,10 +885,10 @@ void Server() {
 
 					//If it's not in our indexes, we don't have it, so reply no
 					if (lockNum / 100 != myMachineID) {
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 0);
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Release, requestID, machineID, mailbox, 0);
 					} else {
 						lockNum = lockNum % 100;
-						sendReplyToServer(outPktHdr, outMailHdr, type, requestID, machineID, mailbox, 1);
+						sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Release, requestID, machineID, mailbox, 1);
 
 						//Check whether or not we can release it
 						if (serverLocks->at(lockNum) == NULL) {

@@ -69,6 +69,8 @@ vector<int>* pagesQ;
 
 int globalThreads;
 
+int NUM_SERVERS;
+
 
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
@@ -158,7 +160,10 @@ Initialize(int argc, char **argv)
 						// number generator
 	    randomYield = TRUE;
 	    argCount = 2;
-	}
+	}else if (!strcmp(*argv, "-NS")) {
+        NUM_SERVERS = atoi(*(argv+1));
+    }
+
 #ifdef USER_PROGRAM
 	if (!strcmp(*argv, "-s"))
 	    debugUserProg = TRUE;

@@ -79,6 +79,8 @@ extern vector<int>* pagesQ;
 
 extern int globalThreads;
 
+extern int NUM_SERVERS;
+
 
 #ifdef USER_PROGRAM
 #include "machine.h"

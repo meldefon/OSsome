@@ -104,7 +104,7 @@
 
 /*Give the server a special address*/
 #define SERVER_M 0
-#define NUM_SERVERS 2
+/*#define NUM_SERVERS 2*/
 
 #ifndef IN_ASM
 
