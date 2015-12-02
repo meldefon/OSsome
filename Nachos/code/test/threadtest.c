@@ -255,8 +255,9 @@ int main() {
 	int numCashiers;
 	int numPassportClerks;
 
-	Uprintf("For TestSuite, enter 1\nFor Simulation, enter 2", 46, 0, 0, 0, 0);
-	testSuite = Scanf();
+	/*Uprintf("For TestSuite, enter 1\nFor Simulation, enter 2", 46, 0, 0, 0, 0);
+	testSuite = Scanf();*/
+	testSuite = 0;
 
 	if(testSuite == 1)
 		testSuite = 0; /*TestSuite();*/
