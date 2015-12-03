@@ -140,15 +140,37 @@ IV. Implementation:
 				Server()
 
 V. Testing:  (For each test case, you must show)
-	+ Part 1 and 2
-		+ How to test
+	+ Part 1
+	
+		To run with 1 server:
 
-		+ Test Output
-
-		+ Test Output
+		Window 1: nachos -m 0 -NS 1 -d ST -server 1
+		Window 2: nachos -m 1 -NS 1  -x ../test/threadtest
+		
+		Expected output: Normal passport office output. Should see "Num customers left: 0" Near the bottom
+		of the output
+	
+	Part 2
+	
+		To run with 2 servers:
+		
+		Window 1: nachos -m 0  -NS 2  -d ST  -server 1
+		Window 2: nachos -m 1  -NS 2  -d ST  -server 1
+		Window 3: nachos -m 2  -NS 2  -x ../test/threadtest
 
 
 VI. Discussion:
-	+ Experiment expectation.  (What is supposed to happen.)
-	+ Experiment result.  (What actually happened.)
-	+ Explanation
+	+ Experiment expectation. For this project, we were supposed to do two things: 1. implement a distributed 
+	passport office which uses server syscall, and 2. Fully distribute the backend, so that requests could
+	be made to any of several servers. Thus, we expected to first convert the passport office and see the syscalls
+	executed on servers, and then afterwards to see no visible difference in the passport office front-end as we
+	converted the back-end to a multiple server, distributed implementation.
+	+ Experiment result.  Part 1 went as expected. The passport office appears to be working fine while using server
+	syscalls. Part 2 we ran into a minor issue which we weren't able to fix in time: it appears to be working with
+	2 servers, exactly in the same way as before, but when more than two servers are used, the message passing is
+	somehow corrupted. 
+	+ Explanation. The part 1 conversion went smoothly - all of the globals were pulled out into MVs, and all
+	locks, CVs, and MVs were shared on the server by having seperate execution threads call Create with a 
+	common name. We believe that we have almost everything working for part 2, since it is working with 2 servers.
+	There appears to be a small bug in the message passing code, since when there are 3 servers, the servers get 
+	hung waiting on eachother.
