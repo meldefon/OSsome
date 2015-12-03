@@ -1,5 +1,5 @@
- Title:  Writeup for Project 3, Fall 2015
- Date:  11/8/15
+ Title:  Writeup for Project 4, Fall 2015
+ Date:  12/3/15
  Group:	27
  Name					Email	
  Allen Almasi				asalmasi@usc.edu
@@ -9,218 +9,146 @@
 
 I. Requirements:
 	+ Part 1:
-		This part requires us to create code to manage the TLB. This part will be done in 2 steps: in step 1 we will populate the TLB from our Page Table, and in step 2 we will implement an Inverted Page Table. We are required to show that a single program that fits in main memory will run to completion and that 2 programs that fit in main memory together will run to completion in different address spaces. 
+		This part requires us to implement all of the entities from the Passport Office simulation so they can work together across Nachos clients. There is going to be only one server whose job is to connect all of the entities together using remote procedure calls. Each of the entities are going to be called using the Exec system call instead of the Fork system call. 
 
 	+ Part 2:
-		This part requires us to implement virtual memory. Nothing will be preloaded from the executable when a process starts up. Pages have to be able to move between disk and memory, and pages will need to be evicted when memory fills up using Random and FIFO page replacements. We need a swapfile for evicted pages that are dirty. We have to show that 2 or more programs that are larger than 32 pages are able to run to completion.
-
-	+ Part 3:
-		This part requires us to implement networking in nachos. We will implement Remote Procedure Calls for all Lock, Condition Variable and Monitor Variable system calls. The system calls will be sent as a message from a nachos client to a nachos server. The server will process the system call and return the results of the system call to the client. The server has to be able to handle multiple clients. 
+		This part requires us to now use more than one server to run the Passport Office simulation. Any server can get a request from any client but a server will only have the lock, CV or MV that it creates. Therefore no one server will have all of the locks, CVs or MVs. If a server gets a request and the object is not in their table, it could have been created by another server. At this point the server should send a message to the other servers to see if they created the object. 
 
 II. Assumptions: - Reasonable assumptions you take for your scheme.
-	+ Part 1:	
-		-We would need to create a new class to hold the IPT entries
-		-There is no IPT in Nachos
-		-We should do things in a step-by-step approach
+	+ Part 1:
+		-We could use the CreateMV, CreateLock, and CreateCondition function to search for existing locks, CVs, or MVs
+		-Instead of using names to make remote calls, we could provide the user with integer values that are unique (machineID * 100 + index) to specific servers to avoid checking via strings
+		-We could Exec everything within in a file instead of manually Execing everything through the command line
+		-We could use the same machineID but different mailbox numbers to act as different clients	
 	+ Part 2:
-		-We would use the Nachos file system for the swap file
-		-We would use bitmap for file functionality alongside memory management 
-	+ Part 3:
-		-We could use stringstream to parse messages
-		-Server would be single threaded
-		-We did not have to implement thread specific messaging for this project
-		-We could use any type of message formatting
-		-We would need to create new types of structs to hold the new locks, CVs, and MVs
-		-We would need new globals that would be shared across clients
-
+		-We could create as many cases as possible for handling server replies and requests
+		-We would use a data structure to hold our server requests
+		-We could use whatever message formatting that we liked
+		-Part 2 would be coded to work with an infinite number of servers
 III. Design:
 	+ Part 1
-		To complete part 1 we have to populate the TLB from our existing page table and then implement the IPT. To populate the TLB, we need to compute the virtual page number, which is virtual address divided by page size, and then find the entry in the current thread's page table using the virtual page number. We then copy both the virtual and physical page numbers from the page table to the spot in the TLB. Next, we need the IPT, which is needed to keep track of what is or is not loaded into physical memory. In the IPT, we need to keep track of the processes that owns a particular virtual page. The IPT will be implemented as an array with a size of NumPhysPages entries. When ever a BitMap Find() occurs, that value will be put in the IPT. We then copy both the virtual and physical page numbers from the page table to the IPT. 
-
+		To complete part 1, we first had to separate functions and variables specific to each clerk and each type of customer (normal or senator) into their own individual files with their own main function which would execute their behavior. After separating all the clerks and customers into their own files, we then needed to figure out how we would share the global data with the other files; we had previously shared data using includes and extern variables. To share data, we moved all the global data, which was previously declared only in one file, into each individual file and declared them as local data; we did this to avoid having to heavily modify any code since the variable names would all be the same. To initialize the local data, we used two server functions in each file: CreateServerMVs(), which would create all the primitive data types on the server that would need to be shared via the server between clients; Initialize(), which would create all the data on the server needed for the clerk struct, Monitor. With these two functions in each file, we would pass in all the variables that would be shared on the server and had the function return the correct values by grabbing or generating them from the server. Having taken care of both these things, our final task was to create a file that would allow the user to enter the number of clerks and customers to start the simulation; this was done in threadtest.c which takes in the number of clerks and customers, creates all the global data that is needed on the server using CreateServerMVs() and Initialize(), then Execs each individual clerk and customer.  
 	+ Part 2
-		In this part, we are going to stop preloading pages into memory and only load it when it is needed during program execution so we have to comment out anywhere a BitMap Find() is performed. The BitMap Find() will only be used when there is a PageFaultException and an IPT miss. We add another condition to the function that handles page faults in order to catch and handle the IPT misess. Handling an IPT miss consists of doing a BitMap Find() and checking the page table entry to see where the virtual page maps to on the disk. We will add the byte offset and the disk location to the page table entries so we know if we have to read a page from the executabl when we get an IPT miss. The page table will be updated with the physical page number with the valid bit set to true so we know when to evict memory pages on an Exit syscall. When an IPT miss occurs and the memory is full, we need to evict a memory page to make room for the one we need to load. This will be done in HandleMemoryFull(). If a page is dirty it will be copied to the swapfile and a BitMap object will be used to keep track of where the the page was put in the swapfile. The evicted page's process page table will then be updated. 
-
-	+ Part 3
-		In part 3, we were required to implement remote procedure calls to establish the basis for server and client communication in Nachos. Our first approach to design this part was to first decide where the server would run and how it would handle client messages via message formatting. Since our server is single threaded, we thought it would be best to create a function called void Server() in the threads directory, in file threadtest.cc, that would serve as the ServerStub and ServerApp. In this function, we would have a while loop that always runs and continually handles client messages one at a time. Once it receives a message, it parses the message based on a specific message format. To accomplish specific message formatting, we used stringstream to pull out specific parts of the message since it seemed the most convenient. In regards to the formatting process: the first entry that is pulled out of a client message is the TYPE of message in the form of a string, which refers to which Syscall is being requested; after this, we use the string we pulled to enter into the specific systemcall code block in our void Server() funciton via switch-case statements where we will continue to use stringstream to pull out the remaining data arguments in the message in order to handle the remote procedure call. It is also in these switch cases where we perform user validation of the input and send back an ERROR value of -1 or success value of -2 to the ClientStub. Having discussed the general procedure of how we handle communication between the ServerStub and ClientStub, we will now turn our attention to the data structures that we used to hold the global locks, CVs, and MVs. Like our previous projects, we felt it would be best to use three structs called ServerLock, ServerCV, and ServerMV, all of which are contain data definitions in serverStructs.h and are not global system variables since they are defined and initialized only in the void Server() function using vector containers. In these structs, we hold information containing owners of locks, CV holders, MV values, etc., and manage them directly in the switch-case statements that pertain to each systemcall. Having defined our structs, we felt that it would be best to use the vectors as containers for these structs to hold them in the void Server() function called vector<ServerLock*> *serverLocks, vector<ServerCV*> *serverCVs, and vector<ServerMV*> *serverMVs, since they will always be continually growing. Once we had our data structures in place, all that was left was to implement the system calls which again sent a reply message of -1 for a success, or -2 for an error, or an actual integer value if one was requested. In the ClientStub, we handled all these syscalls in the appropiate systemcall in exception.cc, just like if it was a normal non-network systemcall, since we felt it would be much easier to manage it directly inside the syscall that made the request rather than creating a new global function which would then have to parse replies based on which syscall was requested.
+		In this part, we first had to think about how we would go about handling server to server communication since there is going to be multiple servers. Eventually, we decided that this would be the general flow of server to server communciation: Client contacts Server 1, Server 1 is unable to fulfill request, Server 1 creates a ServerRequest x on behalf of Client, ServerRequest x is sent to all other servers, Server 2 receives ServerRequest x, Server 2 processes ServerRequest x, Server 2 sends reply to Server 1 for ServerRequest x, Server 1 handles reply from Server 2 for ServerRequest x. Once we decided on the flow of the program, we then proceeded to add two new sets of cases: SC_Server_x, which would be used to handle a server receiving a server request from another server, so in the case above Server 2 would handle the request in SC_Server_x from Server 1; SC_ServerReply_x, which would be used to handle the replies received by the server from other servers that are running in SC_Server_x, so in our case above Server 1 would handle its replies in SC_ServerReply_x from Server 2. After the cases were created, we then decided to create a new struct called ServerRequest which would hold all the data necessary to handle a pending request. So once a client sends the server a message and the server cannot handle its request, the server creates a new ServerRequest object, stores all the data received from the client in the ServerRequest object, then sends whatever data is necessary from the ServerRequest object to all other servers. To hold the struct, we placed it in a vector since we must continually add ServerRequest objects as requests are created.   
 
 IV. Implementation:
 	+ Part 1
 		+ Files Modified
-			test/threadtest.c
-			test/matmult.c
-			threads/system.cc
-			threads/system.h
-			threads/structs.h
-			userprog/addrspace.cc
-			userprog/exception.cc
-
-		+ Data Structures added, and the file they were added to.
-			ITPEntry class in structs.h
-		
-		+ Functions added and in which file.
-			HandlePageFault() in exception.cc
-
-		+ Functions modified and in which file.
-			ExceptionHandler() in exception.cc
-			RestoreState() in addrspace.cc
-			AddrSpace() in addrspace.cc
-			main() in matmult.c
-			main() in sort.c
-			Exit_Syscall() in exception.cc
-			Initialize() in system.cc
-
-	+ Part 2
-		+ Files Modified
-			threads/system.h
-			threads/system.cc
-			threads/structs.h
-			threads/main.cc
-			machine/machine.h
-			test/matmult.c
-			userprog/addrspace.h
-			userprog/addrspace.cc
-			userprog/exception.cc
-			userprog/progtest.cc
-
-		+ Files added
-			test/matmultX2.c
-
-		+ Data Structures modified, and the file they were added to.
-			AddrSpace class in addrspace.h
-			ITPEntry class in structs.h
-
-		+ Functions added and in which file.
-			HandleMemoryFull() in exception.cc
-			main() in matmultX2.c
-
-		+ Functions modified and in which file.
-			Exit_Syscall() in exception.cc
-			Initialize() in system.cc
-			AddrSpace() in addrspace.cc
-			StartProcess() in progtest.cc
-			HandlePageFault() in exception.cc
-			main() in matmult.c
-			RestoreState() in addrspace.cc
-			main() in main.cc
-
-	+ Part 3
-		+ Files Modified
-			network/Makefile
-			threads/system.cc
-			threads/main.cc
-			threads/threadtest.cc
-			test/matmult.c
+			test/customer.c
+			test/globalVars.h
 			test/Makefile
-			test/start.s
+			test/monitor.h
+			test/threadtest.c
+			threads/threadtest.cc
 			userprog/exception.cc
 			userprog/syscall.h
 
 		+ Files added
-			threads/serverStructs.h
-			test/serverCode.c
-			test/lockTests.c
-			test/CVTests.c
-			test/CVTestsSignaller.c
-			test/CVTestsWaiter.c
-			test/CVTestsBroadcaster.c
-			test/MVTests.c
+			test/appClerk.c
+			test/cashier.c
+			test/manager.c
+			test/picClerk.c
+			test/passPClerk.c
+			test/setup.c
+			test/setup.h
 
 		+ Data Structures added, and the file they were added to.
-			ServerLock struct in serverStructs.h
-			ServerCV struct in serverStructs.h
-			ServerMV struct in serverStructs.h
+			customer.c, threadtest.c, appClerk.c, cashier.c, passPClerk.c, and picClerk.c have the following structs
+				Monitor
+				appClerk
+				picClerk
+				passPClerk
+				cashier
 
 		+ Functions added and in which file.
-			sendAndRecieveSyscallMessage() in exception.cc
-			main() in serverCode.c
-			Server() in threadtest.cc
-			CreateMV_Syscall() in exception.cc
-			DestroyMV_Syscall() in exception.cc
-			SetMV_Syscall() in exception.cc
-			GetMV_Syscall() in exception.cc
-			CreateMV() in syscall.h
-			DestroyMV() in syscall.h
-			SetMV() in syscall.h
-			GetMV() in syscall.h
-			sendReply() in threadtest.cc
-			convertMessageToInt() in exception.cc
-			main() in lockTests.c
-			main() in CVTestsSignaller.c
-			main() in CVTestsWaiter.c
-			main() in CVTestsBroadcaster.c
-			main() in MVTests.c
+			appClerk.c, cashier.c, passPClerk.c, and picClerk.c each have:
+				createServerMVs()
+				initialize()
+				Uprintf()
+				waitForLine()
+				main()
+			customer.c
+				createServerMVs()
+				initialize()
+				Uprintf()
+				main()
+			manager.c
+				createServerMVs()
+				initialize()
+				Uprintf()
+				checkForClerkOnBreak()
+				main()
+			threadtest.c
+				createServerMVs()
+				initialize()
+				Uprintf()
+			setup.c
+				createServerMVs()
+				initialize()
 
 
 		+ Functions modified and in which file.
-			Initialize() in system.cc
-			main() in matmult.c
-			Acquire_Syscall() in exception.cc
-			Release_Syscall() in exception.cc
-			Wait_Syscall() in exception.cc
-			Signal_Syscall() in exception.cc
-			Broadcast_Syscall() in exception.cc
-			CreateLock_Syscall() in exception.cc
-			DestroyLock_Syscall() in exception.cc
-			CreateCondition_Syscall() in exception.cc
-			DestroyCondition_Syscall() in exception.cc
-			ExceptionHandler() in exception.cc
+			customer.c
+				punish()
+				tellPassportClerkSSN()
+				tellCashierSSN()
+				payCashier()
+				getInLine()
+				doAppClerkStuff()
+				doPicClerkStuff()
+				doPassportClerkStuff()
+				doCashierStuff()
+				customer()
+			threadtest.c
+				main()
+			threadtest.cc
+				Server()
+			exception.cc
+				sendAndRecieveSyscallMessage()
+
+
+	+ Part 2
+		+ Files Modified
+			threads/serverStructs.h
+			threads/system.cc
+			threads/system.h
+			threads/threadtest.cc
+			userprog/syscall.h
+
+		+ Files added
+
+		+ Data Structures added, and the file they were added to.
+			serverStructs.h
+				ServerRequest{}
+			threadtest.cc
+				Vector<ServerRequest*> *serverRVs;
+
+		+ Data Structures modified, and the file they were added to.
+			No existing data structures were modified
+
+		+ Functions added and in which file.
+			threadtest.cc
+				NewServerRequest()
+				sendReplyToServer()
+				sendReplyToClient()
+				checkIfEnter()
+
+		+ Functions modified and in which file.
+			system.cc
+				Initialize()
+			threadtest.cc
+				Server()
 
 V. Testing:  (For each test case, you must show)
 	+ Part 1 and 2
 		+ How to test
-			1. Compile in the /test and /network directories.
-			2. Go to the /network directory.
-			3. Enter the command "nachos -rs 2 -x ../test/matmultX2" 
 
 		+ Test Output
-			The output of this test is supposed to show two instances of matmult running to completion. Both of the outputs are supposed to show that the result is 7220. 
-
-	+ Part 3
-		+ How to test
-			1. Compile in the /test and /network directories.
-			2. Go to the /network directory.
-
-			3a. To test the Lock syscalls:
-				a. Open two terminal windows.
-				b. Enter the command "nachos -m 0 -d T -server 1" in one terminal window.
-				c. Enter the command "nachos -m 1 -x ../test/lockTests & nachos -m 2 -x ../test/lockTests" in the other window.
-
-			3b. To test the CV syscalls:
-				a. Open three terminal windows.
-				b. Enter the command "nachos -m 0 -d T -server 1" in one terminal window.
-				c. Enter the command "nachos -m 1 -x ../test/CVTestsWaiter & nachos -m 2 -x ../test/CVTestsWaiter" in the second window.
-				d. Enter the command "nachos -m 3 -x ../test/CVTestsSignaller" in the third window.
-
-			3c. To test CV broadcast syscall:
-				a. Open three terminal windows.
-				b. Enter the command "nachos -m 0 -d T -server 1" in one terminal window.
-				c. Enter the command "nachos -m 1 -x ../test/CVTestsWaiter & nachos -m 2 -x ../test/CVTestsWaiter" in the second window.
-				d. Enter the command "nachos -m 3 -x ../test/CVTestsBroadcaster" in the third window.
-
-			3d. To test the MV syscalls:
-				a. Open two terminal windows.
-				b. Enter the command "nachos -m 0 -d T -server 1" in one terminal window.
-				c. Enter the command "nachos -m 1 -x ../test/MVTests & nachos -m 2 -x ../test/MVTests" in the other window.
 
 		+ Test Output
-			These test are meant to show that all of the system calls we implemented as remote procedure calls will work without error. 
 
-			Lock syscall output:
-				This test should show two different clients asking the server to create, acquire, release and destroy a lock. The client side should show each machine working and then leaving their critical sections. The server side should show the sequence of the system calls that it performed for each machine. 
-
-			CV syscall output:
-				This test should show two clients waiting and one client that signals them. Both the waiter and signaler create their own lock and CV and then aquires the lock. The signaler signals, then releases the lock, and destroys the lock and CV. The waiter waits until it gets a signal, then then releases the lock, and destroys the lock and CV. The server side should show the sequence of the system calls that it performed for each machine. 
- 
-			CV broadcast output:
-				This test should show two clients waiting and one client that sends a broadcast signal to them. Both the waiter and broadcaster create their own lock and CV and then aquires the lock. The broadcaster send a broadcase signal, then releases the lock, and destroys the lock and CV. The waiter waits until it gets a signal to wake, then then releases the lock, and destroys the lock and CV. The server side should show the sequence of the system calls that it performed for each machine.
-
-			MV syscall output:
-				This test should show two different clients asking the server to create and acquier a lock, get and set an MV, then release the lock and destroy the lock and MV. The client side should show each machine getting and incrementing a MV and then leaving their respective critical sections. The server side should show the sequence of the system calls that it performed for each machine.
 
 VI. Discussion:
 	+ Experiment expectation.  (What is supposed to happen.)
-		For project 3, we expect to have Nachos support demand paged virtual memory and networking. We use caching to make it seem like Nachos is faster and has more memory than it actually does. The translation lookaside buffer is a cache for the page table to give the illusion of fast access and the main memory is used as a cache to give the illusion of unlimited virtual memory. We expect that Nachos will run successfully with either FIFO or Random as the page eviction policy. For networking in nachos, we expect our Nachos server to be able to serve multiple clients using remote procedure calls.
 	+ Experiment result.  (What actually happened.)
-		We met our experiment expectations by successfully implementing demand paged virtual memory. We also met our experiment expectations by successfully performing networking in Nachos with a server supporting multiple clients at once. 
 	+ Explanation
-		To show that our experiment results were successful, we proved that we were able to implement demand paged virtual memory by running the user programs matmult and sort to completion and receiving the correct outputs. Implementing networking in Nachos was a success because we were able to have a Nachos server support more than one client's remote procedure calls. We created several user programs to test each of the system calls for Locks, Condition Variables and Monitor Variables. The user programs run to completion without errors. 

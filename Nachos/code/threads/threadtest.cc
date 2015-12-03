@@ -1942,30 +1942,229 @@ void Server() {
 						break;
 					}
 					case SC_Server_Broadcast1: {
-						DEBUG('S', "Message: Broadcast\n");
+						DEBUG('S', "Message: Broadcast1\n");
 						ss >> cvNum >> lockNum; //get lock and CV num
-						DEBUG('T', "SR from %d: Broadcast CV %s for machine %d, mailbox %d\n",
-							  serverCVs->at(cvNum)->name.c_str(),
+						DEBUG('T', "SR from %d: Broadcast1 lock %d and CV %d for machine %d, mailbox %d\n", lockNum, cvNum,
 							  inPktHdr->from, inMailHdr->from);
 
+						//Case where lock is on server, but CV is on another server
+						//If it's not in our indexes, we don't have it, so reply no
+						if (cvNum / 100 != myMachineID) {
+							sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast1, requestID, machineID,
+											  mailbox,
+											  0);
+						} else {
+							sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast1, requestID, machineID,
+											  mailbox,
+											  1);
+							cvNum = cvNum % 100; //grab CV index
+
+							if (cvNum < 0 || cvNum >= serverCVs->size()) {
+								sendReplyToClient(machineID, mailbox, -1);
+							} else {
+								//Validate whether or not the CV exists
+								if (serverCVs->at(cvNum) == NULL) {
+									sendReplyToClient(machineID, mailbox, -1);
+								} else if (serverCVs->at(cvNum)->lockID == lockNum) {
+									//If there is a waiting client, send reply so they can wake and go on to acquire
+									if (serverCVs->at(cvNum)->packetWaitQ->empty()) {
+										sendReplyToClient(machineID, mailbox, -1);
+									} else {
+
+										//If there is a waiting client, send reply so they can wake and go on to acquire
+										if (serverCVs->at(cvNum)->packetWaitQ->empty()) {
+											sendReplyToClient(machineID, mailbox, -1);
+										} else {
+											//do a simple loop and wake everybody up by message
+											replyStream << -2;
+											while (!serverCVs->at(cvNum)->packetWaitQ->empty()) {
+												PacketHeader *tempOutPktHdr = serverCVs->at(cvNum)->packetWaitQ->front();
+												serverCVs->at(cvNum)->packetWaitQ->pop();
+												MailHeader *tempOutMailHdr = serverCVs->at(cvNum)->mailWaitQ->front();
+												serverCVs->at(cvNum)->mailWaitQ->pop();
+												sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+											}
+											serverCVs->at(
+													cvNum)->lockID = -1; //since we've woken everyone up, no one is waiting on the lock anymore
+											sendReplyToClient(machineID, mailbox, -2);										
+										}
+									}
+								}
+							}
+						}
 						break;
+
 					}
 					case SC_Server_Broadcast2: {
-						DEBUG('S', "Message: Broadcast\n");
+						DEBUG('S', "Message: Broadcast2\n");
 						ss >> cvNum >> lockNum; //get lock and CV num
-						DEBUG('T', "SR from %d: Broadcast CV %s for machine %d, mailbox %d\n",
-							  serverCVs->at(cvNum)->name.c_str(),
+						DEBUG('T', "SR from %d: Broadcast2 lock %d and CV %d for machine %d, mailbox %d\n", lockNum, cvNum,
 							  inPktHdr->from, inMailHdr->from);
 
-						break;
+						//Case where CV is on server, but lock is on another server
+						//If it's not in our indexes, we don't have it, so reply no
+						//Replies: -1 (we don't do anything since lock is BAD), 0 is lock not found, 1 is lock found and GOOD
+						if (lockNum / 100 != myMachineID) {
+							sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast2, requestID, machineID,
+											  mailbox,
+											  0);
+						} else {
+							lockNum = lockNum % 100; //grab lock index
+
+							if (lockNum < 0 || lockNum >= serverLocks->size()) {
+								//-1 is a special type of YES, in that we don't do anything since lock is bad
+								sendReplyToClient(machineID, mailbox, -1);
+								sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast2, requestID, machineID,
+												  mailbox, -1);
+							} else {
+								//Validate whether or not the lock exists
+								if (serverLocks->at(lockNum) == NULL) {
+									sendReplyToClient(machineID, mailbox, -1);
+									sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast2, requestID,
+													  machineID,
+													  mailbox, -1);
+								} else if (serverLocks->at(lockNum)->ownerMachineID != machineID ||
+										   serverLocks->at(lockNum)->ownerMailboxNum != mailbox) {
+									//check if client actually owns the lock
+									sendReplyToClient(machineID, mailbox, -1);
+									sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast2, requestID,
+													  machineID,
+													  mailbox, -1);
+								} else {
+									//Client owns lock, so send YES (1) to server, but have the server also perform action to avoid race conditions
+									sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast2, requestID,
+													  machineID,
+													  mailbox, 1);
+								}
+							}
+						}
+						break;					
 					}
 					case SC_Server_Broadcast3: {
-						DEBUG('S', "Message: Broadcast\n");
+						DEBUG('S', "Message: Signal3\n");
 						ss >> cvNum >> lockNum; //get lock and CV num
-						DEBUG('T', "SR from %d: Broadcast CV %s for machine %d, mailbox %d\n",
-							  serverCVs->at(cvNum)->name.c_str(),
+						DEBUG('T', "SR from %d: Signal3 lock %d and CV %d for machine %d, mailbox %d\n", lockNum, cvNum,
 							  inPktHdr->from, inMailHdr->from);
+						//Case where CV and lock is on another server
 
+						//bools check whether lock state
+						bool foundLock = false;
+						bool badLock = false;
+
+						//may be used for later in CV checking for matching lockID
+						int lockID = lockNum;
+
+						//If it's not in our indexes, we don't have it, so reply no
+						if (lockNum / 100 != myMachineID) {
+							foundLock = false;
+						} else { //we found the lock, so lets check if it's good
+							lockNum = lockNum % 100; //grab lock index
+							foundLock = true;
+
+							if (lockNum < 0 || lockNum >= serverLocks->size()) {
+								sendReplyToClient(machineID, mailbox, -1);
+								badLock = true;
+								//-1 is a special type of YES, in that we don't do anything
+								//sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, -1);
+							} else {
+								//Validate whether or not the lock exists
+								if (serverLocks->at(lockNum) == NULL) {
+									sendReplyToClient(machineID, mailbox, -1);
+									badLock = true;
+									//sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, -1);
+								} else if (serverLocks->at(lockNum)->ownerMachineID != machineID ||
+										   serverLocks->at(lockNum)->ownerMailboxNum != mailbox) {
+									//check if client actually owns the lock
+									sendReplyToClient(machineID, mailbox, -1);
+									badLock = true;
+									//sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, -1);
+								} else {
+									//badLock = false; lock is good!
+									//Send YES to server, but have the server also perform action to avoid race conditions
+									//sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Signal1, requestID, machineID, mailbox, 1);
+								}
+							}
+						}
+						//reply cases: -1 (bad lock or bad CV so stop searching), 0 (no lock nor cv), 1 (both lock and CV), 2(lock no CV), 3 (CV no lock)
+						//if we found the lock and it was bad, send -1 as a special YES case (meaning to stop searching such the lock is already invalid)
+						if (foundLock && badLock) {
+							sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast3, requestID, machineID,
+											  mailbox,
+											  -1);
+						} else { //if we did not have to stop searching (lock may or may not exist but not a BAD lock), check if the CV exists on the server as well
+
+							//If it's not in our indexes, we don't have it, so reply no
+							if (cvNum / 100 != myMachineID) {
+								if (foundLock && !badLock) { //if we found the lock but not the CV, reply with 2
+									sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast3, requestID,
+													  machineID,
+													  mailbox, 2);
+								} else if (!foundLock) { //if we didn't find the lock or CV, reply with 0
+									sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast3, requestID,
+													  machineID,
+													  mailbox, 0);
+								}
+							} else {
+								//we found the CV, so lets check lock ID
+								cvNum = cvNum % 100; //grab CV index
+
+								if (cvNum < 0 || cvNum >= serverCVs->size()) {
+									sendReplyToClient(machineID, mailbox, -1);
+								} else {
+									//Validate whether or not the CV exists
+									if (serverCVs->at(cvNum) == NULL) {
+										//reply server with -1 to stop searching since CV is bad
+										sendReplyToClient(machineID, mailbox, -1);
+										sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast3, requestID,
+														  machineID, mailbox, -1);
+									} else if (serverCVs->at(cvNum)->lockID ==
+											   lockID) { //if CV exists, check to see if lockID matches with lock provided by client
+
+										if (lockID / 100 ==
+											myMachineID) { //if the lock exists on the server, go ahead and do everything
+											//If there is a waiting client, send reply so they can wake and go on to acquire
+											if (serverCVs->at(cvNum)->packetWaitQ->empty()) {
+												//if there is noone to signal, bad CV so reply with -1 to server since we are done
+												sendReplyToClient(machineID, mailbox, -1);
+												sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast3,
+																  requestID,
+																  machineID, mailbox, -1);
+											} else {
+												//do a simple loop and wake everybody up by message
+												replyStream << -2;
+												while (!serverCVs->at(cvNum)->packetWaitQ->empty()) {
+													PacketHeader *tempOutPktHdr = serverCVs->at(cvNum)->packetWaitQ->front();
+													serverCVs->at(cvNum)->packetWaitQ->pop();
+													MailHeader *tempOutMailHdr = serverCVs->at(cvNum)->mailWaitQ->front();
+													serverCVs->at(cvNum)->mailWaitQ->pop();
+													sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+												}
+												serverCVs->at(
+														cvNum)->lockID = -1; //since we've woken everyone up, no one is waiting on the lock anymore
+
+
+												//reply with 1 to server since we have both lock and CV
+												sendReplyToClient(machineID, mailbox, -2);
+												sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast3,
+																  requestID,
+																  machineID, mailbox, 1);
+											}
+										} else {
+											//if the lock doesn't exist on the server
+											//we need to ping server and see whether or not the ownerMachineId matches our lock's owner
+											//at this point, we know that the CV and lock match, just need to verify owner of the lock
+											sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast3, requestID,
+															  machineID, mailbox, 3);
+										}
+									} else {
+										//if the lock ID does not match CV lock id, bad CV so reply with -1 to server since we are done
+										sendReplyToClient(machineID, mailbox, -1);
+										sendReplyToServer(outPktHdr, outMailHdr, SC_ServerReply_Broadcast3, requestID,
+														  machineID, mailbox, -1);
+									}
+								}
+							}
+						}
 						break;
 					}
 					case SC_Server_CreateMV: {
@@ -2732,9 +2931,9 @@ void Server() {
 						break;
 					}
 					case SC_ServerReply_Broadcast1: {
-						DEBUG('S', "Message: Reply Release\n");
-						DEBUG('T', "SR from %d: Release lock reply %d for machine %d, mailbox %d\n", inPktHdr->from,
-							  currentRequest->arg1,
+						DEBUG('S', "Message: Reply Broadcast1\n");
+						DEBUG('T', "SR from %d: Broadcast1 reply of %d for machine %d, mailbox %d\n", inPktHdr->from,
+							  reply,
 							  machineID, mailbox);
 
 						if (!yes) {
@@ -2746,12 +2945,173 @@ void Server() {
 									//Send reply
 									currentRequest->yes = true;
 									sendReplyToClient(machineID, mailbox, -1);
+									cout << "Condition doesn't exist to broadcast it\n";
 								} else {
 									currentRequest->noCount++;
 								}
 							} else {
 								currentRequest->yes = true;
+								cout << "Other server %d broadcasted condition\n";
 							}
+						}
+						break;
+					}
+					case SC_ServerReply_Broadcast2: {
+						DEBUG('S', "Message: Reply Broadcast2\n");
+						DEBUG('T', "SR from %d: Broadcast2 reply of %d for machine %d, mailbox %d\n", inPktHdr->from,
+							  reply,
+							  machineID, mailbox);
+
+						if (!yes) {
+							//if we got NO
+							if (reply == 0) {
+								currentRequest->noCount++;
+								//if we got all our NO replies, perform action
+								if (currentRequest->noCount == NUM_SERVERS - 1) {
+									//Send reply
+									currentRequest->yes = true;
+									sendReplyToClient(machineID, mailbox, -1);
+									cout << "Condition doesn't exist to broadcast it\n";
+								} else {
+									currentRequest->noCount++;
+								}
+							} else if (reply == -1) {
+								currentRequest->yes = true;
+								sendReplyToClient(machineID, mailbox, -1);
+								cout << "Condition is bad, can't broadcast it\n";
+							} else if (reply == 1) {
+								currentRequest->yes = true;
+								cvNum = currentRequest->arg1 % 100;
+
+								//We do not need to perform any more validations since we did so in SC_Signal through checkIfEnter
+								//If there is a waiting client, send reply so they can wake and go on to acquire
+								if (serverCVs->at(cvNum)->packetWaitQ->empty()) {
+									sendReplyToClient(machineID, mailbox, -1);
+								} else {
+									//do a simple loop and wake everybody up by message
+									replyStream << -2;
+									while (!serverCVs->at(cvNum)->packetWaitQ->empty()) {
+										PacketHeader *tempOutPktHdr = serverCVs->at(cvNum)->packetWaitQ->front();
+										serverCVs->at(cvNum)->packetWaitQ->pop();
+										MailHeader *tempOutMailHdr = serverCVs->at(cvNum)->mailWaitQ->front();
+										serverCVs->at(cvNum)->mailWaitQ->pop();
+										sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+									}
+									serverCVs->at(cvNum)->lockID = -1; //since we've woken everyone up, no one is waiting on the lock anymore
+									sendReplyToClient(machineID, mailbox, -2);									
+								}
+								cout << "Condition was signaled by us since lock exists\n";
+							}
+						}
+						break;
+					}
+					case SC_ServerReply_Broadcast3: {
+						DEBUG('S', "Message: Reply Broadcast3\n");
+						DEBUG('T', "SR from %d: Broadcast3 reply of %d for machine %d, mailbox %d\n", inPktHdr->from,
+							  reply,
+							  machineID, mailbox);
+
+						//reply cases:
+						//-1 (bad lock or bad CV so stop searching)
+						//0 (no lock nor cv)
+						//1 (both lock and CV)
+						//2 (lock no CV) --> Lock info is good:
+						//							1) 3 is there, get server info and send request to handle action
+						//							2) 3 is not there, just wait
+						//3 (CV no lock) --> CV info is good:
+						//							1) 2 is there, send request type to signal (no more validation needed)
+						//							2) 2 is not there, store other server info and send request to handle
+
+						if (!yes) {
+							//if we got NO
+							if (reply == 0) {
+								currentRequest->noCount++;
+								//if we got all our NO replies, perform action
+								if (currentRequest->noCount == NUM_SERVERS - 1 ||
+									(currentRequest->cvFound && currentRequest->noCount == NUM_SERVERS - 2) ||
+									(currentRequest->lockFound && currentRequest->noCount == NUM_SERVERS - 2)) {
+									//Send reply
+									currentRequest->yes = true;
+									sendReplyToClient(machineID, mailbox, -1);
+									cout << "Lock or CV is missing or neither of them exist\n";
+								} else {
+									currentRequest->noCount++;
+								}
+							} else if (reply == -1) {
+								currentRequest->yes = true;
+								sendReplyToClient(machineID, mailbox, -1);
+								cout << "Bad lock or CV\n";
+							} else if (reply == 2) {
+								currentRequest->lockFound = true;
+
+								//if the CV has been found, let server with CV handle it
+								if (currentRequest->cvFound) {
+									sendReplyToServer(currentRequest->replyServerMachineID,
+													  currentRequest->replyServerMailbox, SC_ServerReply_Broadcast4, -1,
+													  machineID, mailbox, currentRequest->arg1);
+									currentRequest->yes = true;
+									cout << "Lock found and CV found\n";
+								} else if (currentRequest->noCount == NUM_SERVERS - 2) {
+									sendReplyToClient(machineID, mailbox, -1);
+									currentRequest->yes = true;
+									cout << "CV does not exist\n";
+								}
+							} else if (reply == 3) {
+								currentRequest->cvFound = true;
+
+								PacketHeader *temp_outPktHdr = new PacketHeader();
+								MailHeader *temp_outMailHdr = new MailHeader();
+
+								temp_outPktHdr->to = inPktHdr->from; //other server machineID goes here
+								temp_outMailHdr->to = inMailHdr->from; //default mailbox is zero
+								temp_outMailHdr->from = myMachineID; //our server machineID goes here
+
+								currentRequest->replyServerMachineID = temp_outPktHdr;
+								currentRequest->replyServerMailbox = temp_outMailHdr;
+
+								//if the lock has been found, let server with CV handle it
+								if (currentRequest->lockFound) {
+									sendReplyToServer(currentRequest->replyServerMachineID,
+													  currentRequest->replyServerMailbox, SC_ServerReply_Broadcast4, -1,
+													  machineID, mailbox, currentRequest->arg1);
+									currentRequest->yes = true;
+									cout << "Lock found and CV found\n";
+								} else if (currentRequest->noCount == NUM_SERVERS - 2) {
+									sendReplyToClient(machineID, mailbox, -1);
+									currentRequest->yes = true;
+									cout << "Lock does not exist\n";
+								}
+							} else if (reply == 1) {
+								currentRequest->yes = true;
+								cout << "Wait completed on another server since both lock and cv were there\n";
+							}
+						}
+						break;
+					}
+					case SC_ServerReply_Broadcast4: {
+						DEBUG('S', "Message: Reply Broadcast4\n");
+						DEBUG('T', "SR from %d: Broadcast4 reply of %d for machine %d, mailbox %d\n", inPktHdr->from,
+							  reply,
+							  machineID, mailbox);
+
+						cvNum = reply % 100;
+
+						//We do not need to perform any more validations since we did so in SC_Signal through checkIfEnter
+						//If there is a waiting client, send reply so they can wake and go on to acquire
+						if (serverCVs->at(cvNum)->packetWaitQ->empty()) {
+							sendReplyToClient(machineID, mailbox, -1);
+						} else {
+							//do a simple loop and wake everybody up by message
+							replyStream << -2;
+							while (!serverCVs->at(cvNum)->packetWaitQ->empty()) {
+								PacketHeader *tempOutPktHdr = serverCVs->at(cvNum)->packetWaitQ->front();
+								serverCVs->at(cvNum)->packetWaitQ->pop();
+								MailHeader *tempOutMailHdr = serverCVs->at(cvNum)->mailWaitQ->front();
+								serverCVs->at(cvNum)->mailWaitQ->pop();
+								sendReply(tempOutPktHdr, tempOutMailHdr, replyStream);
+							}
+							serverCVs->at(cvNum)->lockID = -1; //since we've woken everyone up, no one is waiting on the lock anymore
+							sendReplyToClient(machineID, mailbox, -2);		
 						}
 						break;
 					}

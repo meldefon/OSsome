@@ -73,6 +73,7 @@
 #define SC_Server_Wait3				130
 #define SC_Server_Broadcast2		131
 #define SC_Server_Broadcast3		132
+#define SC_Server_Broadcast4		133
 
 #define SC_ServerReply_Acquire           	211
 #define SC_ServerReply_Release		    	212
@@ -99,6 +100,8 @@
 #define SC_ServerReply_Signal4				233
 #define SC_ServerReply_Wait4				234
 #define SC_ServerReply_Wait5				235
+#define SC_ServerReply_Broadcast4			236
+
 
 #define MAXFILENAME 256
 
