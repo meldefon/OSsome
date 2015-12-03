@@ -157,6 +157,9 @@ V. Testing:  (For each test case, you must show)
 		Window 1: nachos -m 0  -NS 2  -d ST  -server 1
 		Window 2: nachos -m 1  -NS 2  -d ST  -server 1
 		Window 3: nachos -m 2  -NS 2  -x ../test/threadtest
+		
+		Expected ouptut: Normal passport office output in window 3, which includes "Num customers left: 0" near
+		the bottom of the ouput. Also, server calls logged in windows 1 and 2.
 
 
 VI. Discussion:
